@@ -2,11 +2,11 @@ import { HardhatUserConfig } from "hardhat/config";
 import "@nomicfoundation/hardhat-toolbox";
 import "@nomicfoundation/hardhat-verify";
 import "@openzeppelin/hardhat-upgrades";
-import "@openzeppelin/defender-hardhat";
 import "hardhat-deploy";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "dotenv/config";
+import "hardhat-contract-sizer";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -76,12 +76,6 @@ const config: HardhatUserConfig = {
     coinmarketcap: process.env.COINMARKETCAP_API_KEY,
     token: "ETH",
     gasPriceApi: "https://api.etherscan.io/api?module=proxy&action=eth_gasPrice",
-  },
-  contractSizer: {
-    alphaSort: true,
-    disambiguatePaths: false,
-    runOnCompile: true,
-    strict: true,
   },
   paths: {
     sources: "./contracts",
