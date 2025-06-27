@@ -1,0 +1,78 @@
+{
+  "name": "bondly-contracts",
+  "version": "1.0.0",
+  "description": "Bondly 智能合约 - 去中心化社交价值网络",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "test:coverage": "hardhat coverage",
+    "test:gas": "REPORT_GAS=true hardhat test",
+    "deploy:local": "hardhat run scripts/deploy/01_deploy_core.ts --network localhost",
+    "deploy:goerli": "hardhat run scripts/deploy/01_deploy_core.ts --network goerli",
+    "deploy:mainnet": "hardhat run scripts/deploy/01_deploy_core.ts --network mainnet",
+    "verify:goerli": "hardhat run scripts/tasks/verify.ts --network goerli",
+    "verify:mainnet": "hardhat run scripts/tasks/verify.ts --network mainnet",
+    "node": "hardhat node",
+    "clean": "hardhat clean",
+    "size": "hardhat size-contracts",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "format": "prettier --write 'contracts/**/*.sol' 'scripts/**/*.ts' 'test/**/*.ts'",
+    "check-env": "node scripts/utils/check-env.js",
+    "report": "node scripts/utils/generate-report.js"
+  },
+  "keywords": [
+    "solidity",
+    "ethereum",
+    "smart-contracts",
+    "defi",
+    "socialfi",
+    "bondly"
+  ],
+  "author": "Bondly Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.8",
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.2",
+    "@nomicfoundation/hardhat-ethers": "^3.0.4",
+    "@nomicfoundation/hardhat-verify": "^2.0.1",
+    "@typechain/ethers-v6": "^0.4.3",
+    "@typechain/hardhat": "^8.0.3",
+    "@types/chai": "^4.3.5",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20.5.0",
+    "chai": "^4.3.7",
+    "ethers": "^6.7.1",
+    "hardhat": "^2.17.1",
+    "hardhat-gas-reporter": "^1.0.9",
+    "solidity-coverage": "^0.8.4",
+    "typechain": "^8.3.1",
+    "typescript": "^5.1.6",
+    "prettier": "^3.0.2",
+    "prettier-plugin-solidity": "^1.3.1",
+    "solhint": "^4.0.0",
+    "dotenv": "^16.3.1"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "@openzeppelin/contracts-upgradeable": "^5.0.0",
+    "@openzeppelin/hardhat-upgrades": "^3.0.0",
+    "@openzeppelin/defender-hardhat": "^1.0.0",
+    "hardhat-deploy": "^0.12.0",
+    "hardhat-deploy-ethers": "^0.4.0"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "npm": ">=8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/bondly/bondly-contracts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/bondly/bondly-contracts/issues"
+  },
+  "homepage": "https://bondly.io"
+} 
