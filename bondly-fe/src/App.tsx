@@ -5,6 +5,8 @@ import { useTranslation } from 'react-i18next';
 import Home from './pages/Home';
 import Feed from './pages/Feed';
 import Profile from './pages/Profile';
+import Editor from './pages/Editor';
+import Drafts from './pages/Drafts';
 
 // 工具函数：合并样式
 function getStyle(isMobile: boolean, desktop: any, mobile: any) {
@@ -433,6 +435,48 @@ function AppContent() {
                 📱 {t('feed')}
               </button>
               <button 
+                style={page === 'editor' ? activeButtonStyle : buttonStyle} 
+                onClick={(e) => {
+                  createRipple(e);
+                  handlePageChange('editor');
+                }}
+                onMouseEnter={(e) => {
+                  if (page !== 'editor') {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255,255,255,0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (page !== 'editor') {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255,255,255,0.1)';
+                  }
+                }}
+              >
+                ✍️ 创作
+              </button>
+              <button 
+                style={page === 'drafts' ? activeButtonStyle : buttonStyle} 
+                onClick={(e) => {
+                  createRipple(e);
+                  handlePageChange('drafts');
+                }}
+                onMouseEnter={(e) => {
+                  if (page !== 'drafts') {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255,255,255,0.15)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (page !== 'drafts') {
+                    const target = e.target as HTMLButtonElement;
+                    target.style.background = 'rgba(255,255,255,0.1)';
+                  }
+                }}
+              >
+                📝 草稿
+              </button>
+              <button 
                 style={page === 'profile' ? activeButtonStyle : buttonStyle} 
                 onClick={(e) => {
                   createRipple(e);
@@ -549,6 +593,26 @@ function AppContent() {
               📱 {t('feed')}
             </button>
             <button 
+              style={page === 'editor' ? mobileMenuButtonActiveStyle : mobileMenuButtonStyle} 
+              onClick={(e) => {
+                createRipple(e);
+                handlePageChange('editor');
+                setMobileMenuOpen(false);
+              }}
+            >
+              ✍️ 创作
+            </button>
+            <button 
+              style={page === 'drafts' ? mobileMenuButtonActiveStyle : mobileMenuButtonStyle} 
+              onClick={(e) => {
+                createRipple(e);
+                handlePageChange('drafts');
+                setMobileMenuOpen(false);
+              }}
+            >
+              📝 草稿
+            </button>
+            <button 
               style={page === 'profile' ? mobileMenuButtonActiveStyle : mobileMenuButtonStyle} 
               onClick={(e) => {
                 createRipple(e);
@@ -566,6 +630,8 @@ function AppContent() {
             {page === 'home' && <Home isMobile={isMobile} />}
             {page === 'feed' && <Feed isMobile={isMobile} />}
             {page === 'profile' && <Profile isMobile={isMobile} />}
+            {page === 'editor' && <Editor isMobile={isMobile} />}
+            {page === 'drafts' && <Drafts isMobile={isMobile} />}
           </div>
         </div>
       </div>
