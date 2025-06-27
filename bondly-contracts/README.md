@@ -121,7 +121,7 @@ test/                        # 测试文件
 ### 安装依赖
 ```bash
 cd bondly-contracts
-npm install
+npm install --legacy-peer-deps
 ```
 
 ### 环境配置
@@ -130,20 +130,33 @@ npm install
 # 网络配置
 MAINNET_RPC_URL="https://mainnet.infura.io/v3/your_project_id"
 GOERLI_RPC_URL="https://goerli.infura.io/v3/your_project_id"
+SEPOLIA_RPC_URL="https://sepolia.infura.io/v3/your_project_id"
 POLYGON_RPC_URL="https://polygon-rpc.com"
+POLYGON_MUMBAI_RPC_URL="https://rpc-mumbai.maticvigil.com"
 
 # 私钥配置
-PRIVATE_KEY="your_private_key"
-DEPLOYER_PRIVATE_KEY="deployer_private_key"
+PRIVATE_KEY="your_private_key_here"
+DEPLOYER_PRIVATE_KEY="deployer_private_key_here"
 
 # API 密钥
 ETHERSCAN_API_KEY="your_etherscan_api_key"
 POLYGONSCAN_API_KEY="your_polygonscan_api_key"
+COINMARKETCAP_API_KEY="your_coinmarketcap_api_key"
+
+# OpenZeppelin Defender
+DEFENDER_API_KEY="your_defender_api_key"
+DEFENDER_API_SECRET="your_defender_api_secret"
 
 # 合约配置
 BOND_TOKEN_NAME="Bondly Token"
 BOND_TOKEN_SYMBOL="BOND"
 INITIAL_SUPPLY="1000000000000000000000000" # 1M tokens
+
+# Gas 报告
+REPORT_GAS=true
+
+# 网络配置
+NETWORK_NAME="goerli"
 ```
 
 ### 编译合约
@@ -178,6 +191,38 @@ npx hardhat run scripts/deploy/01_deploy_core.ts --network goerli
 
 # 部署到主网
 npx hardhat run scripts/deploy/01_deploy_core.ts --network mainnet
+```
+
+## ✅ 开发环境验证
+
+### 已完成的配置
+- ✅ **依赖安装**: 所有 Solidity 开发依赖已安装
+- ✅ **编译测试**: 合约编译功能正常
+- ✅ **控制台交互**: Hardhat 控制台可正常使用
+- ✅ **合约大小分析**: 合约大小分析工具可用
+- ✅ **多网络支持**: 本地、测试网、主网配置完成
+- ✅ **代码质量工具**: Solhint、Prettier 配置完成
+- ✅ **Gas 报告**: Gas 使用分析工具配置完成
+
+### 测试命令
+```bash
+# 检查环境配置
+npm run check-env
+
+# 编译合约
+npx hardhat compile
+
+# 启动本地节点
+npx hardhat node
+
+# 进入控制台
+npx hardhat console
+
+# 查看合约大小
+npx hardhat size-contracts
+
+# 生成项目报告
+npm run report
 ```
 
 ## 📚 合约文档
@@ -313,24 +358,9 @@ event RewardsClaimed(address indexed user, uint256 amount);
 
 ### 网络配置
 在 `hardhat.config.ts` 中配置：
-```typescript
-networks: {
-  hardhat: {
-    chainId: 31337
-  },
-  localhost: {
-    url: "http://127.0.0.1:8545"
-  },
-  goerli: {
-    url: process.env.GOERLI_RPC_URL,
-    accounts: [process.env.PRIVATE_KEY]
-  },
-  mainnet: {
-    url: process.env.MAINNET_RPC_URL,
-    accounts: [process.env.PRIVATE_KEY]
-  }
-}
-```
+- 以太坊网络 RPC 端点
+- 智能合约地址
+- Gas 价格策略
 
 ### 合约验证
 ```bash
