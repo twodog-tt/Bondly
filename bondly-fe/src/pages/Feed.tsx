@@ -52,7 +52,7 @@ const mockBlogPosts: BlogPost[] = [
     id: 1,
     author: {
       name: 'Alice Chen',
-      avatar: '',
+    avatar: '',
       reputation: 89,
       isVerified: true,
       title: 'DeFi 研究员'
@@ -89,7 +89,7 @@ const mockBlogPosts: BlogPost[] = [
     id: 2,
     author: {
       name: 'Bob Zhang',
-      avatar: '',
+    avatar: '',
       reputation: 234,
       isVerified: true,
       title: '区块链安全专家'
@@ -240,7 +240,7 @@ export default function Feed({ isMobile }: FeedProps) {
       authorName
     });
   };
-
+  
   // 模拟数据加载
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -265,7 +265,7 @@ export default function Feed({ isMobile }: FeedProps) {
     const tagMatch = selectedTags.length === 0 || selectedTags.some(tag => post.metadata.tags.includes(tag));
     return categoryMatch && tagMatch;
   });
-
+  
   const containerStyle = {
     maxWidth: '900px',
     margin: '0 auto',
@@ -306,7 +306,7 @@ export default function Feed({ isMobile }: FeedProps) {
     background: 'linear-gradient(90deg, #667eea 0%, #764ba2 100%)',
     borderRadius: '2px'
   };
-
+  
   // 过滤器样式
   const filterContainerStyle = {
     marginBottom: '32px',
@@ -397,14 +397,14 @@ export default function Feed({ isMobile }: FeedProps) {
     transform: visiblePosts.includes(index) ? 'translateY(0)' : 'translateY(30px)',
     transition: `all 0.6s ease ${index * 0.2}s`
   });
-
+  
   const postHeaderStyle = {
     display: 'flex',
     alignItems: 'flex-start',
     marginBottom: '24px',
     gap: '16px'
   };
-
+  
   const authorAvatarStyle = {
     width: '56px',
     height: '56px',
@@ -419,18 +419,18 @@ export default function Feed({ isMobile }: FeedProps) {
     boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
     flexShrink: 0
   };
-
+  
   const authorInfoStyle = {
     flex: 1
   };
-
+  
   const authorNameStyle = {
     display: 'flex',
     alignItems: 'center',
     gap: '8px',
     marginBottom: '4px'
   };
-
+  
   const authorNameTextStyle = {
     fontWeight: 'bold',
     fontSize: '18px',
@@ -451,7 +451,7 @@ export default function Feed({ isMobile }: FeedProps) {
     color: '#718096',
     marginBottom: '8px'
   };
-
+  
   const postMetaStyle = {
     display: 'flex',
     alignItems: 'center',
@@ -459,7 +459,7 @@ export default function Feed({ isMobile }: FeedProps) {
     fontSize: '14px',
     color: '#718096'
   };
-
+  
   const postTitleStyle = {
     fontSize: '28px',
     fontWeight: 'bold',
@@ -486,7 +486,7 @@ export default function Feed({ isMobile }: FeedProps) {
     marginBottom: '20px',
     flexWrap: 'wrap' as const
   };
-
+  
   const tagStyle = {
     padding: '4px 12px',
     background: 'rgba(102, 126, 234, 0.1)',
@@ -495,7 +495,7 @@ export default function Feed({ isMobile }: FeedProps) {
     fontSize: '12px',
     fontWeight: '500'
   };
-
+  
   const contentPreviewStyle = {
     fontSize: '15px',
     color: '#4a5568',
@@ -514,7 +514,7 @@ export default function Feed({ isMobile }: FeedProps) {
     height: 'auto',
     display: 'block'
   };
-
+  
   const codeBlockStyle = {
     background: '#1a202c',
     color: '#e2e8f0',
@@ -533,12 +533,12 @@ export default function Feed({ isMobile }: FeedProps) {
     paddingTop: '20px',
     borderTop: '1px solid #e2e8f0'
   };
-
+  
   const actionButtonsStyle = {
     display: 'flex',
     gap: '12px'
   };
-
+  
   const actionButtonStyle = (isActive: boolean = false) => ({
     padding: '10px 16px',
     border: isActive ? 'none' : '1px solid #e2e8f0',
@@ -553,20 +553,20 @@ export default function Feed({ isMobile }: FeedProps) {
     background: isActive ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : '#f7fafc',
     color: isActive ? 'white' : '#4a5568'
   });
-
+  
   const statsStyle = {
     display: 'flex',
     gap: '16px',
     fontSize: '14px',
     color: '#718096'
   };
-
+  
   const statItemStyle = {
     display: 'flex',
     alignItems: 'center',
     gap: '4px'
   };
-
+  
   return (
     <div style={isMobile ? mobileContainerStyle : containerStyle}>
       <h1 style={isMobile ? mobileTitleStyle : titleStyle}>
@@ -592,7 +592,7 @@ export default function Feed({ isMobile }: FeedProps) {
               </button>
             ))}
           </div>
-        </div>
+          </div>
 
         {/* 标签过滤 */}
         <div>
@@ -630,17 +630,17 @@ export default function Feed({ isMobile }: FeedProps) {
           // 博客文章
           filteredPosts.map((post, index) => (
             <div key={post.id}>
-              <div 
+            <div 
                 style={isMobile ? animatedMobileBlogPostStyle(index) : animatedBlogPostStyle(index)}
-                onMouseEnter={(e) => {
+              onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-4px)';
                   e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.15)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
-                }}
-              >
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(0,0,0,0.08)';
+              }}
+            >
                 <div style={postHeaderStyle}>
                   <div style={authorAvatarStyle}>
                     {post.author.avatar || post.author.name.charAt(0)}
@@ -705,10 +705,10 @@ export default function Feed({ isMobile }: FeedProps) {
 
                 <div style={postActionsStyle}>
                   <div style={actionButtonsStyle}>
-                    <button 
+                  <button 
                       style={actionButtonStyle(post.isLiked)}
-                      onClick={(e) => {
-                        createRipple(e);
+                    onClick={(e) => {
+                      createRipple(e);
                         handleLike(post.id);
                       }}
                     >
@@ -719,7 +719,7 @@ export default function Feed({ isMobile }: FeedProps) {
                       onClick={(e) => {
                         createRipple(e);
                         setSelectedPost(selectedPost === post.id ? null : post.id);
-                      }}
+                    }}
                     >
                       💬 {post.stats.comments}
                     </button>
@@ -728,14 +728,14 @@ export default function Feed({ isMobile }: FeedProps) {
                       onClick={(e) => {
                         createRipple(e);
                         handleBookmark(post.id);
-                      }}
-                    >
+                    }}
+                  >
                       {post.isBookmarked ? '🔖' : '📖'} {post.stats.bookmarks}
-                    </button>
-                    <button 
+                  </button>
+                  <button 
                       style={actionButtonStyle()}
-                      onClick={(e) => {
-                        createRipple(e);
+                    onClick={(e) => {
+                      createRipple(e);
                         handleTip(post.id, post.author.name);
                       }}
                     >
@@ -758,7 +758,7 @@ export default function Feed({ isMobile }: FeedProps) {
                       }}
                     >
                       ⚠️ 举报
-                    </button>
+                  </button>
                   </div>
 
                   <div style={statsStyle}>
@@ -805,7 +805,7 @@ export default function Feed({ isMobile }: FeedProps) {
           </p>
         </div>
       )}
-
+      
       {/* 打赏模态框 */}
       <TipModal
         targetId={tipModal.targetId}
