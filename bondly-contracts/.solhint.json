@@ -5,7 +5,6 @@
     "func-visibility": ["warn", { "ignoreConstructors": true }],
     "max-line-length": ["warn", 120],
     "no-empty-blocks": "warn",
-    "no-inline-assembly": "warn",
     "not-rely-on-time": "warn",
     "not-rely-on-block-hash": "warn",
     "avoid-low-level-calls": "warn",

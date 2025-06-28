@@ -7,6 +7,7 @@ import "hardhat-gas-reporter";
 import "solidity-coverage";
 import "dotenv/config";
 import "hardhat-contract-sizer";
+import "hardhat-docgen";
 
 const config: HardhatUserConfig = {
   solidity: {
@@ -115,6 +116,16 @@ const config: HardhatUserConfig = {
   defender: {
     apiKey: process.env.DEFENDER_API_KEY || "",
     apiSecret: process.env.DEFENDER_API_SECRET || "",
+  },
+  docgen: {
+    path: "docs/contracts",
+    clear: true,
+    runOnCompile: false,
+  },
+  contractSizer: {
+    alphaSort: true,
+    runOnCompile: false,
+    disambiguatePaths: false,
   },
 };
 

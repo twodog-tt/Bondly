@@ -24,7 +24,7 @@ Bondly Contracts 是基于 Solidity 开发的智能合约集合，为 Bondly 社
 - **BondlyRewards**: 奖励分配和计算
 
 ### NFT 和代币合约
-- **BondlyToken**: 平台代币 (BOND) 合约
+- **BondlyToken**: 平台代币 (BOND) 合约 ✅ **已部署**
 - **BondlyNFT**: 内容 NFT 铸造和管理
 - **BondlySBT**: 灵魂绑定代币，声誉标识
 
@@ -32,6 +32,41 @@ Bondly Contracts 是基于 Solidity 开发的智能合约集合，为 Bondly 社
 - **BondlyDAO**: 去中心化自治组织
 - **BondlyVoting**: 投票和提案系统
 - **BondlyTreasury**: 资金管理和分配
+
+### 基础设施合约
+- **BondlyRegistry**: 合约注册表，地址管理
+
+## 🎯 最新进展 (2025-06-28)
+
+### ✅ BOND 代币合约已成功部署
+
+**合约信息：**
+- **合约地址：** `0x2D82FbF7d0a7e94FcdA6E24f7351f1BbFCb55CdC`
+- **网络：** Sepolia 测试网
+- **代币名称：** Bondly Token
+- **代币符号：** BOND
+- **小数位数：** 18
+- **初始供应量：** 1,000,000,000 BOND
+- **最大供应量：** 2,000,000,000 BOND
+- **当前总供应量：** 2,000,000,000 BOND
+
+**功能验证：**
+- ✅ **单个铸币功能**：支持指定地址和数量的代币铸造
+- ✅ **批量铸币功能**：支持一次性向多个地址铸造代币
+- ✅ **销毁功能**：支持代币销毁和通缩机制
+- ✅ **权限控制**：只有合约所有者可以铸币和销毁
+- ✅ **供应量限制**：严格限制最大供应量，防止通胀
+- ✅ **事件记录**：完整的操作日志和事件触发
+- ✅ **ERC20 标准**：完全兼容 ERC20 和 ERC20Permit 标准
+
+**部署交易：**
+- **交易哈希：** `0xd327a8751088de17b9fdd44fd4905b5db8baf916454fd610c923afd3ef0ca22c`
+- **部署者：** `0xb1DB1B4aaa31dbE294A628d3A4B1Fc424Df0fa16`
+- **部署时间：** 2025-06-28T18:01:01.170Z
+
+**相关链接：**
+- **Etherscan：** https://sepolia.etherscan.io/token/0x2D82FbF7d0a7e94FcdA6E24f7351f1BbFCb55CdC
+- **合约验证：** 支持 Etherscan 验证
 
 ## 🛠 技术栈
 
@@ -56,59 +91,32 @@ Bondly Contracts 是基于 Solidity 开发的智能合约集合，为 Bondly 社
 
 ```
 contracts/
-├── core/                    # 核心合约
-│   ├── BondlyIdentity.sol   # 身份管理
-│   ├── BondlyProfile.sol    # 用户档案
-│   ├── BondlyReputation.sol # 声誉系统
-│   └── BondlyContent.sol    # 内容管理
-├── social/                  # 社交合约
-│   ├── BondlyInteraction.sol
-│   ├── BondlyStaking.sol
-│   └── BondlyRewards.sol
-├── tokens/                  # 代币合约
-│   ├── BondlyToken.sol      # 平台代币
-│   ├── BondlyNFT.sol        # 内容 NFT
-│   └── BondlySBT.sol        # 灵魂绑定代币
+├── BondlyRegistry.sol       # 合约注册表
+├── token/                   # 代币合约
+│   └── BondlyToken.sol      # BOND 代币合约 ✅
 ├── governance/              # 治理合约
-│   ├── BondlyDAO.sol
-│   ├── BondlyVoting.sol
-│   └── BondlyTreasury.sol
-├── interfaces/              # 接口定义
-│   ├── IBondlyIdentity.sol
-│   ├── IBondlyContent.sol
-│   └── IBondlyToken.sol
-├── libraries/               # 库合约
-│   ├── BondlyMath.sol
-│   ├── BondlyUtils.sol
-│   └── BondlyValidation.sol
-└── upgrades/                # 可升级合约
-    ├── BondlyIdentityV2.sol
-    └── BondlyContentV2.sol
+├── reputation/              # 声誉系统
+├── staking/                 # 质押合约
+├── nft/                     # NFT 合约
+└── upgradeability/          # 可升级合约
 
 scripts/                     # 部署脚本
-├── deploy/
-│   ├── 01_deploy_core.ts
-│   ├── 02_deploy_social.ts
-│   └── 03_deploy_tokens.ts
-├── tasks/
-│   ├── setup.ts
-│   ├── verify.ts
-│   └── upgrade.ts
-└── utils/
-    ├── constants.ts
-    └── helpers.ts
+├── deploy-simple.ts         # 简单部署脚本 ✅
+├── check-balance.ts         # 余额检查脚本 ✅
+├── generate-docs.js         # 文档生成脚本 ✅
+├── deploy/                  # 部署目录
+├── tasks/                   # 任务脚本
+└── utils/                   # 工具脚本
 
 test/                        # 测试文件
-├── unit/
-│   ├── BondlyIdentity.test.ts
-│   ├── BondlyContent.test.ts
-│   └── BondlyToken.test.ts
-├── integration/
-│   ├── SocialFlow.test.ts
-│   └── GovernanceFlow.test.ts
-└── fixtures/
-    ├── users.ts
-    └── content.ts
+├── unit/                    # 单元测试
+├── integration/             # 集成测试
+└── fixtures/                # 测试数据
+
+docs/                        # 文档
+├── BondlyToken.md           # BOND 代币文档 ✅
+├── BondlyRegistry.md        # 注册表文档
+└── README.md                # 项目文档
 ```
 
 ## 🚀 快速开始
@@ -127,36 +135,24 @@ npm install --legacy-peer-deps
 ### 环境配置
 创建 `.env` 文件：
 ```env
-# 网络配置
-MAINNET_RPC_URL="https://mainnet.infura.io/v3/your_project_id"
-GOERLI_RPC_URL="https://goerli.infura.io/v3/your_project_id"
-SEPOLIA_RPC_URL="https://sepolia.infura.io/v3/your_project_id"
-POLYGON_RPC_URL="https://polygon-rpc.com"
-POLYGON_MUMBAI_RPC_URL="https://rpc-mumbai.maticvigil.com"
+# Sepolia 测试网配置
+SEPOLIA_RPC_URL="https://eth-sepolia.g.alchemy.com/v2/your-project-id"
+PRIVATE_KEY="your-private-key-here"
 
-# 私钥配置
-PRIVATE_KEY="your_private_key_here"
-DEPLOYER_PRIVATE_KEY="deployer_private_key_here"
+# Etherscan API 密钥（用于验证合约）
+ETHERSCAN_API_KEY="your-etherscan-api-key"
 
-# API 密钥
-ETHERSCAN_API_KEY="your_etherscan_api_key"
-POLYGONSCAN_API_KEY="your_polygonscan_api_key"
-COINMARKETCAP_API_KEY="your_coinmarketcap_api_key"
+# 已部署的合约地址
+SEPOLIA_BOND_TOKEN_ADDRESS="0x2D82FbF7d0a7e94FcdA6E24f7351f1BbFCb55CdC"
 
-# OpenZeppelin Defender
-DEFENDER_API_KEY="your_defender_api_key"
-DEFENDER_API_SECRET="your_defender_api_secret"
+# 部署信息
+DEPLOYER_ADDRESS="0xb1DB1B4aaa31dbE294A628d3A4B1Fc424Df0fa16"
+DEPLOYMENT_TX_HASH="0xd327a8751088de17b9fdd44fd4905b5db8baf916454fd610c923afd3ef0ca22c"
+DEPLOYMENT_DATE="2025-06-28T18:01:01.170Z"
 
-# 合约配置
-BOND_TOKEN_NAME="Bondly Token"
-BOND_TOKEN_SYMBOL="BOND"
-INITIAL_SUPPLY="1000000000000000000000000" # 1M tokens
-
-# Gas 报告
+# Gas 报告配置
 REPORT_GAS=true
-
-# 网络配置
-NETWORK_NAME="goerli"
+COINMARKETCAP_API_KEY="your-coinmarketcap-api-key"
 ```
 
 ### 编译合约
@@ -182,15 +178,23 @@ npm run coverage
 
 ### 部署合约
 ```bash
-# 部署到本地网络
-npx hardhat node
-npx hardhat run scripts/deploy/01_deploy_core.ts --network localhost
+# 部署 BOND 代币到 Sepolia 测试网
+npx hardhat run scripts/deploy-simple.ts --network sepolia
 
-# 部署到测试网
-npx hardhat run scripts/deploy/01_deploy_core.ts --network goerli
+# 检查代币余额
+npx hardhat run scripts/check-balance.ts --network sepolia
+```
 
-# 部署到主网
-npx hardhat run scripts/deploy/01_deploy_core.ts --network mainnet
+### 合约交互
+```bash
+# 启动 Hardhat 控制台
+npx hardhat console --network sepolia
+
+# 在控制台中与合约交互
+const BondlyToken = await ethers.getContractFactory("BondlyToken");
+const bondToken = BondlyToken.attach("0x2D82FbF7d0a7e94FcdA6E24f7351f1BbFCb55CdC");
+const balance = await bondToken.balanceOf("0xb1DB1B4aaa31dbE294A628d3A4B1Fc424Df0fa16");
+console.log("余额:", ethers.formatEther(balance), "BOND");
 ```
 
 ## ✅ 开发环境验证
@@ -203,6 +207,9 @@ npx hardhat run scripts/deploy/01_deploy_core.ts --network mainnet
 - ✅ **多网络支持**: 本地、测试网、主网配置完成
 - ✅ **代码质量工具**: Solhint、Prettier 配置完成
 - ✅ **Gas 报告**: Gas 使用分析工具配置完成
+- ✅ **BOND 代币部署**: 成功部署到 Sepolia 测试网
+- ✅ **功能验证**: 铸币、销毁、权限控制等功能正常
+- ✅ **文档生成**: 自动生成合约文档
 
 ### 测试命令
 ```bash
@@ -223,6 +230,9 @@ npx hardhat size-contracts
 
 # 生成项目报告
 npm run report
+
+# 检查 BOND 代币余额
+npx hardhat run scripts/check-balance.ts --network sepolia
 ```
 
 ## 📚 合约文档
@@ -481,4 +491,6 @@ npx hardhat run scripts/monitor/start.ts --network goerli
 - [前端项目](../bondly-fe/README.md)
 - [后端 API](../bondly-api/README.md)
 - [技术文档](../docs/README.md)
-- [合约地址](https://etherscan.io/address/0x...) 
+- [合约地址](https://etherscan.io/address/0x...)
+- [BOND 代币合约](https://sepolia.etherscan.io/token/0x2D82FbF7d0a7e94FcdA6E24f7351f1BbFCb55CdC)
+- [部署交易](https://sepolia.etherscan.io/tx/0xd327a8751088de17b9fdd44fd4905b5db8baf916454fd610c923afd3ef0ca22c) 
