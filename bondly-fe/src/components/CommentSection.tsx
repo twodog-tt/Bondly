@@ -472,7 +472,7 @@ export default function CommentSection({ postId, isMobile, onTipComment }: Comme
         <button
           style={isMobile ? mobileButtonStyle : buttonStyle}
           onClick={handleSubmitComment}
-          disabled={loading || (!replyTo && !newComment.trim()) || (replyTo && !replyContent.trim())}
+          disabled={loading || (!replyTo && !newComment.trim()) || (!!replyTo && !replyContent.trim())}
         >
           {loading ? '发送中...' : (replyTo ? '回复' : '发表评论')}
         </button>
