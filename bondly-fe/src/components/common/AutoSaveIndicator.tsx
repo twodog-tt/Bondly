@@ -4,27 +4,31 @@ interface AutoSaveIndicatorProps {
   enabled: boolean;
 }
 
-export default function AutoSaveIndicator({ isSaving, lastSaved, enabled }: AutoSaveIndicatorProps) {
+export default function AutoSaveIndicator({
+  isSaving,
+  lastSaved,
+  enabled,
+}: AutoSaveIndicatorProps) {
   const containerStyle = {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '8px',
-    fontSize: '12px',
-    color: '#718096'
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "12px",
+    color: "#718096",
   };
 
   const statusStyle = {
-    width: '8px',
-    height: '8px',
-    borderRadius: '50%',
-    background: isSaving ? '#f6ad55' : enabled ? '#68d391' : '#fc8181'
+    width: "8px",
+    height: "8px",
+    borderRadius: "50%",
+    background: isSaving ? "#f6ad55" : enabled ? "#68d391" : "#fc8181",
   };
 
   const getStatusText = () => {
-    if (isSaving) return '保存中...';
-    if (!enabled) return '自动保存已关闭';
+    if (isSaving) return "保存中...";
+    if (!enabled) return "自动保存已关闭";
     if (lastSaved) return `上次保存: ${lastSaved.toLocaleTimeString()}`;
-    return '自动保存已启用';
+    return "自动保存已启用";
   };
 
   return (
@@ -33,4 +37,4 @@ export default function AutoSaveIndicator({ isSaving, lastSaved, enabled }: Auto
       <span>{getStatusText()}</span>
     </div>
   );
-} 
+}
