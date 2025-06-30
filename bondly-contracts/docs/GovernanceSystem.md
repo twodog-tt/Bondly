@@ -7,6 +7,7 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 1. **BondlyDAO** - 提案管理合约
 2. **BondlyVoting** - 投票机制合约  
 3. **BondlyTreasury** - 资金管理合约
+4. **BondlyRegistry** - 合约寻址注册表（所有合约间寻址均通过 Registry）
 
 ## 系统架构
 
@@ -15,7 +16,7 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 │   BondlyDAO     │    │  BondlyVoting   │    │ BondlyTreasury  │
 │                 │    │                 │    │                 │
 │ • 提案管理      │◄──►│ • 投票机制      │    │ • 资金管理      │
-│ • 状态流转      │    │ • 权重计算      │    │ • 提案执行      │
+│ • 状态流转      │    │ • 权重快照      │    │ • 提案执行      │
 │ • 权限控制      │    │ • 快照机制      │    │ • 安全控制      │
 └─────────────────┘    └─────────────────┘    └─────────────────┘
          │                       │                       │
@@ -37,11 +38,15 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 - 提案的创建、激活、执行和状态管理
 - 与 BondlyVoting 和 BondlyTreasury 合约的协调
 - 权限控制和治理参数管理
+- 激活提案时自动调用 Voting 合约的 startVoting，同步快照区块和截止时间
+- 声誉投票时自动调用 Voting 合约的 recordReputationSnapshot 记录快照
+- 执行提案时校验目标合约是否在 Registry 白名单
+- 执行提案时使用 try/catch 捕获 revert reason 并链上记录
 
 **主要功能：**
 - `createProposal()` - 创建新提案
-- `activateProposal()` - 激活提案开始投票
-- `executeProposal()` - 执行通过的提案
+- `activateProposal()` - 激活提案开始投票（自动调用 Voting.startVoting）
+- `executeProposal()` - 执行通过的提案（白名单校验+try/catch）
 - `onVote()` - 接收投票回调
 - `isProposalActive()` - 检查提案状态
 
@@ -55,31 +60,39 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 
 **功能职责：**
 - 用户投票机制
-- 投票权重计算（基于代币余额或声誉分数）
+- 投票权重快照（Token 权重用 ERC20Votes.getPastVotes，Reputation 权重用合约快照）
 - 投票快照和防操纵机制
+- 只允许 DAO 合约调用 startVoting、endVoting、recordReputationSnapshot
 
 **主要功能：**
-- `vote()` - 用户投票
-- `startVoting()` - 开始投票（由 DAO 调用）
+- `vote()` - 用户投票（基于快照区块的权重）
+- `startVoting()` - 开始投票（由 DAO 调用，记录快照区块和截止时间）
 - `endVoting()` - 结束投票（由 DAO 调用）
-- `getVotingWeightAtSnapshot()` - 获取快照权重
+- `getVotingWeightAtSnapshot()` - 获取快照权重（Token: ERC20Votes.getPastVotes, Reputation: reputationSnapshots）
+- `recordReputationSnapshot()` - 记录声誉快照（由 DAO 调用）
 
 **权重类型：**
-- `Token` (0) - 基于 ERC20 代币余额
-- `Reputation` (1) - 基于声誉分数
+- `Token` (0) - 基于 ERC20Votes 代币快照余额
+- `Reputation` (1) - 基于声誉分数快照
 
 ### 3. BondlyTreasury 合约
 
 **功能职责：**
 - 资金管理和安全控制
-- 提案资金执行
+- 提案资金执行（白名单校验）
+- 参数变更提案执行（仅允许 setter 白名单函数）
 - 紧急资金提取
 
 **主要功能：**
-- `executeProposal()` - 执行资金提案
+- `executeProposal()` - 执行资金提案（目标合约白名单校验）
+- `executeParameterChange()` - 执行参数变更提案（函数选择器白名单校验）
 - `emergencyWithdraw()` - 紧急提取
 - `getFundsStatus()` - 获取资金状态
 - `updateFundsParameters()` - 更新资金参数
+
+### 4. BondlyRegistry 合约
+- 所有合约间寻址均通过 Registry
+- 支持合约注册、更新、删除、白名单校验
 
 ## 治理流程
 
@@ -102,14 +115,16 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
            ↓
 更新提案状态（状态：Active）
            ↓
-通知 BondlyVoting 开始投票
+调用 BondlyVoting.startVoting 同步快照区块/截止时间
+           ↓
+如为声誉投票，调用 Voting.recordReputationSnapshot 记录快照
 ```
 
 ### 3. 投票阶段
 ```
 用户 → BondlyVoting.vote()
      ↓
-检查投票资格和权重
+检查投票资格和权重（基于快照区块）
      ↓
 记录投票（防重复投票）
      ↓
@@ -126,7 +141,9 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
            ↓
 验证提案数据完整性
            ↓
-执行提案操作
+校验目标合约是否在 Registry 白名单
+           ↓
+执行提案操作（try/catch 捕获 revert reason 并链上记录）
            ↓
 更新提案状态（Executed/Failed）
 ```
@@ -139,43 +156,44 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 
 ### 2. 投票快照机制
 - 在提案激活时记录快照区块
-- 基于快照时的权重计算投票，防止操纵
+- 基于快照时的权重计算投票（Token: ERC20Votes.getPastVotes, Reputation: 合约快照），防止操纵
 
 ### 3. 权限控制
 - 只有授权执行者可以激活和执行提案
-- 只有 DAO 合约可以调用投票回调
+- 只有 DAO 合约可以调用投票回调、快照记录
 - 多重签名和时间锁机制
 
 ### 4. 资金安全
 - 提案执行失败时自动回滚资金
 - 紧急提取机制
 - 资金限额控制
+- 目标合约和 setter 函数选择器白名单
+
+### 5. 合约寻址安全
+- 所有合约寻址均通过 Registry
+- Registry 支持合约白名单校验
 
 ## 接口设计
 
 ### IBondlyDAO 接口
 ```solidity
 interface IBondlyDAO {
-    enum ProposalState { Pending, Active, Executed, Failed }
-    
-    struct Proposal {
-        uint256 id;
-        address proposer;
-        string title;
-        string description;
-        address target;
-        bytes data;
-        bytes32 proposalHash;
-        ProposalState state;
-        uint256 yesVotes;
-        uint256 noVotes;
-        uint256 snapshotBlock;
-        uint256 votingDeadline;
-        uint256 executionTime;
-    }
-    
     function isProposalActive(uint256 proposalId) external view returns (bool);
-    function getProposal(uint256 proposalId) external view returns (Proposal memory);
+    function getProposal(uint256 proposalId) external view returns (
+        uint256 id,
+        address proposer,
+        string memory title,
+        string memory description,
+        address target,
+        bytes memory data,
+        bytes32 proposalHash,
+        uint8 state,
+        uint256 yesVotes,
+        uint256 noVotes,
+        uint256 snapshotBlock,
+        uint256 votingDeadline,
+        uint256 executionTime
+    );
     function getProposalSnapshotBlock(uint256 proposalId) external view returns (uint256);
     function getProposalVotingDeadline(uint256 proposalId) external view returns (uint256);
     function onVote(uint256 proposalId, address voter, bool support, uint256 weight) external;
@@ -185,8 +203,6 @@ interface IBondlyDAO {
 ### IBondlyVoting 接口
 ```solidity
 interface IBondlyVoting {
-    enum WeightType { Token, Reputation }
-    
     function vote(uint256 proposalId, bool support) external;
     function startVoting(uint256 proposalId, uint256 snapshotBlock, uint256 votingDeadline) external;
     function endVoting(uint256 proposalId) external;
@@ -198,9 +214,11 @@ interface IBondlyVoting {
     function getUserVote(address user, uint256 proposalId) external view returns (bool hasVoted_, uint256 weight);
     function getProposalVotingInfo(uint256 proposalId) external view returns (uint256 snapshotBlock, uint256 votingDeadline, bool isActive, bool votingEnded);
     function updateDAOContract(address newDAOContract) external;
-    function updateWeightType(WeightType newWeightType) external;
+    function updateWeightType(uint8 newWeightType) external;
     function resetProposalVotes(uint256 proposalId) external;
-    function getContractInfo() external view returns (address daoAddress, WeightType currentWeightType, address tokenAddress, address reputationAddress);
+    function getContractInfo() external view returns (address daoAddress, uint8 currentWeightType, address tokenAddress, address reputationAddress);
+    function recordReputationSnapshot(uint256 proposalId, address user, uint256 reputation) external;
+    function recordReputationSnapshots(uint256 proposalId, address[] calldata users, uint256[] calldata reputations) external;
 }
 ```
 
@@ -208,6 +226,7 @@ interface IBondlyVoting {
 ```solidity
 interface IBondlyTreasury {
     function executeProposal(uint256 proposalId, address target, uint256 amount, bytes calldata data) external;
+    function executeParameterChange(uint256 proposalId, address target, bytes calldata data) external;
     function emergencyWithdraw(address recipient, uint256 amount, string calldata reason) external;
     function withdrawToken(address token, address recipient, uint256 amount) external;
     function getFundsStatus() external view returns (uint256 total, uint256 available, uint256 locked);
@@ -217,6 +236,9 @@ interface IBondlyTreasury {
     function setAuthorizedSpender(address spender, bool authorized) external;
     function updateFundsParameters(uint256 _minProposalAmount, uint256 _maxProposalAmount) external;
     function getContractInfo() external view returns (address daoAddress, uint256 totalFunds_, uint256 availableFunds_, uint256 minAmount, uint256 maxAmount);
+    function setAllowedSetter(bytes4 functionSelector, bool allowed) external;
+    function setAllowedSetters(bytes4[] calldata functionSelectors, bool allowed) external;
+    function isAllowedSetter(bytes4 functionSelector) external view returns (bool);
 }
 ```
 
@@ -242,11 +264,12 @@ interface IBondlyTreasury {
 ### 单元测试
 - 合约部署和配置验证
 - 提案生命周期测试
-- 投票机制测试
-- 声誉投票测试
-- 资金库功能测试
+- 投票机制测试（快照权重、重复投票、快照区块）
+- 声誉投票测试（快照存储与读取）
+- 资金库功能测试（白名单、setter 校验）
 - 权限控制测试
 - 提案完整性验证
+- try/catch revert reason 事件链上验证
 
 ### 集成测试
 - 完整治理流程测试
