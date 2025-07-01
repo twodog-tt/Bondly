@@ -3,6 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "./interfaces/IBondlyRegistry.sol";
 import "./interfaces/IBondlyVoting.sol";
 import "./interfaces/IBondlyTreasury.sol";
@@ -15,7 +16,7 @@ import "../reputation/interfaces/IReputationVault.sol";
  * @author Bondly Team
  * @custom:security-contact security@bondly.com
  */
-contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
+contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
     
     // ============ 状态枚举 ============
     
@@ -90,6 +91,9 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
     
     event ProposalFailedWithReason(uint256 indexed proposalId, string reason);
     
+    event ContractPaused(address indexed account, string reason);
+    event ContractUnpaused(address indexed account);
+    
     // ============ 修饰符 ============
     
     modifier onlyVotingContract() {
@@ -145,7 +149,7 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
         address target,
         bytes calldata data,
         uint256 votingPeriod
-    ) external payable nonReentrant returns (uint256) {
+    ) external payable nonReentrant whenNotPaused returns (uint256) {
         require(msg.value >= minProposalDeposit, "DAO: Insufficient deposit");
         require(bytes(title).length > 0, "DAO: Empty title");
         require(bytes(description).length > 0, "DAO: Empty description");
@@ -182,7 +186,7 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
      * @param proposalId 提案ID
      * @param votingPeriod 投票期（秒）
      */
-    function activateProposal(uint256 proposalId, uint256 votingPeriod) external onlyAuthorizedExecutor proposalExists(proposalId) {
+    function activateProposal(uint256 proposalId, uint256 votingPeriod) external onlyAuthorizedExecutor proposalExists(proposalId) whenNotPaused {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.state == ProposalState.Pending, "DAO: Proposal not pending");
         require(votingPeriod >= minVotingPeriod, "DAO: Voting period too short");
@@ -227,7 +231,7 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
      * @dev 执行提案
      * @param proposalId 提案ID
      */
-    function executeProposal(uint256 proposalId) external onlyAuthorizedExecutor nonReentrant proposalExists(proposalId) {
+    function executeProposal(uint256 proposalId) external onlyAuthorizedExecutor nonReentrant proposalExists(proposalId) whenNotPaused {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.state == ProposalState.Active, "DAO: Proposal not active");
         require(block.timestamp > proposal.votingDeadline, "DAO: Voting not ended");
@@ -481,6 +485,23 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard {
         minProposalDeposit = _minProposalDeposit;
         minVotingPeriod = _minVotingPeriod;
         maxVotingPeriod = _maxVotingPeriod;
+    }
+    
+    /**
+     * @dev 暂停合约（仅所有者）
+     * @param reason 暂停原因
+     */
+    function pause(string memory reason) external onlyOwner {
+        _pause();
+        emit ContractPaused(msg.sender, reason);
+    }
+    
+    /**
+     * @dev 恢复合约（仅所有者）
+     */
+    function unpause() external onlyOwner {
+        _unpause();
+        emit ContractUnpaused(msg.sender);
     }
     
     /**

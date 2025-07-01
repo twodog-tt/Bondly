@@ -2,7 +2,9 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
  * @title BondlyRegistry 接口
@@ -22,12 +24,18 @@ interface IBondlyRegistry {
  * - 支持每个 NFT 独立的 tokenURI（如 IPFS JSON 链接）
  * - 自动记录创作者地址
  * - 可通过 BondlyRegistry 查询合约地址
+ * - 暂停机制（紧急情况）
+ * - 角色权限管理
  *
  * @notice 适用于 Bondly 平台内容资产化场景
  * @author Bondly Team
  * @custom:security-contact security@bondly.com
  */
-contract ContentNFT is ERC721URIStorage, Ownable {
+contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
+    // 角色定义
+    bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    
     /// @dev 内容 NFT 计数器（tokenId 自增）
     uint256 private _tokenIdCounter;
 
@@ -57,6 +65,19 @@ contract ContentNFT is ERC721URIStorage, Ownable {
     event ContentMinted(address indexed to, uint256 indexed tokenId, address indexed creator, string tokenURI);
 
     /**
+     * @dev 合约暂停事件
+     * @param account 暂停操作的账户
+     * @param reason 暂停原因
+     */
+    event ContractPaused(address indexed account, string reason);
+    
+    /**
+     * @dev 合约恢复事件
+     * @param account 恢复操作的账户
+     */
+    event ContractUnpaused(address indexed account);
+
+    /**
      * @dev 构造函数
      * @param name NFT 名称
      * @param symbol NFT 符号
@@ -70,12 +91,17 @@ contract ContentNFT is ERC721URIStorage, Ownable {
         string memory symbol,
         address initialOwner,
         address registryAddress
-    ) ERC721(name, symbol) Ownable(initialOwner) {
+    ) ERC721(name, symbol) {
         registry = registryAddress;
+        
+        // 设置角色权限
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
+        _grantRole(MINTER_ROLE, initialOwner);
+        _grantRole(PAUSER_ROLE, initialOwner);
     }
 
     /**
-     * @dev 铸造内容 NFT
+     * @dev 铸造内容 NFT（需要 MINTER_ROLE）
      * @param to 接收者地址
      * @param title 内容标题
      * @param summary 内容摘要
@@ -96,7 +122,7 @@ contract ContentNFT is ERC721URIStorage, Ownable {
         string memory coverImage,
         string memory ipfsLink,
         string memory tokenUri
-    ) external returns (uint256) {
+    ) external onlyRole(MINTER_ROLE) whenNotPaused returns (uint256) {
         require(to != address(0), "Cannot mint to zero address");
         require(bytes(tokenUri).length > 0, "tokenURI required");
         _tokenIdCounter++;
@@ -125,5 +151,61 @@ contract ContentNFT is ERC721URIStorage, Ownable {
     function getContentMeta(uint256 tokenId) external view returns (ContentMeta memory) {
         require(_ownerOf(tokenId) != address(0), "Query for nonexistent token");
         return _contentMetas[tokenId];
+    }
+    
+    /**
+     * @dev 暂停合约（需要 PAUSER_ROLE）
+     * @param reason 暂停原因
+     */
+    function pause(string memory reason) external onlyRole(PAUSER_ROLE) {
+        _pause();
+        emit ContractPaused(msg.sender, reason);
+    }
+    
+    /**
+     * @dev 恢复合约（需要 PAUSER_ROLE）
+     */
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+        emit ContractUnpaused(msg.sender);
+    }
+    
+    // ============ 重写函数以支持暂停 ============
+    
+    /**
+     * @dev 重写 transferFrom 函数以支持暂停
+     */
+    function transferFrom(address from, address to, uint256 tokenId) public virtual override(ERC721, IERC721) whenNotPaused {
+        super.transferFrom(from, to, tokenId);
+    }
+    
+    /**
+     * @dev 重写 safeTransferFrom 函数以支持暂停
+     */
+    function safeTransferFrom(address from, address to, uint256 tokenId, bytes memory data) public virtual override(ERC721, IERC721) whenNotPaused {
+        super.safeTransferFrom(from, to, tokenId, data);
+    }
+    
+    /**
+     * @dev 重写 approve 函数以支持暂停
+     */
+    function approve(address to, uint256 tokenId) public virtual override(ERC721, IERC721) whenNotPaused {
+        super.approve(to, tokenId);
+    }
+    
+    /**
+     * @dev 重写 setApprovalForAll 函数以支持暂停
+     */
+    function setApprovalForAll(address operator, bool approved) public virtual override(ERC721, IERC721) whenNotPaused {
+        super.setApprovalForAll(operator, approved);
+    }
+    
+    // ============ 支持 AccessControl ============
+    
+    /**
+     * @dev 支持 ERC165 接口检测
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721URIStorage, AccessControl) returns (bool) {
+        return super.supportsInterface(interfaceId);
     }
 } 

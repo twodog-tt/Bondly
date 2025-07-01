@@ -1,7 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/access/AccessControl.sol";
+import "@openzeppelin/contracts/utils/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
@@ -38,12 +39,18 @@ interface IContentNFT {
  * - 支持用户撤回未结算质押
  * - 内容创作者可领取互动奖励
  * - 通过 BondlyRegistry 获取 BondlyToken、ContentNFT 地址
+ * - 暂停机制（紧急情况）
+ * - 角色权限管理
  *
  * @notice 适用于 Bondly 平台内容互动激励场景
  * @author Bondly Team
  * @custom:security-contact security@bondly.com
  */
-contract InteractionStaking is Ownable {
+contract InteractionStaking is AccessControl, Pausable {
+    // 角色定义
+    bytes32 public constant PARAMETER_ROLE = keccak256("PARAMETER_ROLE");
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
+    
     /// @dev 互动类型枚举
     enum InteractionType { Like, Comment, Favorite }
 
@@ -93,12 +100,39 @@ contract InteractionStaking is Ownable {
     event RewardClaimed(address indexed creator, uint256 indexed tokenId, InteractionType indexed interactionType, uint256 amount);
 
     /**
+     * @dev 质押金额更新事件
+     * @param interactionType 互动类型
+     * @param oldAmount 旧金额
+     * @param newAmount 新金额
+     */
+    event StakeAmountUpdated(InteractionType indexed interactionType, uint256 oldAmount, uint256 newAmount);
+
+    /**
+     * @dev 合约暂停事件
+     * @param account 暂停操作的账户
+     * @param reason 暂停原因
+     */
+    event ContractPaused(address indexed account, string reason);
+    
+    /**
+     * @dev 合约恢复事件
+     * @param account 恢复操作的账户
+     */
+    event ContractUnpaused(address indexed account);
+
+    /**
      * @dev 构造函数
      * @param registryAddress BondlyRegistry 合约地址
      * @param initialOwner 初始所有者地址
      */
-    constructor(address registryAddress, address initialOwner) Ownable(initialOwner) {
+    constructor(address registryAddress, address initialOwner) {
         registry = registryAddress;
+        
+        // 设置角色权限
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
+        _grantRole(PARAMETER_ROLE, initialOwner);
+        _grantRole(PAUSER_ROLE, initialOwner);
+        
         // 默认质押金额（可后续通过 setStakeAmount 调整）
         stakeAmounts[InteractionType.Like] = 1 ether;      // 1 BOND
         stakeAmounts[InteractionType.Comment] = 2 ether;   // 2 BOND
@@ -106,12 +140,14 @@ contract InteractionStaking is Ownable {
     }
 
     /**
-     * @dev 设置各互动类型的质押金额（仅 owner）
+     * @dev 设置各互动类型的质押金额（需要 PARAMETER_ROLE）
      * @param interactionType 互动类型
      * @param amount 质押金额（单位：wei）
      */
-    function setStakeAmount(InteractionType interactionType, uint256 amount) external onlyOwner {
+    function setStakeAmount(InteractionType interactionType, uint256 amount) external onlyRole(PARAMETER_ROLE) {
+        uint256 oldAmount = stakeAmounts[interactionType];
         stakeAmounts[interactionType] = amount;
+        emit StakeAmountUpdated(interactionType, oldAmount, amount);
     }
 
     /**
@@ -122,7 +158,7 @@ contract InteractionStaking is Ownable {
      * @notice 用户需提前 approve 足够的 BOND 给本合约
      * @custom:security tokenId 必须存在，且不能重复互动
      */
-    function stakeInteraction(uint256 tokenId, InteractionType interactionType) external {
+    function stakeInteraction(uint256 tokenId, InteractionType interactionType) external whenNotPaused {
         require(!hasInteracted[msg.sender][tokenId][interactionType], "Already interacted");
         address contentNFT = IBondlyRegistry(registry).getContractAddress("CONTENT_NFT");
         require(IERC721(contentNFT).ownerOf(tokenId) != address(0), "Token does not exist");
@@ -143,7 +179,7 @@ contract InteractionStaking is Ownable {
      *
      * @notice 仅未被创作者领取奖励前可撤回
      */
-    function withdrawInteraction(uint256 tokenId, InteractionType interactionType) external {
+    function withdrawInteraction(uint256 tokenId, InteractionType interactionType) external whenNotPaused {
         require(hasInteracted[msg.sender][tokenId][interactionType], "No stake");
         require(!rewardClaimed[tokenId][interactionType], "Reward already claimed");
         uint256 amount = userStakes[msg.sender][tokenId][interactionType];
@@ -163,7 +199,7 @@ contract InteractionStaking is Ownable {
      *
      * @notice 只有内容创作者可领取
      */
-    function claimReward(uint256 tokenId, InteractionType interactionType) external {
+    function claimReward(uint256 tokenId, InteractionType interactionType) external whenNotPaused {
         address contentNFT = IBondlyRegistry(registry).getContractAddress("CONTENT_NFT");
         IContentNFT.ContentMeta memory meta = IContentNFT(contentNFT).getContentMeta(tokenId);
         address creator = meta.creator;
@@ -197,5 +233,35 @@ contract InteractionStaking is Ownable {
      */
     function getTotalStaked(uint256 tokenId, InteractionType interactionType) external view returns (uint256) {
         return totalStakedPerToken[tokenId][interactionType];
+    }
+    
+    /**
+     * @dev 暂停合约（需要 PAUSER_ROLE）
+     * @param reason 暂停原因
+     */
+    function pause(string memory reason) external onlyRole(PAUSER_ROLE) {
+        _pause();
+        emit ContractPaused(msg.sender, reason);
+    }
+    
+    /**
+     * @dev 恢复合约（需要 PAUSER_ROLE）
+     */
+    function unpause() external onlyRole(PAUSER_ROLE) {
+        _unpause();
+        emit ContractUnpaused(msg.sender);
+    }
+    
+    /**
+     * @dev 紧急提取合约中的代币（仅管理员）
+     * @param token 代币地址
+     * @param to 接收地址
+     * @param amount 提取金额
+     */
+    function emergencyWithdraw(address token, address to, uint256 amount) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        require(token != address(0), "Invalid token");
+        require(to != address(0), "Invalid recipient");
+        require(amount > 0, "Invalid amount");
+        require(IERC20(token).transfer(to, amount), "Transfer failed");
     }
 } 

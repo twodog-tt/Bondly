@@ -28,6 +28,12 @@ contract BondlyRegistry is Ownable {
 
     /// @dev 合约地址映射（如 "BondlyToken" => 0x...）
     mapping(string => address) private registry;
+    
+    /// @dev 反向映射：合约地址 => 合约名称
+    mapping(address => string) private addressToName;
+    
+    /// @dev 已注册的合约名称列表
+    string[] private contractNames;
 
     /**
      * @dev 合约地址变更事件
@@ -53,7 +59,20 @@ contract BondlyRegistry is Ownable {
     function setContractAddress(string calldata name, address newAddress) external onlyOwner {
         require(bytes(name).length > 0, "Name required");
         require(newAddress != address(0), "Zero address not allowed");
+        
         address oldAddress = registry[name];
+        
+        // 如果是新注册，添加到名称列表
+        if (oldAddress == address(0)) {
+            contractNames.push(name);
+        }
+        
+        // 更新反向映射
+        if (oldAddress != address(0)) {
+            delete addressToName[oldAddress];
+        }
+        addressToName[newAddress] = name;
+        
         registry[name] = newAddress;
         emit ContractAddressUpdated(name, oldAddress, newAddress);
     }
@@ -82,7 +101,46 @@ contract BondlyRegistry is Ownable {
     function removeContractAddress(string calldata name) external onlyOwner {
         address oldAddress = registry[name];
         require(oldAddress != address(0), "Not registered");
+        
+        // 从反向映射中删除
+        delete addressToName[oldAddress];
+        
+        // 从名称列表中删除
+        for (uint256 i = 0; i < contractNames.length; i++) {
+            if (keccak256(bytes(contractNames[i])) == keccak256(bytes(name))) {
+                contractNames[i] = contractNames[contractNames.length - 1];
+                contractNames.pop();
+                break;
+            }
+        }
+        
         delete registry[name];
         emit ContractAddressUpdated(name, oldAddress, address(0));
+    }
+    
+    /**
+     * @dev 检查合约是否已注册
+     * @param name 合约名称
+     * @return 是否已注册
+     */
+    function isContractRegistered(string calldata name) external view returns (bool) {
+        return registry[name] != address(0);
+    }
+    
+    /**
+     * @dev 检查合约地址是否已登记
+     * @param contractAddress 合约地址
+     * @return 是否已登记
+     */
+    function isContractRegisteredByAddress(address contractAddress) external view returns (bool) {
+        return bytes(addressToName[contractAddress]).length > 0;
+    }
+    
+    /**
+     * @dev 获取所有已注册的合约名称
+     * @return 合约名称数组
+     */
+    function getAllContractNames() external view returns (string[] memory) {
+        return contractNames;
     }
 }
