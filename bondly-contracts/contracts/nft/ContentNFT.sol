@@ -58,7 +58,6 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
      * @dev NFT 铸造事件
      * @param to 接收者地址
      * @param tokenId NFT ID
-     * @param creator 创作者地址
      * @param tokenURI NFT 元数据 JSON 链接
      * @notice 每次内容被铸造为 NFT 时触发
      */
@@ -129,7 +128,6 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
         require(bytes(tokenUri).length > 0, "tokenURI required");
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
-        require(!_exists(tokenId), "Already minted");
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenUri);
         _contentMetas[tokenId] = ContentMeta({

@@ -6,10 +6,10 @@ import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Votes.sol";
 import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "./interfaces/IBondlyRegistry.sol";
-import "../reputation/interfaces/IReputationVault.sol";
-import "./interfaces/IBondlyDAO.sol";
-import "./interfaces/IBondlyVoting.sol";
+import "../registry/IBondlyRegistry.sol";
+import "../reputation/IReputationVault.sol";
+import "./IBondlyDAO.sol";
+import "./IBondlyVoting.sol";
 
 // 权重策略接口，需在合约外部定义
 interface IVotingWeightStrategy {

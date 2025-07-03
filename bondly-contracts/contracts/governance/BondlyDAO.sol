@@ -5,11 +5,11 @@ import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
-import "./interfaces/IBondlyRegistry.sol";
-import "./interfaces/IBondlyVoting.sol";
-import "./interfaces/IBondlyTreasury.sol";
-import "./interfaces/IBondlyDAO.sol";
-import "../reputation/interfaces/IReputationVault.sol";
+import "../registry/IBondlyRegistry.sol";
+import "./IBondlyVoting.sol";
+import "../treasury/IBondlyTreasury.sol";
+import "./IBondlyDAO.sol";
+import "../reputation/IReputationVault.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
@@ -249,12 +249,12 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
      * @param proposalId 提案ID
      */
     function recordReputationSnapshots(uint256 proposalId, address[] memory voters) internal {
-        address reputationVault = registry.getContractAddress("ReputationVault", "v1");
-        if (reputationVault == address(0)) return;
+        address vaultAddr = registry.getContractAddress("ReputationVault", "v1");
+        if (vaultAddr == address(0)) return;
         for (uint256 i = 0; i < voters.length; i++) {
             address voter = voters[i];
             uint256 reputation = 0;
-            try IReputationVault(reputationVault).getReputation(voter) returns (uint256 rep) {
+            try IReputationVault(vaultAddr).getReputation(voter) returns (uint256 rep) {
                 reputation = rep;
             } catch {}
             IBondlyVoting(address(votingContract)).recordReputationSnapshot(proposalId, voter, reputation);
