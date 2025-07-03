@@ -43,10 +43,8 @@ contract BondlyTokenUpgradeable is
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 
     // ============ 常量 ============
-    /// @dev 初始供应量：10亿代币
-    uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10**18;
-    /// @dev 最大供应量：20亿代币
-    uint256 public constant MAX_SUPPLY = 2_000_000_000 * 10**18;
+    /// @dev 最大供应量（可变）
+    uint256 public maxSupply;
 
     // ============ Custom Errors ============
     /// @dev 合约暂停时仅允许 approve 0
@@ -93,11 +91,12 @@ contract BondlyTokenUpgradeable is
     /**
      * @dev 初始化函数，替代构造函数
      * @param initialOwner 初始所有者地址，将拥有合约的管理权限
+     * @param daoAddress DAO 合约地址
      *
      * @notice 部署时会自动铸造初始供应量给合约所有者
      * @notice 代币名称为 "Bondly Token"，符号为 "BOND"
      */
-    function initialize(address initialOwner) public initializer {
+    function initialize(address initialOwner, address daoAddress) public initializer {
         __ERC20_init("Bondly Token", "BOND");
         __ERC20Permit_init("Bondly Token");
         __ERC20Votes_init();
@@ -111,7 +110,11 @@ contract BondlyTokenUpgradeable is
         _grantRole(BURNER_ROLE, initialOwner);
         _grantRole(PAUSER_ROLE, initialOwner);
         transferOwnership(initialOwner);
-        _mint(initialOwner, INITIAL_SUPPLY);
+        uint256 initialSupply = 1_000_000_000 * 10**decimals();
+        _mint(initialOwner, initialSupply);
+        maxSupply = 2_000_000_000 * 10**18;
+        require(daoAddress != address(0), "DAO address required");
+        dao = daoAddress;
     }
 
     // ============ 核心功能 ============
@@ -123,12 +126,12 @@ contract BondlyTokenUpgradeable is
      */
     function mint(address to, uint256 amount, string memory reason)
         external
-        onlyRole(MINTER_ROLE)
+        onlyDAO
         whenNotPaused
     {
         require(to != address(0), "Cannot mint to zero address");
         require(amount > 0, "Amount must be greater than 0");
-        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
+        require(totalSupply() + amount <= maxSupply, "Exceeds max supply");
         _mint(to, amount);
         emit TokensMinted(to, amount, reason);
     }
@@ -141,7 +144,7 @@ contract BondlyTokenUpgradeable is
      */
     function burn(address from, uint256 amount, string memory reason)
         external
-        onlyRole(BURNER_ROLE)
+        onlyDAO
         whenNotPaused
     {
         require(from != address(0), "Cannot burn from zero address");
@@ -161,7 +164,7 @@ contract BondlyTokenUpgradeable is
         address[] memory recipients,
         uint256[] memory amounts,
         string memory reason
-    ) external onlyRole(MINTER_ROLE) whenNotPaused {
+    ) external onlyDAO whenNotPaused {
         require(recipients.length == amounts.length, "Arrays length mismatch");
         require(recipients.length > 0, "Empty arrays");
         uint256 totalAmount = 0;
@@ -170,7 +173,7 @@ contract BondlyTokenUpgradeable is
             require(amounts[i] > 0, "Amount must be greater than 0");
             unchecked { totalAmount += amounts[i]; }
         }
-        require(totalSupply() + totalAmount <= MAX_SUPPLY, "Exceeds max supply");
+        require(totalSupply() + totalAmount <= maxSupply, "Exceeds max supply");
         for (uint256 i = 0; i < recipients.length; i++) {
             _mint(recipients[i], amounts[i]);
             emit TokensMinted(recipients[i], amounts[i], reason);
@@ -199,7 +202,7 @@ contract BondlyTokenUpgradeable is
      * @return tokenSymbol 代币符号
      * @return tokenDecimals 代币小数位数
      * @return currentSupply 当前总供应量
-     * @return maxSupply 最大供应量
+     * @return maxSupplyValue 最大供应量
      *
      * @notice 这是一个便利函数，一次性返回代币的所有基本信息
      * @notice 适用于前端界面显示和 API 接口
@@ -209,14 +212,14 @@ contract BondlyTokenUpgradeable is
         string memory tokenSymbol,
         uint8 tokenDecimals,
         uint256 currentSupply,
-        uint256 maxSupply
+        uint256 maxSupplyValue
     ) {
         return (
             name(),
             symbol(),
             decimals(),
             totalSupply(),
-            MAX_SUPPLY
+            maxSupply
         );
     }
 
@@ -330,23 +333,59 @@ contract BondlyTokenUpgradeable is
      * @param amount 奖励数量
      * @param reason 领取原因
      */
-    function selfMint(uint256 amount, string memory reason) external onlyRole(MINTER_ROLE) whenNotPaused {
+    function selfMint(uint256 amount, string memory reason) external
+        onlyDAO
+        whenNotPaused {
         require(amount > 0, "Amount must be greater than 0");
-        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
+        require(totalSupply() + amount <= maxSupply, "Exceeds max supply");
         _mint(msg.sender, amount);
         emit TokensMinted(msg.sender, amount, reason);
     }
     /**
      * @dev 查询剩余可铸代币数量
-     * @return 剩余可铸数量（MAX_SUPPLY - totalSupply()）
+     * @return 剩余可铸数量（maxSupply - totalSupply()）
      */
     function mintableSupply() external view returns (uint256) {
-        return MAX_SUPPLY - totalSupply();
+        return maxSupply - totalSupply();
     }
 
     // ============ UUPS 升级授权 ============
+    /// @dev 升级授权，仅允许 DAO 合约
+    function _authorizeUpgrade(address newImplementation) internal override {
+        require(msg.sender == dao, "Token: Only DAO can upgrade");
+        // 可选：proxiableUUID/ERC1967 校验
+    }
+
+    /// @dev 合约版本号
+    function version() public pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    address public dao;
+
     /**
-     * @dev UUPS 升级授权，仅限合约所有者
+     * @dev 设置 DAO 合约地址（仅 owner）
+     * @param _dao DAO 合约地址
      */
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    function setDAO(address _dao) external onlyOwner {
+        require(_dao != address(0), "Invalid DAO address");
+        dao = _dao;
+    }
+
+    /**
+     * @dev 仅允许 DAO 调用的修饰符
+     */
+    modifier onlyDAO() {
+        require(msg.sender == dao, "Only DAO can call");
+        _;
+    }
+
+    /**
+     * @dev 设置最大供应量（仅 DAO）
+     * @param newMaxSupply 新的最大供应量
+     */
+    function setMaxSupply(uint256 newMaxSupply) external onlyDAO {
+        require(newMaxSupply >= totalSupply(), "Cannot be less than current supply");
+        maxSupply = newMaxSupply;
+    }
 }

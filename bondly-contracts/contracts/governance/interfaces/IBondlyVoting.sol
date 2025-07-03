@@ -8,6 +8,8 @@ pragma solidity ^0.8.19;
  */
 interface IBondlyVoting {
     
+    enum WeightType { Token, Reputation, Mixed }
+    
     /**
      * @dev 用户投票
      * @param proposalId 提案ID
@@ -123,4 +125,10 @@ interface IBondlyVoting {
      * @param reputations 声誉值数组
      */
     function recordReputationSnapshots(uint256 proposalId, address[] calldata users, uint256[] calldata reputations) external;
+    
+    /**
+     * @dev 设置权重类型
+     * @param newType 新的权重类型
+     */
+    function setWeightType(WeightType newType) external;
 } 

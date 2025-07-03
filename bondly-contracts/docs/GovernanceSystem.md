@@ -60,20 +60,33 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 
 **功能职责：**
 - 用户投票机制
-- 投票权重快照（Token 权重用 ERC20Votes.getPastVotes，Reputation 权重用合约快照）
+- 投票权重快照（Token 权重用 ERC20Votes.getPastVotes，Reputation 权重用合约快照，Mixed 支持灵活加权）
 - 投票快照和防操纵机制
-- 只允许 DAO 合约调用 startVoting、endVoting、recordReputationSnapshot
+- 只允许 DAO 合约调用 startVoting、endVoting、recordReputationSnapshot、权重类型/比例变更、暂停/恢复
+- 支持合约暂停（pause/unpause），暂停后所有投票与快照操作不可用
 
 **主要功能：**
-- `vote()` - 用户投票（基于快照区块的权重）
+- `vote()` - 用户投票（基于快照区块的权重，支持 Token、Reputation、Mixed 三种模式）
 - `startVoting()` - 开始投票（由 DAO 调用，记录快照区块和截止时间）
 - `endVoting()` - 结束投票（由 DAO 调用）
-- `getVotingWeightAtSnapshot()` - 获取快照权重（Token: ERC20Votes.getPastVotes, Reputation: reputationSnapshots）
-- `recordReputationSnapshot()` - 记录声誉快照（由 DAO 调用）
+- `getVotingWeightAtSnapshot()` - 获取快照权重（Token: ERC20Votes.getPastVotes, Reputation: reputationSnapshots, Mixed: 按权重比例加权）
+- `recordReputationSnapshot()` - 记录单个用户声誉快照（由 DAO 调用）
+- `recordReputationSnapshots()` - 批量记录活跃用户声誉快照（由 DAO 调用，前端可传入 voters 列表）
+- `updateWeightType()`/`setWeightType()` - 仅 DAO 可变更权重类型（Token/Reputation/Mixed）
+- `updateWeightConfig()` - 仅 DAO 可变更混合权重比例（如 70/30、50/50）
+- `pause(string)`/`unpause()` - 仅 DAO 可暂停/恢复投票合约
+- `getVotingWeightType()` - 查询当前权重类型
 
-**权重类型：**
+**权重类型与配置：**
 - `Token` (0) - 基于 ERC20Votes 代币快照余额
 - `Reputation` (1) - 基于声誉分数快照
+- `Mixed` (2) - Token+Reputation 按百分比加权（WeightConfig，默认 50/50，可治理变更）
+- 权重类型和比例均需 DAO 提案通过后方可变更，提升治理可信度
+
+**安全与扩展：**
+- 所有敏感操作（权重类型/比例变更、暂停、快照）均需 DAO 治理
+- 支持批量快照，提升大规模治理效率
+- 事件丰富，便于前端和链下追踪
 
 ### 3. BondlyTreasury 合约
 
@@ -214,11 +227,15 @@ interface IBondlyVoting {
     function getUserVote(address user, uint256 proposalId) external view returns (bool hasVoted_, uint256 weight);
     function getProposalVotingInfo(uint256 proposalId) external view returns (uint256 snapshotBlock, uint256 votingDeadline, bool isActive, bool votingEnded);
     function updateDAOContract(address newDAOContract) external;
-    function updateWeightType(uint8 newWeightType) external;
+    function setWeightType(WeightType newType) external;
+    function updateWeightConfig(uint256 tokenPercent, uint256 repPercent) external;
+    function pause(string memory reason) external;
+    function unpause() external;
+    function getVotingWeightType() external view returns (WeightType);
     function resetProposalVotes(uint256 proposalId) external;
     function getContractInfo() external view returns (address daoAddress, uint8 currentWeightType, address tokenAddress, address reputationAddress);
     function recordReputationSnapshot(uint256 proposalId, address user, uint256 reputation) external;
-    function recordReputationSnapshots(uint256 proposalId, address[] calldata users, uint256[] calldata reputations) external;
+    function recordReputationSnapshots(uint256 proposalId, address[] calldata voters) external;
 }
 ```
 
@@ -295,4 +312,108 @@ interface IBondlyTreasury {
 
 ## 总结
 
-Bondly 治理系统采用模块化、安全、可扩展的设计，提供了完整的 DAO 治理功能。通过严格的权限控制、投票快照机制和提案完整性保护，确保治理过程的安全性和公平性。系统支持基于代币和声誉的投票权重，满足不同场景的需求。 
+Bondly 治理系统采用模块化、安全、可扩展的设计，提供了完整的 DAO 治理功能。通过严格的权限控制、投票快照机制和提案完整性保护，确保治理过程的安全性和公平性。系统支持基于代币和声誉的投票权重，满足不同场景的需求。
+
+# BondlyDAOUpgradeable
+
+BondlyDAOUpgradeable 是 Bondly 平台的核心治理合约，基于 OpenZeppelin UUPS 可升级标准，支持提案、投票、执行、权限管理、合约注册表集成等功能。
+
+## 合约特性 Features
+
+- **UUPS 可升级（Upgradeable, UUPS）**：支持合约逻辑升级，数据不变，升级权限由 onlyOwner 控制。
+- **提案治理**：支持提案创建、激活、投票、执行、失败等全流程。
+- **多合约集成**：通过 Registry 动态集成 Voting、Treasury、Reputation 等模块。
+- **权限管理**：支持 onlyOwner、onlyAuthorizedExecutor、onlyVotingContract 等多级权限。
+- **暂停机制**：紧急情况下可暂停所有治理操作。
+- **事件丰富**：全流程事件追踪，便于前端和链上分析。
+
+---
+
+## 初始化 Initialization
+
+```solidity
+function initialize(address initialOwner, address registryAddress) public initializer
+```
+- 仅可调用一次（UUPS 标准）。
+- 设置初始 owner。
+- 绑定 Registry 地址。
+- 初始化治理参数（押金、投票期等）。
+
+---
+
+## 主要结构体 Structs
+
+- `Proposal`：提案结构，包含 id、proposer、title、description、target、data、proposalHash、state、yesVotes、noVotes、snapshotBlock、votingDeadline、executionTime。
+
+---
+
+## 主要事件 Events
+
+- `ProposalCreated(uint256 id, address proposer, string title, address target, bytes data, bytes32 proposalHash)`
+- `ProposalActivated(uint256 id, uint256 snapshotBlock, uint256 votingDeadline)`
+- `ProposalExecuted(uint256 id, bool success, uint256 executionTime)`
+- `ProposalFailed(uint256 id)`
+- `ProposalVoted(uint256 id, address voter, bool support, uint256 weight)`
+- `VotingContractUpdated(address oldVoting, address newVoting)`
+- `TreasuryContractUpdated(address oldTreasury, address newTreasury)`
+- `ProposalFailedWithReason(uint256 proposalId, string reason)`
+- `ContractPaused(address account, string reason)`
+- `ContractUnpaused(address account)`
+
+---
+
+## 主要函数 Functions
+
+### 提案治理 Proposal Management
+- `createProposal(string title, string description, address target, bytes data, uint256 votingPeriod)`
+- `activateProposal(uint256 proposalId, uint256 votingPeriod)`
+- `executeProposal(uint256 proposalId)`
+- `onVote(uint256 proposalId, address voter, bool support, uint256 weight)`
+- `getProposal(uint256 proposalId)`
+- `getUserProposals(address user)`
+- `canExecute(uint256 proposalId)`
+- `getVoteResult(uint256 proposalId)`
+- `verifyProposalIntegrity(uint256 proposalId)`
+
+### 合约集成与管理
+- `updateVotingContract(address newVotingContract)`
+- `updateTreasuryContract(address newTreasuryContract)`
+- `setAuthorizedExecutor(address executor, bool authorized)`
+- `updateGovernanceParameters(uint256 minDeposit, uint256 minVoting, uint256 maxVoting)`
+- `pause(string reason)`
+- `unpause()`
+- `withdrawETH(uint256 amount)`
+
+### UUPS 升级
+- `_authorizeUpgrade(address newImplementation)`：仅 owner 可升级。
+
+---
+
+## 升级说明 Upgradeability
+
+- 本合约采用 UUPS 升级模式，需通过 Proxy 部署。
+- 升级权限由 onlyOwner 控制，建议 owner 为多签或 DAO。
+- 升级流程：部署新实现合约 → 通过 Proxy 调用 upgradeTo → Registry 记录新版本。
+
+---
+
+## 典型用法 Usage
+
+1. 通过 Hardhat + OpenZeppelin Upgrades 插件部署 UUPS Proxy。
+2. 初始化时传入初始 owner 和 Registry 地址。
+3. 通过 Registry 管理多版本 Proxy 地址。
+4. 通过权限安全管理提案、投票、执行、升级。
+
+---
+
+## 重要安全提示 Security Notes
+
+- 升级权限建议交由多签或 DAO。
+- 所有敏感操作均有权限控制。
+- 合约升级前请充分测试和审计。
+
+---
+
+## English Summary
+
+BondlyDAOUpgradeable is an upgradable (UUPS) governance contract for the Bondly platform, supporting proposal lifecycle, voting, execution, registry integration, and role-based access control. All upgrade logic is protected by onlyOwner. Use with a proxy and manage versions via BondlyRegistry. 

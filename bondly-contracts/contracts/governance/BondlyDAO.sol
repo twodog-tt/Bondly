@@ -44,6 +44,7 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         uint256 snapshotBlock;          // 快照区块
         uint256 votingDeadline;         // 投票截止时间
         uint256 executionTime;          // 执行时间
+        uint256 depositAmount;           // 提案押金（ETH）
     }
     
     // ============ 状态变量 ============
@@ -61,6 +62,8 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
     mapping(address => bool) public authorizedExecutors;
     mapping(uint256 => address) public proposalDepositors; // 记录每个提案的押金人
     mapping(uint256 => uint256) public proposalDeposits;   // 记录每个提案的押金数量
+    /// @dev 合约函数白名单：target => selector => allowed
+    mapping(address => mapping(bytes4 => bool)) public allowedFunctions;
     
     // ============ 事件 ============
     
@@ -95,6 +98,8 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
     
     event ContractPaused(address indexed account, string reason);
     event ContractUnpaused(address indexed account);
+    
+    event VotingWeightTypeUpdated(address indexed dao, uint8 newType);
     
     // ============ 修饰符 ============
     
@@ -205,6 +210,14 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         require(proposal.state == ProposalState.Pending, "DAO: Proposal not pending");
         require(votingPeriod >= minVotingPeriod, "DAO: Voting period too short");
         require(votingPeriod <= maxVotingPeriod, "DAO: Voting period too long");
+        // 前置检查：目标合约必须在 registry 注册
+        require(registry.isContractRegisteredByAddress(proposal.target), "DAO: Target not registered");
+        // 前置检查：执行函数 selector 必须在白名单
+        require(proposal.data.length >= 4, "DAO: Invalid calldata");
+        bytes memory data = proposal.data;
+        bytes4 selector;
+        assembly { selector := mload(add(data, 32)) }
+        require(allowedFunctions[proposal.target][selector], "DAO: Function not allowed");
         proposal.state = ProposalState.Active;
         proposal.snapshotBlock = block.number;
         proposal.votingDeadline = block.timestamp + votingPeriod;
@@ -215,7 +228,7 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
             (, uint8 currentWeightType, , ) = votingContract.getContractInfo();
             // 0: Token, 1: Reputation, 2: Mixed
             if (currentWeightType == 1 || currentWeightType == 2) {
-                recordReputationSnapshots(proposalId);
+                recordReputationSnapshots(proposalId, new address[](0));
             }
         }
         emit ProposalActivated(proposalId, proposal.snapshotBlock, proposal.votingDeadline);
@@ -225,17 +238,16 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
      * @dev 记录声誉快照（内部函数）
      * @param proposalId 提案ID
      */
-    function recordReputationSnapshots(uint256 proposalId) internal {
+    function recordReputationSnapshots(uint256 proposalId, address[] memory voters) internal {
         address reputationVault = registry.getContractAddress("ReputationVault", "v1");
         if (reputationVault == address(0)) return;
-        
-        // 这里可以根据需要记录特定用户的声誉快照
-        // 目前先记录提案人的声誉快照作为示例
-        Proposal storage proposal = proposals[proposalId];
-        try IReputationVault(reputationVault).getReputation(proposal.proposer) returns (uint256 reputation) {
-            IBondlyVoting(address(votingContract)).recordReputationSnapshot(proposalId, proposal.proposer, reputation);
-        } catch {
-            IBondlyVoting(address(votingContract)).recordReputationSnapshot(proposalId, proposal.proposer, 0);
+        for (uint256 i = 0; i < voters.length; i++) {
+            address voter = voters[i];
+            uint256 reputation = 0;
+            try IReputationVault(reputationVault).getReputation(voter) returns (uint256 rep) {
+                reputation = rep;
+            } catch {}
+            IBondlyVoting(address(votingContract)).recordReputationSnapshot(proposalId, voter, reputation);
         }
     }
     
@@ -247,7 +259,17 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         require(proposal.state == ProposalState.Active, "DAO: Proposal not active");
         require(block.timestamp > proposal.votingDeadline, "DAO: Voting not ended");
         require(keccak256(abi.encode(proposal.target, proposal.data)) == proposal.proposalHash, "DAO: Proposal data mismatch");
-        require(registry.isContractRegisteredByAddress(proposal.target), "DAO: Target not whitelisted");
+        // 校验目标合约注册和名称
+        require(registry.isContractRegisteredByAddress(proposal.target), "DAO: Target not registered");
+        (string memory name, string memory verStr) = registry.addressToNameVersion(proposal.target);
+        address regAddr = registry.getContractAddress(name, verStr);
+        require(bytes(name).length > 0, "DAO: Target name missing");
+        // 校验 selector 白名单
+        require(proposal.data.length >= 4, "DAO: Invalid calldata");
+        bytes memory data = proposal.data;
+        bytes4 selector;
+        assembly { selector := mload(add(data, 32)) }
+        require(allowedFunctions[proposal.target][selector], "DAO: Function not allowed");
         proposal.executionTime = block.timestamp;
         address depositor = proposalDepositors[proposalId];
         uint256 deposit = proposalDeposits[proposalId];
@@ -268,30 +290,12 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
             }
             proposal.state = success ? ProposalState.Executed : ProposalState.Failed;
             if (success) {
-                // 返还 50% 押金
-                if (deposit > 0 && depositor != address(0)) {
-                    uint256 refund = deposit / 2;
-                    bondToken.transfer(depositor, refund);
-                    // 其余转 Treasury
-                    if (address(treasuryContract) != address(0)) {
-                        bondToken.transfer(address(treasuryContract), deposit - refund);
-                    }
-                }
                 emit ProposalExecuted(proposalId, true, proposal.executionTime);
             } else {
-                // 全部转 Treasury
-                if (deposit > 0 && address(treasuryContract) != address(0)) {
-                    bondToken.transfer(address(treasuryContract), deposit);
-                }
                 emit ProposalFailed(proposalId);
                 emit ProposalFailedWithReason(proposalId, revertReason);
             }
         } else {
-            // 提案未通过，全部转 Treasury
-            if (deposit > 0 && address(treasuryContract) != address(0)) {
-                bondToken.transfer(address(treasuryContract), deposit);
-            }
-            proposal.state = ProposalState.Failed;
             emit ProposalFailed(proposalId);
         }
         // 清理押金记录
@@ -335,10 +339,11 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
     ) external override onlyVotingContract proposalExists(proposalId) proposalActive(proposalId) {
         require(weight > 0, "DAO: Zero voting weight");
         
+        Proposal storage proposal = proposals[proposalId];
         if (support) {
-            proposals[proposalId].yesVotes += weight;
+            proposal.yesVotes += weight;
         } else {
-            proposals[proposalId].noVotes += weight;
+            proposal.noVotes += weight;
         }
         
         emit ProposalVoted(proposalId, voter, support, weight);
@@ -466,6 +471,7 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         require(newVotingContract != address(0), "DAO: Invalid voting contract");
         address oldVoting = address(votingContract);
         votingContract = IBondlyVoting(newVotingContract);
+        registry.setContractAddress("BondlyVoting", "v1", newVotingContract);
         emit VotingContractUpdated(oldVoting, newVotingContract);
     }
     
@@ -477,15 +483,17 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         require(newTreasuryContract != address(0), "DAO: Invalid treasury contract");
         address oldTreasury = address(treasuryContract);
         treasuryContract = IBondlyTreasury(newTreasuryContract);
+        registry.setContractAddress("BondlyTreasury", "v1", newTreasuryContract);
         emit TreasuryContractUpdated(oldTreasury, newTreasuryContract);
     }
     
     /**
-     * @dev 设置授权执行者
+     * @dev 设置授权执行者（只能由合约自身调用，即只能通过 DAO 提案）
      * @param executor 执行者地址
      * @param authorized 是否授权
      */
-    function setAuthorizedExecutor(address executor, bool authorized) external onlyOwner {
+    function setAuthorizedExecutor(address executor, bool authorized) external {
+        require(msg.sender == address(this), "DAO: Only self-call");
         authorizedExecutors[executor] = authorized;
     }
     
@@ -537,5 +545,58 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
     receive() external payable {}
 
     // ============ UUPS 升级授权 ============
-    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
+    /// @dev 升级授权，仅允许合约自身（address(this)）调用，不引用未定义的 dao 变量。
+    function _authorizeUpgrade(address newImplementation) internal override {
+        require(msg.sender == address(this), "DAO: Only self-upgrade via proposal");
+        // 可选：proxiableUUID/ERC1967 校验
+    }
+
+    /// @dev 合约版本号
+    function version() public pure returns (string memory) {
+        return "1.0.0";
+    }
+
+    // 预留：升级提案需经过 timelock/权限判断，可在 executeProposal 处集成
+
+    function updateWeightType(uint8 newType) external onlyOwner {
+        votingContract.setWeightType(IBondlyVoting.WeightType(newType));
+        emit VotingWeightTypeUpdated(address(this), newType);
+    }
+
+    /**
+     * @dev 校验目标合约是否注册且名称匹配
+     * @param target 目标合约地址
+     * @param expectedName 期望的合约名称（如 "BondlyVoting"）
+     */
+    function requireWhitelistedTarget(address target, string memory expectedName) internal view {
+        require(registry.isContractRegisteredByAddress(target), "DAO: Target not whitelisted");
+        (string memory name, string memory verStr) = registry.addressToNameVersion(target);
+        require(keccak256(bytes(name)) == keccak256(bytes(expectedName)), "DAO: Target name mismatch");
+    }
+
+    /**
+     * @dev 设置合约函数白名单（仅 owner）
+     * @param target 目标合约地址
+     * @param selector 函数选择器（bytes4）
+     * @param allowed 是否允许
+     */
+    function setAllowedFunction(address target, bytes4 selector, bool allowed) external onlyOwner {
+        allowedFunctions[target][selector] = allowed;
+    }
+
+    // 预留 AccessControl 相关变量和注释，便于未来扩展
+    // bytes32 public constant EXECUTOR_ROLE = keccak256("EXECUTOR_ROLE");
+    // 可扩展为 AccessControl 管理 authorized executor
+
+    // votingContract、treasuryContract 动态查找
+    function getVotingContract() internal view returns (IBondlyVoting) {
+        address votingAddr = registry.getContractAddress("BondlyVoting", "v1");
+        require(votingAddr != address(0), "DAO: Voting contract not found");
+        return IBondlyVoting(votingAddr);
+    }
+    function getTreasuryContract() internal view returns (IBondlyTreasury) {
+        address treasuryAddr = registry.getContractAddress("BondlyTreasury", "v1");
+        require(treasuryAddr != address(0), "DAO: Treasury contract not found");
+        return IBondlyTreasury(treasuryAddr);
+    }
 } 

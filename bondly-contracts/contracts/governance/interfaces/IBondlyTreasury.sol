@@ -88,9 +88,9 @@ interface IBondlyTreasury {
     /**
      * @dev 设置授权支出者
      * @param spender 支出者地址
-     * @param authorized 是否授权
+     * @param level 级别
      */
-    function setAuthorizedSpender(address spender, bool authorized) external;
+    function setAuthorizedSpender(address spender, uint8 level) external;
     
     /**
      * @dev 更新资金参数
