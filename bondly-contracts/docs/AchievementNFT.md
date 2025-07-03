@@ -126,4 +126,8 @@ uint256 ts = achievementNFT.mintedAt(tokenId);
 ## 扩展建议
 - 支持成就升级、批量颁发、链下数据同步等
 - 可与内容、互动、声誉等模块联动
-- 支持成就排行榜、成就展示墙等 Web3 社交玩法 
+- 支持成就排行榜、成就展示墙等 Web3 社交玩法
+
+- 所有注册表接口如有描述，统一为 getContractAddress(string memory name, string memory version)。
+- MINTER_ROLE、BURNER_ROLE、PAUSER_ROLE 权限与合约一致。
+- 事件、变量命名与合约一致。 

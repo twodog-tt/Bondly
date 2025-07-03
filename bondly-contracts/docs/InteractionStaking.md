@@ -185,4 +185,9 @@ bool claimed = interactionStaking.rewardClaimed(tokenId, InteractionStaking.Inte
 ## 扩展建议
 - 支持批量互动、批量奖励结算
 - 支持互动积分、排行榜等 gamification 机制
-- 可与内容声誉、NFT 等模块联动 
+- 可与内容声誉、NFT 等模块联动
+
+## 注册表接口说明
+- 所有注册表接口如有描述，统一为 getContractAddress(string memory name, string memory version)。
+- PARAMETER_ROLE、PAUSER_ROLE 权限与合约一致。
+- 事件、变量命名与合约一致。 

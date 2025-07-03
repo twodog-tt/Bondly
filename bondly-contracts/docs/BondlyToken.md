@@ -71,8 +71,18 @@ function initialize(address initialOwner) public initializer
 - `unpause()`：PAUSER_ROLE
 
 ### 查询
-- getTokenInfo()：返回名称、符号、小数位、当前供应、最大供应（maxSupplyValue）。
+- getTokenInfo()：返回名称、符号、小数位、当前供应、最大供应（maxSupply，与合约变量一致）。
 - `mintableSupply()`：剩余可铸数量。
+
+### DAO 相关
+- `setDAO(address _dao)`：仅 owner 可设置 DAO 地址。
+- `setMaxSupply(uint256 newMaxSupply)`：仅 DAO 可设置最大供应量。
+- 所有 onlyDAO 修饰的函数仅 DAO 合约可调用。
+- 升级权限仅 DAO 合约可调用。
+
+### 合约注册/寻址接口（如需）
+function setContractAddress(string memory name, string memory version, address newAddress) external;
+function getContractAddress(string memory name, string memory version) external view returns (address);
 
 ### 升级
 - `_authorizeUpgrade(address newImplementation)`

@@ -102,4 +102,8 @@ string memory uri = contentNFT.tokenURI(tokenId); // 例：ipfs://Qm.../1.json
 
 ## 扩展建议
 - 支持批量铸造、内容授权、二级市场等功能
-- 可扩展内容类型、链下存证、版税分成等 
+- 可扩展内容类型、链下存证、版税分成等
+
+- 所有注册表接口如有描述，统一为 getContractAddress(string memory name, string memory version)。
+- MINTER_ROLE、PAUSER_ROLE 权限与合约一致。
+- 事件、变量命名与合约一致。 
