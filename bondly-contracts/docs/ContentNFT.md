@@ -100,6 +100,14 @@ string memory uri = contentNFT.tokenURI(tokenId); // 例：ipfs://Qm.../1.json
 - mint 操作有严格参数校验，防止误操作
 - 可与 BondlyRegistry、BondlyToken、声誉系统等模块联动
 
+## 设计说明补充
+ContentNFT 是可转让的创作型 NFT，支持创作者 mint 自己的内容：
+- tokenId 自动递增，mint 时有 require(!_exists(tokenId), "Already minted") 防止重复。
+- 每次铸造会触发 ContentMinted 事件，便于链上追踪和前端监听。
+- 支持 setBaseURI 和 tokenURI，便于前端展示和多平台兼容。
+- 只有 MINTER_ROLE 可铸造，合约支持暂停机制。
+- NFT 可转让，支持 approve/transferFrom/safeTransferFrom 等标准操作。
+
 ## 扩展建议
 - 支持批量铸造、内容授权、二级市场等功能
 - 可扩展内容类型、链下存证、版税分成等

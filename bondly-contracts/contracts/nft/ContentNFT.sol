@@ -62,7 +62,7 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
      * @param tokenURI NFT 元数据 JSON 链接
      * @notice 每次内容被铸造为 NFT 时触发
      */
-    event ContentMinted(address indexed to, uint256 indexed tokenId, address indexed creator, string tokenURI);
+    event ContentMinted(address indexed to, uint256 indexed tokenId, string tokenURI);
 
     /**
      * @dev 合约暂停事件
@@ -76,6 +76,8 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
      * @param account 恢复操作的账户
      */
     event ContractUnpaused(address indexed account);
+
+    string private _baseTokenURI;
 
     /**
      * @dev 构造函数
@@ -127,6 +129,7 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
         require(bytes(tokenUri).length > 0, "tokenURI required");
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
+        require(!_exists(tokenId), "Already minted");
         _safeMint(to, tokenId);
         _setTokenURI(tokenId, tokenUri);
         _contentMetas[tokenId] = ContentMeta({
@@ -136,7 +139,7 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
             ipfsLink: ipfsLink,
             creator: msg.sender
         });
-        emit ContentMinted(to, tokenId, msg.sender, tokenUri);
+        emit ContentMinted(to, tokenId, tokenUri);
         return tokenId;
     }
 
@@ -207,5 +210,13 @@ contract ContentNFT is ERC721URIStorage, AccessControl, Pausable {
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721URIStorage, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
+    }
+
+    function setBaseURI(string memory uri) external onlyRole(MINTER_ROLE) {
+        _baseTokenURI = uri;
+    }
+
+    function _baseURI() internal view override returns (string memory) {
+        return _baseTokenURI;
     }
 } 

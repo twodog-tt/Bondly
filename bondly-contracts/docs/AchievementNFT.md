@@ -123,6 +123,14 @@ uint256 ts = achievementNFT.mintedAt(tokenId);
 - 事件追踪，便于前端监听和链上分析
 - 支持成就历史追踪和前端批量查询
 
+## 设计说明补充
+AchievementNFT 是不可转让（Soulbound）的荣誉徽章：
+- 所有转让和授权相关方法均被禁止，直接 revert("Soulbound: non-transferable")。
+- 只有 MINTER_ROLE 可铸造，BURNER_ROLE 可销毁，合约支持暂停机制。
+- 每个地址每种成就只能获得一次，mintAchievement 有 require 检查。
+- 每次铸造会触发 AchievementMinted 和 AchievementGranted 事件，便于链上和前端追踪。
+- 支持 setAchievementURI 为每个成就类型设置独立 URI，便于前端展示不同成就。
+
 ## 扩展建议
 - 支持成就升级、批量颁发、链下数据同步等
 - 可与内容、互动、声誉等模块联动

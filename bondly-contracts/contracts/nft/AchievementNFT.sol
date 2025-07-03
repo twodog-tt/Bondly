@@ -55,6 +55,9 @@ contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
     /// @dev tokenId => 铸造时间戳
     mapping(uint256 => uint256) public mintedAt;
 
+    /// @dev achievementId => tokenURI
+    mapping(uint256 => string) public achievementURIs;
+
     /**
      * @dev 成就 NFT 铸造事件
      * @param user 获得成就的用户
@@ -83,6 +86,14 @@ contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
      * @param account 恢复操作的账户
      */
     event ContractUnpaused(address indexed account);
+
+    /**
+     * @dev 成就 NFT 授予事件
+     * @param to 获得成就的用户
+     * @param achievementId 成就类型ID
+     * @param tokenId NFT ID
+     */
+    event AchievementGranted(address indexed to, uint256 indexed achievementId, uint256 indexed tokenId);
 
     /**
      * @dev 构造函数
@@ -120,12 +131,14 @@ contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
         require(!hasAchievement[to][achievementId], "Already claimed");
         _tokenIdCounter++;
         uint256 tokenId = _tokenIdCounter;
+        require(!_exists(tokenId), "Already minted");
         _safeMint(to, tokenId);
         achievementOf[tokenId] = achievementId;
         hasAchievement[to][achievementId] = true;
         _tokenURIs[tokenId] = tokenUri;
         mintedAt[tokenId] = block.timestamp;
         emit AchievementMinted(to, achievementId, tokenId);
+        emit AchievementGranted(to, achievementId, tokenId);
         return tokenId;
     }
 
@@ -154,10 +167,13 @@ contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
     function isApprovedForAll(address, address) public pure override(ERC721, IERC721) returns (bool) {
         return false;
     }
-    function transferFrom(address, address, uint256) public pure override(ERC721, IERC721) {
+    function transferFrom(address, address, uint256) public pure override returns (void) {
         revert("Soulbound: non-transferable");
     }
-    function safeTransferFrom(address, address, uint256, bytes memory) public pure override(ERC721, IERC721) {
+    function safeTransferFrom(address, address, uint256) public pure override returns (void) {
+        revert("Soulbound: non-transferable");
+    }
+    function safeTransferFrom(address, address, uint256, bytes memory) public pure override returns (void) {
         revert("Soulbound: non-transferable");
     }
 
@@ -207,6 +223,15 @@ contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
     function unpause() external onlyRole(PAUSER_ROLE) {
         _unpause();
         emit ContractUnpaused(msg.sender);
+    }
+    
+    /**
+     * @dev 设置成就 NFT 的独立 URI
+     * @param achievementId 成就类型ID
+     * @param uri 新的 URI
+     */
+    function setAchievementURI(uint256 achievementId, string memory uri) external onlyRole(DEFAULT_ADMIN_ROLE) {
+        achievementURIs[achievementId] = uri;
     }
     
     // ============ 支持 AccessControl ============
