@@ -1,261 +1,110 @@
-# BondlyToken 合约文档
+# BondlyTokenUpgradeable
 
-## 概述
+BondlyTokenUpgradeable 是 Bondly 平台的原生代币合约，基于 OpenZeppelin UUPS 可升级标准，支持 ERC20、ERC20Permit、ERC20Votes、角色权限、暂停机制等功能。
 
-BondlyToken
+## 合约特性 Features
 
-## 函数
-
-### mint
-
-**说明**: 这是一个可升级的代币合约，支持社交价值网络的激励机制
- * @author Bondly Team
- * @custom:security-contact security@bondly.com 当合约所有者铸造新代币时触发 当合约所有者销毁代币时触发 部署时会自动铸造初始供应量给合约所有者
-     * @notice 代币名称为 "Bondly Token"，符号为 "BONDLY" 只有合约所有者可以调用此函数
-     * @notice 铸造数量不能超过最大供应量限制
-     * @notice 会触发 TokensMinted 事件
-     * 
-     * @custom:security 确保 to 地址不为零地址
-     * @custom:security 确保铸造后总供应量不超过 MAX_SUPPLY
-
-**开发者说明**: Bondly 平台代币，支持 ERC20 标准和 ERC20Permit 扩展
- * 
- * 功能特性：
- * - 标准 ERC20 功能（转账、授权等）
- * - ERC20Permit 支持（无 gas 授权）
- * - 铸造和销毁功能（仅限所有者）
- * - 社交激励相关功能预留
- * 
- * @notice 这是一个可升级的代币合约，支持社交价值网络的激励机制
- * @author Bondly Team
- * @custom:security-contact security@bondly.com 代币铸造事件
-     * @param to 接收代币的地址
-     * @param amount 铸造的代币数量
-     * @param reason 铸造原因（如：用户奖励、社区激励等）
-     * @notice 当合约所有者铸造新代币时触发 代币销毁事件
-     * @param from 销毁代币的地址
-     * @param amount 销毁的代币数量
-     * @param reason 销毁原因（如：用户惩罚、通缩机制等）
-     * @notice 当合约所有者销毁代币时触发 初始供应量：10亿代币
-    uint256 public constant INITIAL_SUPPLY = 1_000_000_000 * 10**18;
-    /// @dev 最大供应量：20亿代币
-    uint256 public constant MAX_SUPPLY = 2_000_000_000 * 10**18;
-    
-    /**
-     * @dev 构造函数，初始化代币合约
-     * @param initialOwner 初始所有者地址，将拥有合约的管理权限
-     * 
-     * @notice 部署时会自动铸造初始供应量给合约所有者
-     * @notice 代币名称为 "Bondly Token"，符号为 "BONDLY" 铸造代币（仅限所有者）
-     * @param to 接收代币的地址
-     * @param amount 要铸造的代币数量（以 wei 为单位）
-     * @param reason 铸造原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice 铸造数量不能超过最大供应量限制
-     * @notice 会触发 TokensMinted 事件
-     * 
-     * @custom:security 确保 to 地址不为零地址
-     * @custom:security 确保铸造后总供应量不超过 MAX_SUPPLY
-
-**参数**:
-- `to`: 接收代币的地址
-     * @param amount 铸造的代币数量
-     * @param reason 铸造原因（如：用户奖励、社区激励等）
-     * @notice 当合约所有者铸造新代币时触发
-- `from`: 销毁代币的地址
-     * @param amount 销毁的代币数量
-     * @param reason 销毁原因（如：用户惩罚、通缩机制等）
-     * @notice 当合约所有者销毁代币时触发
-- `initialOwner`: 初始所有者地址，将拥有合约的管理权限
-     * 
-     * @notice 部署时会自动铸造初始供应量给合约所有者
-     * @notice 代币名称为 "Bondly Token"，符号为 "BONDLY"
-- `to`: 接收代币的地址
-     * @param amount 要铸造的代币数量（以 wei 为单位）
-     * @param reason 铸造原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice 铸造数量不能超过最大供应量限制
-     * @notice 会触发 TokensMinted 事件
-     * 
-     * @custom:security 确保 to 地址不为零地址
-     * @custom:security 确保铸造后总供应量不超过 MAX_SUPPLY
+- **UUPS 可升级（Upgradeable, UUPS）**：支持合约逻辑升级，数据不变，升级权限由 onlyOwner 控制。
+- **ERC20 标准**：支持标准转账、授权、余额查询等。
+- **ERC20Permit**：支持 EIP-2612，无 gas 授权。
+- **ERC20Votes**：支持治理快照、投票权重。
+- **角色权限管理**：基于 AccessControl，支持 MINTER/BURNER/PAUSER 角色。
+- **暂停机制**：紧急情况下可暂停所有转账和授权。
+- **批量铸造、用户自助销毁/领取奖励**。
 
 ---
 
-### burn
+## 初始化 Initialization
 
-**说明**: 只有合约所有者可以调用此函数
-     * @notice 被销毁地址必须有足够的代币余额
-     * @notice 会触发 TokensBurned 事件
-     * 
-     * @custom:security 确保 from 地址不为零地址
-     * @custom:security 确保 from 地址有足够的余额
-
-**开发者说明**: 销毁代币（仅限所有者）
-     * @param from 要销毁代币的地址
-     * @param amount 要销毁的代币数量（以 wei 为单位）
-     * @param reason 销毁原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice 被销毁地址必须有足够的代币余额
-     * @notice 会触发 TokensBurned 事件
-     * 
-     * @custom:security 确保 from 地址不为零地址
-     * @custom:security 确保 from 地址有足够的余额
-
-**参数**:
-- `from`: 要销毁代币的地址
-     * @param amount 要销毁的代币数量（以 wei 为单位）
-     * @param reason 销毁原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice 被销毁地址必须有足够的代币余额
-     * @notice 会触发 TokensBurned 事件
-     * 
-     * @custom:security 确保 from 地址不为零地址
-     * @custom:security 确保 from 地址有足够的余额
+```solidity
+function initialize(address initialOwner) public initializer
+```
+- 仅可调用一次（UUPS 标准）。
+- 设置初始 owner，分配所有角色权限。
+- 自动铸造 10 亿 BOND 给初始 owner。
 
 ---
 
-### batchMint
+## 主要角色 Roles
 
-**说明**: 只有合约所有者可以调用此函数
-     * @notice recipients 和 amounts 数组长度必须相同
-     * @notice 批量铸造的总量不能超过最大供应量限制
-     * @notice 会为每个地址触发 TokensMinted 事件
-     * 
-     * @custom:security 确保数组长度匹配
-     * @custom:security 确保所有地址不为零地址
-     * @custom:security 确保批量铸造后总供应量不超过 MAX_SUPPLY
-     * @custom:gas 注意：大量地址的批量操作可能消耗较多 gas
-
-**开发者说明**: 批量铸造代币（仅限所有者）
-     * @param recipients 接收代币的地址数组
-     * @param amounts 对应的代币数量数组（以 wei 为单位）
-     * @param reason 批量铸造原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice recipients 和 amounts 数组长度必须相同
-     * @notice 批量铸造的总量不能超过最大供应量限制
-     * @notice 会为每个地址触发 TokensMinted 事件
-     * 
-     * @custom:security 确保数组长度匹配
-     * @custom:security 确保所有地址不为零地址
-     * @custom:security 确保批量铸造后总供应量不超过 MAX_SUPPLY
-     * @custom:gas 注意：大量地址的批量操作可能消耗较多 gas
-
-**参数**:
-- `recipients`: 接收代币的地址数组
-     * @param amounts 对应的代币数量数组（以 wei 为单位）
-     * @param reason 批量铸造原因，用于记录和追踪
-     * 
-     * @notice 只有合约所有者可以调用此函数
-     * @notice recipients 和 amounts 数组长度必须相同
-     * @notice 批量铸造的总量不能超过最大供应量限制
-     * @notice 会为每个地址触发 TokensMinted 事件
-     * 
-     * @custom:security 确保数组长度匹配
-     * @custom:security 确保所有地址不为零地址
-     * @custom:security 确保批量铸造后总供应量不超过 MAX_SUPPLY
-     * @custom:gas 注意：大量地址的批量操作可能消耗较多 gas
+- `DEFAULT_ADMIN_ROLE`：合约超级管理员。
+- `MINTER_ROLE`：可铸造新代币。
+- `BURNER_ROLE`：可销毁代币。
+- `PAUSER_ROLE`：可暂停/恢复合约。
+- `onlyOwner`：UUPS 升级权限。
 
 ---
 
-### getTokenInfo
+## 主要常量 Constants
 
-**说明**: 这是一个便利函数，一次性返回代币的所有基本信息
-     * @notice 适用于前端界面显示和 API 接口
-
-**开发者说明**: 获取代币的完整信息
-     * @return tokenName 代币名称
-     * @return tokenSymbol 代币符号
-     * @return tokenDecimals 代币小数位数
-     * @return currentSupply 当前总供应量
-     * @return maxSupply 最大供应量
-     * 
-     * @notice 这是一个便利函数，一次性返回代币的所有基本信息
-     * @notice 适用于前端界面显示和 API 接口
-
-**返回值**:
-- tokenName 代币名称
-     * @return tokenSymbol 代币符号
-     * @return tokenDecimals 代币小数位数
-     * @return currentSupply 当前总供应量
-     * @return maxSupply 最大供应量
-     * 
-     * @notice 这是一个便利函数，一次性返回代币的所有基本信息
-     * @notice 适用于前端界面显示和 API 接口
+- `INITIAL_SUPPLY = 1_000_000_000 * 10**18`：初始供应量。
+- `MAX_SUPPLY = 2_000_000_000 * 10**18`：最大供应量。
 
 ---
 
-### decimals
+## 主要事件 Events
 
-**说明**: 这是 ERC20 标准的一部分，大多数代币使用 18 位小数
-     * @notice 与以太坊的 ETH 保持一致，便于用户理解
-
-**开发者说明**: 重写 decimals 函数，确保返回 18
-     * @return 代币的小数位数，固定为 18
-     * 
-     * @notice 这是 ERC20 标准的一部分，大多数代币使用 18 位小数
-     * @notice 与以太坊的 ETH 保持一致，便于用户理解
-
-**返回值**:
-- 代币的小数位数，固定为 18
-     * 
-     * @notice 这是 ERC20 标准的一部分，大多数代币使用 18 位小数
-     * @notice 与以太坊的 ETH 保持一致，便于用户理解
+- `TokensMinted(address to, uint256 amount, string reason)`
+- `TokensBurned(address from, uint256 amount, string reason)`
+- `ContractPaused(address account, string reason)`
+- `ContractUnpaused(address account)`
 
 ---
 
-## 事件
+## 主要函数 Functions
 
-### TokensMinted
+### 铸造/销毁
+- `mint(address to, uint256 amount, string reason)`：MINTER_ROLE，单地址铸造。
+- `batchMint(address[] recipients, uint256[] amounts, string reason)`：MINTER_ROLE，批量铸造。
+- `burn(address from, uint256 amount, string reason)`：BURNER_ROLE，销毁。
+- `selfMint(uint256 amount, string reason)`：MINTER_ROLE，用户自助领取。
+- `selfBurn(uint256 amount, string reason)`：用户自助销毁。
 
-**说明**: 这是一个可升级的代币合约，支持社交价值网络的激励机制
- * @author Bondly Team
- * @custom:security-contact security@bondly.com 当合约所有者铸造新代币时触发
+### 转账/授权
+- `transfer(address to, uint256 amount)`
+- `transferFrom(address from, address to, uint256 amount)`
+- `approve(address spender, uint256 amount)`
+- `permit(address owner, address spender, uint256 value, uint256 deadline, uint8 v, bytes32 r, bytes32 s)`
 
-**开发者说明**: Bondly 平台代币，支持 ERC20 标准和 ERC20Permit 扩展
- * 
- * 功能特性：
- * - 标准 ERC20 功能（转账、授权等）
- * - ERC20Permit 支持（无 gas 授权）
- * - 铸造和销毁功能（仅限所有者）
- * - 社交激励相关功能预留
- * 
- * @notice 这是一个可升级的代币合约，支持社交价值网络的激励机制
- * @author Bondly Team
- * @custom:security-contact security@bondly.com 代币铸造事件
-     * @param to 接收代币的地址
-     * @param amount 铸造的代币数量
-     * @param reason 铸造原因（如：用户奖励、社区激励等）
-     * @notice 当合约所有者铸造新代币时触发
+### 暂停/恢复
+- `pause(string reason)`：PAUSER_ROLE
+- `unpause()`：PAUSER_ROLE
 
-**参数**:
-- `to`: 接收代币的地址
-     * @param amount 铸造的代币数量
-     * @param reason 铸造原因（如：用户奖励、社区激励等）
-     * @notice 当合约所有者铸造新代币时触发
+### 查询
+- `getTokenInfo()`：返回名称、符号、小数位、当前供应、最大供应。
+- `mintableSupply()`：剩余可铸数量。
+
+### 升级
+- `_authorizeUpgrade(address newImplementation)`：仅 owner 可升级。
 
 ---
 
-### TokensBurned
+## 升级说明 Upgradeability
 
-**说明**: 当合约所有者销毁代币时触发
-
-**开发者说明**: 代币销毁事件
-     * @param from 销毁代币的地址
-     * @param amount 销毁的代币数量
-     * @param reason 销毁原因（如：用户惩罚、通缩机制等）
-     * @notice 当合约所有者销毁代币时触发
-
-**参数**:
-- `from`: 销毁代币的地址
-     * @param amount 销毁的代币数量
-     * @param reason 销毁原因（如：用户惩罚、通缩机制等）
-     * @notice 当合约所有者销毁代币时触发
+- 本合约采用 UUPS 升级模式，需通过 Proxy 部署。
+- 升级权限由 onlyOwner 控制，建议 owner 为多签或 DAO。
+- 升级流程：部署新实现合约 → 通过 Proxy 调用 upgradeTo → Registry 记录新版本。
 
 ---
+
+## 典型用法 Usage
+
+1. 通过 Hardhat + OpenZeppelin Upgrades 插件部署 UUPS Proxy。
+2. 初始化时传入初始 owner 地址。
+3. 通过 Registry 管理多版本 Proxy 地址。
+4. 通过角色权限安全管理铸造、销毁、暂停、升级。
+
+---
+
+## 重要安全提示 Security Notes
+
+- 升级权限建议交由多签或 DAO。
+- 所有敏感操作均有角色权限控制。
+- 合约升级前请充分测试和审计。
+
+---
+
+## English Summary
+
+BondlyTokenUpgradeable is an upgradable (UUPS) ERC20 token contract for the Bondly platform, supporting ERC20, ERC20Permit, ERC20Votes, role-based access control, pausing, batch minting, and self-service mint/burn. All upgrade logic is protected by onlyOwner. Use with a proxy and manage versions via BondlyRegistry.
 
