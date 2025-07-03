@@ -70,6 +70,14 @@ contract BondlyToken is ERC20, ERC20Permit, ERC20Votes, AccessControl, Pausable 
     /// @dev 最大供应量：20亿代币
     uint256 public constant MAX_SUPPLY = 2_000_000_000 * 10**18;
     
+    // ===== Custom Errors =====
+    error PausedOnlyRevokeAllowed();
+    
+    modifier whenNotPausedOrZero(uint256 amount) {
+        if (paused() && amount != 0) revert PausedOnlyRevokeAllowed();
+        _;
+    }
+    
     /**
      * @dev 构造函数，初始化代币合约
      * @param initialOwner 初始所有者地址，将拥有合约的管理权限
@@ -281,9 +289,56 @@ contract BondlyToken is ERC20, ERC20Permit, ERC20Votes, AccessControl, Pausable 
     }
     
     /**
-     * @dev 重写 approve 函数以支持暂停
+     * @dev 重写 approve 函数以支持暂停和 custom error
      */
-    function approve(address spender, uint256 amount) public virtual override whenNotPaused returns (bool) {
+    function approve(address spender, uint256 amount) public virtual override whenNotPausedOrZero(amount) returns (bool) {
         return super.approve(spender, amount);
+    }
+
+    /**
+     * @dev 显式实现 permit() 以便前端和接口可直接调用
+     */
+    function permit(
+        address owner,
+        address spender,
+        uint256 value,
+        uint256 deadline,
+        uint8 v,
+        bytes32 r,
+        bytes32 s
+    ) public virtual override {
+        super.permit(owner, spender, value, deadline, v, r, s);
+    }
+
+    /**
+     * @dev 用户主动销毁自己账户的代币
+     * @param amount 要销毁的代币数量
+     * @param reason 销毁原因
+     */
+    function selfBurn(uint256 amount, string memory reason) external whenNotPaused {
+        require(amount > 0, "Amount must be greater than 0");
+        require(balanceOf(msg.sender) >= amount, "Insufficient balance");
+        _burn(msg.sender, amount);
+        emit TokensBurned(msg.sender, amount, reason);
+    }
+
+    /**
+     * @dev 用户主动领取奖励（需有 MINTER_ROLE）
+     * @param amount 奖励数量
+     * @param reason 领取原因
+     */
+    function selfMint(uint256 amount, string memory reason) external onlyRole(MINTER_ROLE) whenNotPaused {
+        require(amount > 0, "Amount must be greater than 0");
+        require(totalSupply() + amount <= MAX_SUPPLY, "Exceeds max supply");
+        _mint(msg.sender, amount);
+        emit TokensMinted(msg.sender, amount, reason);
+    }
+
+    /**
+     * @dev 查询剩余可铸代币数量
+     * @return 剩余可铸数量（MAX_SUPPLY - totalSupply()）
+     */
+    function mintableSupply() external view returns (uint256) {
+        return MAX_SUPPLY - totalSupply();
     }
 }
