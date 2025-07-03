@@ -117,4 +117,24 @@ uint256 claimable = rewardDistributor.getClaimable(user);
 ## 扩展建议
 - 支持多轮历史奖励查询、批量领取等
 - 支持奖励池自动结算、剩余奖励回收等
-- 可与内容、互动、成就等模块联动，实现更丰富的激励机制 
+- 可与内容、互动、成就等模块联动，实现更丰富的激励机制
+
+## 合约注册、寻址相关接口
+
+### 设置合约地址
+```solidity
+function setContractAddress(string memory name, string memory version, address newAddress) external onlyOwner;
+```
+- **name**: 合约名称
+- **version**: 合约版本
+- **newAddress**: 新的合约地址
+
+### 获取合约地址
+```solidity
+function getContractAddress(string memory name, string memory version) external view returns (address);
+```
+- **name**: 合约名称
+- **version**: 合约版本
+- 返回合约地址
+
+## 保持所有接口、事件、变量命名与最新 .sol 文件一致。 

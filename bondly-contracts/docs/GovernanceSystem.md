@@ -259,6 +259,12 @@ interface IBondlyTreasury {
 }
 ```
 
+### 合约注册接口
+```solidity
+function setContractAddress(string memory name, string memory version, address newAddress) external;
+function getContractAddress(string memory name, string memory version) external view returns (address);
+```
+
 ## 部署和配置
 
 ### 部署顺序

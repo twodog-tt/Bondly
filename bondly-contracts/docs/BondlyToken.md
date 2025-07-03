@@ -71,40 +71,8 @@ function initialize(address initialOwner) public initializer
 - `unpause()`：PAUSER_ROLE
 
 ### 查询
-- `getTokenInfo()`：返回名称、符号、小数位、当前供应、最大供应。
+- getTokenInfo()：返回名称、符号、小数位、当前供应、最大供应（maxSupplyValue）。
 - `mintableSupply()`：剩余可铸数量。
 
 ### 升级
-- `_authorizeUpgrade(address newImplementation)`：仅 owner 可升级。
-
----
-
-## 升级说明 Upgradeability
-
-- 本合约采用 UUPS 升级模式，需通过 Proxy 部署。
-- 升级权限由 onlyOwner 控制，建议 owner 为多签或 DAO。
-- 升级流程：部署新实现合约 → 通过 Proxy 调用 upgradeTo → Registry 记录新版本。
-
----
-
-## 典型用法 Usage
-
-1. 通过 Hardhat + OpenZeppelin Upgrades 插件部署 UUPS Proxy。
-2. 初始化时传入初始 owner 地址。
-3. 通过 Registry 管理多版本 Proxy 地址。
-4. 通过角色权限安全管理铸造、销毁、暂停、升级。
-
----
-
-## 重要安全提示 Security Notes
-
-- 升级权限建议交由多签或 DAO。
-- 所有敏感操作均有角色权限控制。
-- 合约升级前请充分测试和审计。
-
----
-
-## English Summary
-
-BondlyTokenUpgradeable is an upgradable (UUPS) ERC20 token contract for the Bondly platform, supporting ERC20, ERC20Permit, ERC20Votes, role-based access control, pausing, batch minting, and self-service mint/burn. All upgrade logic is protected by onlyOwner. Use with a proxy and manage versions via BondlyRegistry.
-
+- `_authorizeUpgrade(address newImplementation)`

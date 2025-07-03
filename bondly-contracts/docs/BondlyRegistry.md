@@ -24,9 +24,10 @@ constructor(address initialOwner)
 
 ### 设置/更新合约地址
 ```solidity
-function setContractAddress(string calldata name, address newAddress) external onlyOwner;
+function setContractAddress(string memory name, string memory version, address newAddress) external;
 ```
 - **name**: 合约名称（如 "BondlyToken"）
+- **version**: 合约版本（如 "v1"）
 - **newAddress**: 新的合约地址
 - 只有 owner 可调用
 - 注册或更新合约地址，原地址会被覆盖
@@ -36,17 +37,19 @@ function setContractAddress(string calldata name, address newAddress) external o
 
 ### 查询合约地址
 ```solidity
-function getContractAddress(string calldata name) external view returns (address);
+function getContractAddress(string memory name, string memory version) external view returns (address);
 ```
 - **name**: 合约名称
+- **version**: 合约版本
 - 返回注册的合约地址（未注册时为 0）
 - 任何人都可以调用
 
 ### 删除合约地址
 ```solidity
-function removeContractAddress(string calldata name) external onlyOwner;
+function removeContractAddress(string memory name, string memory version) external;
 ```
 - **name**: 合约名称
+- **version**: 合约版本
 - 只有 owner 可调用
 - 删除后该名称对应的地址为 0
 - 会触发 ContractAddressUpdated 事件，newAddress 为 0
@@ -65,24 +68,24 @@ event ContractAddressUpdated(string indexed name, address indexed oldAddress, ad
 
 1. **注册/更新合约地址**
 ```solidity
-registry.setContractAddress("BondlyToken", 0x1234...);
+registry.setContractAddress("BondlyToken", "v1", 0x1234...);
 ```
 
 2. **查询合约地址**
 ```solidity
-address token = registry.getContractAddress("BondlyToken");
+address token = registry.getContractAddress("BondlyToken", "v1");
 ```
 
 3. **删除合约地址**
 ```solidity
-registry.removeContractAddress("BondlyToken");
+registry.removeContractAddress("BondlyToken", "v1");
 ```
 
 ## 设计说明与安全性
 - 支持任意 key（如 "BondlyToken"、"BondlyNFT"、"BondlyDAO"），未来新模块无需改代码
 - 只有 owner（可升级为多签/DAO）可修改，防止恶意篡改
 - 所有变更有事件，便于前端监听和链上分析
-- 前端/其他合约可通过 `getContractAddress("BondlyToken")` 获取最新地址
+- 前端/其他合约可通过 `getContractAddress("BondlyToken", "v1")` 获取最新地址
 - 注册、更新、删除操作均有严格的参数校验，防止误操作
 
 ## 扩展建议
