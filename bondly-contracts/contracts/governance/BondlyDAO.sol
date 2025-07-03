@@ -1,22 +1,23 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.19;
 
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/ReentrancyGuardUpgradeable.sol";
 import "./interfaces/IBondlyRegistry.sol";
 import "./interfaces/IBondlyVoting.sol";
 import "./interfaces/IBondlyTreasury.sol";
 import "./interfaces/IBondlyDAO.sol";
 import "../reputation/interfaces/IReputationVault.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 /**
- * @title BondlyDAO
- * @dev Bondly 平台的 DAO 治理合约，管理提案的创建、记录、状态流转
+ * @title BondlyDAOUpgradeable
+ * @dev Bondly 平台的 DAO 治理合约，UUPS 可升级，管理提案的创建、记录、状态流转
  * @author Bondly Team
- * @custom:security-contact security@bondly.com
  */
-contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
+contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuardUpgradeable, PausableUpgradeable, UUPSUpgradeable {
     
     // ============ 状态枚举 ============
     
@@ -47,18 +48,19 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
     
     // ============ 状态变量 ============
     
-    IBondlyRegistry public immutable registry;
+    IBondlyRegistry public registry;
     IBondlyVoting public votingContract;
     IBondlyTreasury public treasuryContract;
-    
+    IERC20 public bondToken; // BOND 代币地址（通过 registry 获取）
     uint256 public proposalCount;
-    uint256 public minProposalDeposit;      // 最小提案押金
-    uint256 public minVotingPeriod;         // 最小投票期
-    uint256 public maxVotingPeriod;         // 最大投票期
-    
+    uint256 public minProposalDeposit;
+    uint256 public minVotingPeriod;
+    uint256 public maxVotingPeriod;
     mapping(uint256 => Proposal) public proposals;
     mapping(address => uint256[]) public userProposals;
     mapping(address => bool) public authorizedExecutors;
+    mapping(uint256 => address) public proposalDepositors; // 记录每个提案的押金人
+    mapping(uint256 => uint256) public proposalDeposits;   // 记录每个提案的押金数量
     
     // ============ 事件 ============
     
@@ -116,18 +118,22 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
         _;
     }
     
-    // ============ 构造函数 ============
+    /// @custom:oz-upgrades-unsafe-allow constructor
+    constructor() { _disableInitializers(); }
     
     /**
-     * @dev 构造函数
+     * @dev 初始化函数，替代构造函数
      * @param initialOwner 初始所有者
      * @param registryAddress BondlyRegistry 合约地址
      */
-    constructor(address initialOwner, address registryAddress) Ownable(initialOwner) {
+    function initialize(address initialOwner, address registryAddress) public initializer {
+        __Ownable_init();
+        __ReentrancyGuard_init();
+        __Pausable_init();
+        __UUPSUpgradeable_init();
         require(registryAddress != address(0), "DAO: Invalid registry address");
         registry = IBondlyRegistry(registryAddress);
-        
-        // 初始化治理参数
+        _transferOwnership(initialOwner);
         minProposalDeposit = 100 * 10**18;  // 100 BOND
         minVotingPeriod = 3 days;            // 最小 3 天投票期
         maxVotingPeriod = 7 days;            // 最大 7 天投票期
@@ -136,12 +142,16 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
     // ============ 核心功能 ============
     
     /**
-     * @dev 创建新提案
-     * @param title 提案标题
-     * @param description 提案描述
-     * @param target 目标合约地址
-     * @param data 执行数据
-     * @param votingPeriod 投票期（秒）
+     * @dev 设置 BOND 代币地址（仅 owner，可通过 registry 获取）
+     * @param tokenAddr BOND 代币地址
+     */
+    function setBondToken(address tokenAddr) external onlyOwner {
+        require(tokenAddr != address(0), "DAO: Invalid bond token");
+        bondToken = IERC20(tokenAddr);
+    }
+    
+    /**
+     * @dev 创建新提案，押金为 BOND 代币
      */
     function createProposal(
         string calldata title,
@@ -149,17 +159,20 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
         address target,
         bytes calldata data,
         uint256 votingPeriod
-    ) external payable nonReentrant whenNotPaused returns (uint256) {
-        require(msg.value >= minProposalDeposit, "DAO: Insufficient deposit");
+    ) external nonReentrant whenNotPaused returns (uint256) {
+        require(address(bondToken) != address(0), "DAO: Bond token not set");
+        require(minProposalDeposit > 0, "DAO: Deposit not set");
+        require(bondToken.allowance(msg.sender, address(this)) >= minProposalDeposit, "DAO: Approve BOND first");
+        require(bondToken.balanceOf(msg.sender) >= minProposalDeposit, "DAO: Insufficient BOND");
         require(bytes(title).length > 0, "DAO: Empty title");
         require(bytes(description).length > 0, "DAO: Empty description");
         require(target != address(0), "DAO: Invalid target address");
         require(votingPeriod >= minVotingPeriod, "DAO: Voting period too short");
         require(votingPeriod <= maxVotingPeriod, "DAO: Voting period too long");
-        
+        // 转账 BOND 作为押金
+        bondToken.transferFrom(msg.sender, address(this), minProposalDeposit);
         proposalCount++;
         uint256 proposalId = proposalCount;
-        
         Proposal storage proposal = proposals[proposalId];
         proposal.id = proposalId;
         proposal.proposer = msg.sender;
@@ -174,9 +187,10 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
         proposal.snapshotBlock = 0;
         proposal.votingDeadline = 0;
         proposal.executionTime = 0;
-        
         userProposals[msg.sender].push(proposalId);
-        
+        // 记录押金人和押金
+        proposalDepositors[proposalId] = msg.sender;
+        proposalDeposits[proposalId] = minProposalDeposit;
         emit ProposalCreated(proposalId, msg.sender, title, target, data, proposal.proposalHash);
         return proposalId;
     }
@@ -191,21 +205,19 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
         require(proposal.state == ProposalState.Pending, "DAO: Proposal not pending");
         require(votingPeriod >= minVotingPeriod, "DAO: Voting period too short");
         require(votingPeriod <= maxVotingPeriod, "DAO: Voting period too long");
-        
         proposal.state = ProposalState.Active;
         proposal.snapshotBlock = block.number;
         proposal.votingDeadline = block.timestamp + votingPeriod;
-        
         // 通知 Voting 合约开始投票
         if (address(votingContract) != address(0)) {
             votingContract.startVoting(proposalId, proposal.snapshotBlock, proposal.votingDeadline);
-            
+            // 获取当前权重类型
             (, uint8 currentWeightType, , ) = votingContract.getContractInfo();
-            if (uint8(currentWeightType) == 1) { // WeightType.Reputation
+            // 0: Token, 1: Reputation, 2: Mixed
+            if (currentWeightType == 1 || currentWeightType == 2) {
                 recordReputationSnapshots(proposalId);
             }
         }
-        
         emit ProposalActivated(proposalId, proposal.snapshotBlock, proposal.votingDeadline);
     }
     
@@ -214,7 +226,7 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
      * @param proposalId 提案ID
      */
     function recordReputationSnapshots(uint256 proposalId) internal {
-        address reputationVault = registry.getContractAddress("ReputationVault");
+        address reputationVault = registry.getContractAddress("ReputationVault", "v1");
         if (reputationVault == address(0)) return;
         
         // 这里可以根据需要记录特定用户的声誉快照
@@ -228,34 +240,22 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
     }
     
     /**
-     * @dev 执行提案
-     * @param proposalId 提案ID
+     * @dev 执行提案，成功返还 50% 押金，失败全部转 Treasury
      */
     function executeProposal(uint256 proposalId) external onlyAuthorizedExecutor nonReentrant proposalExists(proposalId) whenNotPaused {
         Proposal storage proposal = proposals[proposalId];
         require(proposal.state == ProposalState.Active, "DAO: Proposal not active");
         require(block.timestamp > proposal.votingDeadline, "DAO: Voting not ended");
-        
-        // 校验提案数据完整性
-        require(
-            keccak256(abi.encode(proposal.target, proposal.data)) == proposal.proposalHash,
-            "DAO: Proposal data mismatch"
-        );
-        
-        // 校验目标地址是否在 Registry 白名单
-        require(
-            registry.isContractRegisteredByAddress(proposal.target),
-            "DAO: Target not whitelisted"
-        );
-        
+        require(keccak256(abi.encode(proposal.target, proposal.data)) == proposal.proposalHash, "DAO: Proposal data mismatch");
+        require(registry.isContractRegisteredByAddress(proposal.target), "DAO: Target not whitelisted");
         proposal.executionTime = block.timestamp;
-        
+        address depositor = proposalDepositors[proposalId];
+        uint256 deposit = proposalDeposits[proposalId];
         if (proposal.yesVotes > proposal.noVotes) {
             // 提案通过，执行操作
             bool success;
             bytes memory returnData;
             string memory revertReason = "";
-            // 使用 try/catch 捕获 revert 原因
             try this._callProposalTarget(proposal.target, proposal.data) returns (bool s, bytes memory ret) {
                 success = s;
                 returnData = ret;
@@ -263,22 +263,40 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
                 revertReason = reason;
                 success = false;
             } catch (bytes memory lowLevelData) {
-                // 低级错误
                 revertReason = _getRevertMsg(lowLevelData);
                 success = false;
             }
             proposal.state = success ? ProposalState.Executed : ProposalState.Failed;
             if (success) {
+                // 返还 50% 押金
+                if (deposit > 0 && depositor != address(0)) {
+                    uint256 refund = deposit / 2;
+                    bondToken.transfer(depositor, refund);
+                    // 其余转 Treasury
+                    if (address(treasuryContract) != address(0)) {
+                        bondToken.transfer(address(treasuryContract), deposit - refund);
+                    }
+                }
                 emit ProposalExecuted(proposalId, true, proposal.executionTime);
             } else {
+                // 全部转 Treasury
+                if (deposit > 0 && address(treasuryContract) != address(0)) {
+                    bondToken.transfer(address(treasuryContract), deposit);
+                }
                 emit ProposalFailed(proposalId);
                 emit ProposalFailedWithReason(proposalId, revertReason);
             }
         } else {
-            // 提案未通过
+            // 提案未通过，全部转 Treasury
+            if (deposit > 0 && address(treasuryContract) != address(0)) {
+                bondToken.transfer(address(treasuryContract), deposit);
+            }
             proposal.state = ProposalState.Failed;
             emit ProposalFailed(proposalId);
         }
+        // 清理押金记录
+        delete proposalDepositors[proposalId];
+        delete proposalDeposits[proposalId];
     }
     
     /**
@@ -517,4 +535,7 @@ contract BondlyDAO is IBondlyDAO, Ownable, ReentrancyGuard, Pausable {
      * @dev 接收 ETH
      */
     receive() external payable {}
+
+    // ============ UUPS 升级授权 ============
+    function _authorizeUpgrade(address newImplementation) internal override onlyOwner {}
 } 

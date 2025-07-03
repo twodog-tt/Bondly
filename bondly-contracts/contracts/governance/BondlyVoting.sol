@@ -22,7 +22,8 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
     
     enum WeightType { 
         Token,      // 基于代币余额
-        Reputation  // 基于声誉分数
+        Reputation, // 基于声誉分数
+        Mixed       // 混合权重（Token+Reputation）
     }
     
     // ============ 状态变量 ============
@@ -49,6 +50,12 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
     mapping(uint256 => mapping(address => uint256)) public reputationSnapshots;
     // proposalId => user => tokenSnapshot
     mapping(uint256 => mapping(address => uint256)) public tokenSnapshots;
+    // proposalId => user => MixedSnapshot
+    struct MixedSnapshot {
+        uint256 tokenWeight;
+        uint256 reputationWeight;
+    }
+    mapping(uint256 => mapping(address => MixedSnapshot)) public mixedSnapshots;
     
     // ============ 事件 ============
     
@@ -111,24 +118,22 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
     function vote(uint256 proposalId, bool support) external override nonReentrant proposalActive(proposalId) votingNotEnded(proposalId) {
         require(!hasVoted[proposalId][msg.sender], "Voting: Already voted");
         require(daoContract != IBondlyDAO(address(0)), "Voting: DAO contract not set");
-        
-        uint256 weight = getVotingWeightAtSnapshot(msg.sender, proposalId);
+        uint256 weight;
+        if (weightType == WeightType.Mixed) {
+            MixedSnapshot memory snap = mixedSnapshots[proposalId][msg.sender];
+            weight = snap.tokenWeight + snap.reputationWeight;
+        } else {
+            weight = getVotingWeightAtSnapshot(msg.sender, proposalId);
+        }
         require(weight > 0, "Voting: No voting power");
-        
-        // 记录投票
         hasVoted[proposalId][msg.sender] = true;
         voteWeightSnapshot[proposalId][msg.sender] = weight;
-        
-        // 更新总票数
         if (support) {
             totalYesVotes[proposalId] += weight;
         } else {
             totalNoVotes[proposalId] += weight;
         }
-        
-        // 回调 DAO 合约记录投票
         daoContract.onVote(proposalId, msg.sender, support, weight);
-        
         emit Voted(proposalId, msg.sender, support, weight);
     }
     
@@ -141,7 +146,30 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
     function startVoting(uint256 proposalId, uint256 snapshotBlock, uint256 votingDeadline) external override onlyDAOContract {
         proposalSnapshotBlocks[proposalId] = snapshotBlock;
         proposalVotingDeadlines[proposalId] = votingDeadline;
-        
+        if (weightType == WeightType.Token) {
+            _recordTokenSnapshot(proposalId, snapshotBlock);
+        } else if (weightType == WeightType.Reputation) {
+            _recordReputationSnapshot(proposalId);
+        } else if (weightType == WeightType.Mixed) {
+            _recordTokenSnapshot(proposalId, snapshotBlock);
+            _recordReputationSnapshot(proposalId);
+            // 记录混合快照
+            address token = registry.getContractAddress("BondlyToken", "v1");
+            address reputationVault = registry.getContractAddress("ReputationVault", "v1");
+            for (uint256 i = 0; i < 50; i++) { // TODO: 替换为实际活跃用户列表
+                address user = address(uint160(i+1)); // 占位示例
+                uint256 tokenW = 0;
+                uint256 repW = 0;
+                if (token != address(0)) {
+                    try ERC20Votes(token).getPastVotes(user, snapshotBlock) returns (uint256 balance) { tokenW = balance; }
+                    catch { try IERC20(token).balanceOf(user) returns (uint256 balance) { tokenW = balance; } catch {} }
+                }
+                if (reputationVault != address(0)) {
+                    try IReputationVault(reputationVault).getReputation(user) returns (uint256 rep) { repW = rep; } catch {}
+                }
+                mixedSnapshots[proposalId][user] = MixedSnapshot(tokenW, repW);
+            }
+        }
         emit VotingStarted(proposalId, snapshotBlock, votingDeadline);
     }
     
@@ -170,7 +198,7 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
         
         if (weightType == WeightType.Token) {
             // 使用 ERC20Votes 的 getPastVotes 获取快照时的代币余额
-            address token = registry.getContractAddress("BondlyToken");
+            address token = registry.getContractAddress("BondlyToken", "v1");
             if (token == address(0)) return 0;
             
             try ERC20Votes(token).getPastVotes(user, snapshotBlock) returns (uint256 balance) {
@@ -195,11 +223,11 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
      */
     function getCurrentVotingWeight(address user) external view override returns (uint256) {
         if (weightType == WeightType.Token) {
-            address token = registry.getContractAddress("BondlyToken");
+            address token = registry.getContractAddress("BondlyToken", "v1");
             if (token == address(0)) return 0;
             return IERC20(token).balanceOf(user);
         } else {
-            address reputationVault = registry.getContractAddress("ReputationVault");
+            address reputationVault = registry.getContractAddress("ReputationVault", "v1");
             if (reputationVault == address(0)) return 0;
             return IReputationVault(reputationVault).getReputation(user);
         }
@@ -339,7 +367,33 @@ contract BondlyVoting is IBondlyVoting, Ownable, ReentrancyGuard {
     ) {
         daoAddress = address(daoContract);
         currentWeightType = uint8(weightType);
-        tokenAddress = registry.getContractAddress("BondlyToken");
-        reputationAddress = registry.getContractAddress("ReputationVault");
+        tokenAddress = registry.getContractAddress("BondlyToken", "v1");
+        reputationAddress = registry.getContractAddress("ReputationVault", "v1");
+    }
+    
+    // ============ 内部函数 ============
+    
+    // 内部函数：记录 Token 快照
+    function _recordTokenSnapshot(uint256 proposalId, uint256 snapshotBlock) internal {
+        address token = registry.getContractAddress("BondlyToken", "v1");
+        if (token == address(0)) return;
+        for (uint256 i = 0; i < 50; i++) { // TODO: 替换为实际活跃用户列表
+            address user = address(uint160(i+1)); // 占位示例
+            uint256 tokenW = 0;
+            try ERC20Votes(token).getPastVotes(user, snapshotBlock) returns (uint256 balance) { tokenW = balance; }
+            catch { try IERC20(token).balanceOf(user) returns (uint256 balance) { tokenW = balance; } catch {} }
+            tokenSnapshots[proposalId][user] = tokenW;
+        }
+    }
+    // 内部函数：记录 Reputation 快照
+    function _recordReputationSnapshot(uint256 proposalId) internal {
+        address reputationVault = registry.getContractAddress("ReputationVault", "v1");
+        if (reputationVault == address(0)) return;
+        for (uint256 i = 0; i < 50; i++) { // TODO: 替换为实际活跃用户列表
+            address user = address(uint160(i+1)); // 占位示例
+            uint256 repW = 0;
+            try IReputationVault(reputationVault).getReputation(user) returns (uint256 rep) { repW = rep; } catch {}
+            reputationSnapshots[proposalId][user] = repW;
+        }
     }
 } 
