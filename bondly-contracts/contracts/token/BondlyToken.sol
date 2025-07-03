@@ -26,8 +26,11 @@ import "@openzeppelin/contracts/utils/Pausable.sol";
 contract BondlyToken is ERC20, ERC20Permit, ERC20Votes, AccessControl, Pausable {
     
     // 角色定义
+    // 拥有"铸币"权限的角色
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
+    // 拥有"销毁"权限的角色
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
+    // 拥有"暂停"权限的角色
     bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
     
     /**
@@ -163,18 +166,18 @@ contract BondlyToken is ERC20, ERC20Permit, ERC20Votes, AccessControl, Pausable 
     ) external onlyRole(MINTER_ROLE) whenNotPaused {
         require(recipients.length == amounts.length, "Arrays length mismatch");
         require(recipients.length > 0, "Empty arrays");
-        
+
         uint256 totalAmount = 0;
-        for (uint256 i = 0; i < amounts.length; i++) {
-            totalAmount += amounts[i];
-        }
-        
-        require(totalSupply() + totalAmount <= MAX_SUPPLY, "Exceeds max supply");
-        
         for (uint256 i = 0; i < recipients.length; i++) {
             require(recipients[i] != address(0), "Cannot mint to zero address");
             require(amounts[i] > 0, "Amount must be greater than 0");
-            
+            unchecked {
+                totalAmount += amounts[i];
+            }
+        }
+        require(totalSupply() + totalAmount <= MAX_SUPPLY, "Exceeds max supply");
+
+        for (uint256 i = 0; i < recipients.length; i++) {
             _mint(recipients[i], amounts[i]);
             emit TokensMinted(recipients[i], amounts[i], reason);
         }
