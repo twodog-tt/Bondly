@@ -64,6 +64,8 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
     mapping(uint256 => uint256) public proposalDeposits;   // 记录每个提案的押金数量
     /// @dev 合约函数白名单：target => selector => allowed
     mapping(address => mapping(bytes4 => bool)) public allowedFunctions;
+    IReputationVault public reputationVault;
+    bool public allowReputationProposal;
     
     // ============ 事件 ============
     
@@ -142,6 +144,8 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         minProposalDeposit = 100 * 10**18;  // 100 BOND
         minVotingPeriod = 3 days;            // 最小 3 天投票期
         maxVotingPeriod = 7 days;            // 最大 7 天投票期
+        reputationVault = IReputationVault(registry.getContractAddress("ReputationVault", "v1"));
+        allowReputationProposal = true;
     }
     
     // ============ 核心功能 ============
@@ -164,18 +168,24 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         address target,
         bytes calldata data,
         uint256 votingPeriod
-    ) external nonReentrant whenNotPaused returns (uint256) {
+    ) external payable nonReentrant whenNotPaused returns (uint256) {
         require(address(bondToken) != address(0), "DAO: Bond token not set");
         require(minProposalDeposit > 0, "DAO: Deposit not set");
-        require(bondToken.allowance(msg.sender, address(this)) >= minProposalDeposit, "DAO: Approve BOND first");
-        require(bondToken.balanceOf(msg.sender) >= minProposalDeposit, "DAO: Insufficient BOND");
         require(bytes(title).length > 0, "DAO: Empty title");
         require(bytes(description).length > 0, "DAO: Empty description");
         require(target != address(0), "DAO: Invalid target address");
         require(votingPeriod >= minVotingPeriod, "DAO: Voting period too short");
         require(votingPeriod <= maxVotingPeriod, "DAO: Voting period too long");
-        // 转账 BOND 作为押金
-        bondToken.transferFrom(msg.sender, address(this), minProposalDeposit);
+        bool eligibleByDeposit = msg.value >= minProposalDeposit;
+        bool eligibleByReputation = allowReputationProposal &&
+            address(reputationVault) != address(0) &&
+            reputationVault.isEligible(msg.sender);
+        require(eligibleByDeposit || eligibleByReputation, "DAO: Not eligible to propose");
+        // 原有押金逻辑保留
+        if (eligibleByDeposit) {
+            // 转账 BOND 作为押金
+            bondToken.transferFrom(msg.sender, address(this), minProposalDeposit);
+        }
         proposalCount++;
         uint256 proposalId = proposalCount;
         Proposal storage proposal = proposals[proposalId];
@@ -598,5 +608,13 @@ contract BondlyDAOUpgradeable is IBondlyDAO, OwnableUpgradeable, ReentrancyGuard
         address treasuryAddr = registry.getContractAddress("BondlyTreasury", "v1");
         require(treasuryAddr != address(0), "DAO: Treasury contract not found");
         return IBondlyTreasury(treasuryAddr);
+    }
+
+    function updateReputationVault(address vault) external onlyOwner {
+        require(vault != address(0), "DAO: Invalid reputation vault");
+        reputationVault = IReputationVault(vault);
+    }
+    function setAllowReputationProposal(bool allowed) external onlyOwner {
+        allowReputationProposal = allowed;
     }
 } 

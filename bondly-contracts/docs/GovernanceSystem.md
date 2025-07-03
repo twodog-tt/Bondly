@@ -110,14 +110,40 @@ Bondly 治理系统是一个去中心化的自治组织（DAO）系统，由三�
 ## 治理流程
 
 ### 1. 提案创建
+- 用户 → BondlyDAO.createProposal()
+-      ↓
+- 检查资格：
+-   - 用户要么支付足够押金（ETH），要么满足声誉门槛（由 ReputationVault 判断 isEligible）
+-   - 资格判断通过后，继续参数有效性校验
+-      ↓
+- 创建提案记录（状态：Pending）
+-      ↓
+- 记录提案哈希（防篡改）
+
+#### 双通道提案机制
+- 新增状态变量：
+  - `IReputationVault public reputationVault;`
+  - `bool public allowReputationProposal;`
+- 初始化时自动从 Registry 获取 ReputationVault 地址，并允许声誉提案。
+- 管理函数：
+  - `updateReputationVault(address vault)` 仅 owner 可调用，更新声誉合约地址。
+  - `setAllowReputationProposal(bool allowed)` 仅 owner 可调用，开关声誉提案通道。
+- 资格判断逻辑：
+  - `bool eligibleByDeposit = msg.value >= minProposalDeposit;`
+  - `bool eligibleByReputation = allowReputationProposal && address(reputationVault) != address(0) && reputationVault.isEligible(msg.sender);`
+  - `require(eligibleByDeposit || eligibleByReputation, "DAO: Not eligible to propose");`
+- 原有 BOND 押金逻辑保留。
+
+#### IReputationVault 接口
+需包含：
+```solidity
+function isEligible(address user) external view returns (bool);
 ```
-用户 → BondlyDAO.createProposal()
-     ↓
-检查押金、参数有效性
-     ↓
-创建提案记录（状态：Pending）
-     ↓
-记录提案哈希（防篡改）
+
+#### Registry 注册
+部署后需通过 Registry 注册 ReputationVault：
+```solidity
+registry.setContractAddress("ReputationVault", "v1", reputationVaultAddress);
 ```
 
 ### 2. 提案激活

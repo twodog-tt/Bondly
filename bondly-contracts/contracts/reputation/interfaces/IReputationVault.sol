@@ -42,4 +42,11 @@ interface IReputationVault {
      * @return 声誉历史数组
      */
     function getReputationHistory(address user) external view returns (uint256[] memory);
+
+    /**
+     * @dev 检查用户是否符合条件
+     * @param user 用户地址
+     * @return 是否符合条件
+     */
+    function isEligible(address user) external view returns (bool);
 } 
