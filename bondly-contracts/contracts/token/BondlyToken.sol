@@ -97,24 +97,24 @@ contract BondlyTokenUpgradeable is
      * @notice 代币名称为 "Bondly Token"，符号为 "BOND"
      */
     function initialize(address initialOwner, address daoAddress) public initializer {
-        __ERC20_init("Bondly Token", "BOND");
-        __ERC20Permit_init("Bondly Token");
-        __ERC20Votes_init();
-        __AccessControl_init();
-        __Pausable_init();
-        __Ownable_init();
-        __UUPSUpgradeable_init();
+        __ERC20_init("Bondly Token", "BOND"); // 代币名称和符号
+        __ERC20Permit_init("Bondly Token"); // 无 gas 授权
+        __ERC20Votes_init(); // 治理快照
+        __AccessControl_init(); // 角色权限管理
+        __Pausable_init(); // 暂停机制
+        __Ownable_init(); // 合约所有权
+        __UUPSUpgradeable_init(); // UUPS 升级
 
-        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner);
-        _grantRole(MINTER_ROLE, initialOwner);
-        _grantRole(BURNER_ROLE, initialOwner);
-        _grantRole(PAUSER_ROLE, initialOwner);
-        transferOwnership(initialOwner);
-        uint256 initialSupply = 1_000_000_000 * 10**decimals();
-        _mint(initialOwner, initialSupply);
-        maxSupply = 2_000_000_000 * 10**18;
-        require(daoAddress != address(0), "DAO address required");
-        dao = daoAddress;
+        _grantRole(DEFAULT_ADMIN_ROLE, initialOwner); // 默认管理员
+        _grantRole(MINTER_ROLE, initialOwner); // 铸币权限
+        _grantRole(BURNER_ROLE, initialOwner); // 销毁权限
+        _grantRole(PAUSER_ROLE, initialOwner); // 暂停权限
+        transferOwnership(initialOwner); // 转移所有权
+        uint256 initialSupply = 1_000_000_000 * 10**decimals(); // 初始供应量
+        _mint(initialOwner, initialSupply); // 铸造初始供应量
+        maxSupply = 2_000_000_000 * 10**18; // 最大供应量
+        require(daoAddress != address(0), "DAO address required"); // DAO 地址
+        dao = daoAddress; // 设置 DAO 地址
     }
 
     // ============ 核心功能 ============
@@ -235,8 +235,14 @@ contract BondlyTokenUpgradeable is
     }
 
     // ============ ERC20Votes 重写函数 ============
+    // 重写 ERC20Votes 相关函数，确保在转账、铸造、销毁时更新治理快照 为治理系统提供「可快照的投票权机制」
+    // 这些重写函数确保在代币转账、铸造和销毁时，治理快照能够正确更新，防止操纵投票
+    // 同时，这些重写函数也确保了代币的治理功能能够正常工作
     /**
      * @dev ERC20Votes 相关转账后钩子
+     * @param from 转账前的地址
+     * @param to 转账后的地址
+     * @param amount 转账数量
      */
     function _afterTokenTransfer(address from, address to, uint256 amount)
         internal
@@ -247,6 +253,8 @@ contract BondlyTokenUpgradeable is
     }
     /**
      * @dev ERC20Votes 相关铸造
+     * @param to 接收代币的地址
+     * @param amount 铸造的代币数量
      */
     function _mint(address to, uint256 amount)
         internal
@@ -257,6 +265,8 @@ contract BondlyTokenUpgradeable is
     }
     /**
      * @dev ERC20Votes 相关销毁
+     * @param account 销毁代币的地址
+     * @param amount 销毁的代币数量
      */
     function _burn(address account, uint256 amount)
         internal
@@ -267,8 +277,13 @@ contract BondlyTokenUpgradeable is
     }
 
     // ============ ERC20Permit 重写 ============
+    // 支持 EIP-2612 Permit 功能中的 nonce 查询
+    // 这是 ERC20Permit 标准的一部分，确保了代币的治理功能能够正常工作
+    // 多重继承情况下必须显式 override
     /**
      * @dev ERC20Permit 相关 nonces 查询
+     * @param owner 查询 nonce 的地址
+     * @return nonce 查询结果
      */
     function nonces(address owner)
         public
@@ -283,18 +298,28 @@ contract BondlyTokenUpgradeable is
     // ============ transfer/approve 支持暂停 ============
     /**
      * @dev 支持暂停的 transfer
+     * @param to 转账后的地址
+     * @param amount 转账数量
+     * @return 转账是否成功
      */
     function transfer(address to, uint256 amount) public virtual override whenNotPaused returns (bool) {
         return super.transfer(to, amount);
     }
     /**
      * @dev 支持暂停的 transferFrom
+     * @param from 转账前的地址
+     * @param to 转账后的地址
+     * @param amount 转账数量
+     * @return 转账是否成功
      */
     function transferFrom(address from, address to, uint256 amount) public virtual override whenNotPaused returns (bool) {
         return super.transferFrom(from, to, amount);
     }
     /**
      * @dev 支持暂停和 custom error 的 approve
+     * @param spender 授权的地址
+     * @param amount 授权数量
+     * @return 授权是否成功
      */
     function approve(address spender, uint256 amount) public virtual override whenNotPausedOrZero(amount) returns (bool) {
         return super.approve(spender, amount);
@@ -303,6 +328,13 @@ contract BondlyTokenUpgradeable is
     // ============ permit 显式暴露 ============
     /**
      * @dev 显式实现 permit() 以便前端和接口可直接调用
+     * @param owner 授权的地址
+     * @param spender 被授权的地址
+     * @param value 授权数量
+     * @param deadline 授权截止时间
+     * @param v 签名 v 参数
+     * @param r 签名 r 参数
+     * @param s 签名 s 参数
      */
     function permit(
         address owner,
@@ -350,17 +382,27 @@ contract BondlyTokenUpgradeable is
     }
 
     // ============ UUPS 升级授权 ============
-    /// @dev 升级授权，仅允许 DAO 合约
+    /**
+     * @dev 升级授权，仅允许 DAO 合约
+     * @param newImplementation 新实现的合约地址
+     */
     function _authorizeUpgrade(address newImplementation) internal override {
         require(msg.sender == dao, "Token: Only DAO can upgrade");
         // 可选：proxiableUUID/ERC1967 校验
     }
 
-    /// @dev 合约版本号
+    /**
+     * @dev 合约版本号
+     * @return 合约版本号
+     */
     function version() public pure returns (string memory) {
         return "1.0.0";
     }
 
+    // ============ DAO 相关功能 ============
+    /**
+     * @dev DAO 合约地址
+     */
     address public dao;
 
     /**

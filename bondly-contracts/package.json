@@ -39,7 +39,7 @@
     "@nomicfoundation/hardhat-toolbox": "^4.0.0",
     "@nomicfoundation/hardhat-verify": "^2.0.1",
     "@typechain/ethers-v6": "^0.5.0",
-    "@typechain/hardhat": "^8.0.3",
+    "@typechain/hardhat": "^9.1.0",
     "@types/chai": "^4.3.5",
     "@types/mocha": "^10.0.1",
     "@types/node": "^20.5.0",
@@ -55,7 +55,7 @@
     "prettier": "^3.0.2",
     "prettier-plugin-solidity": "^1.4.3",
     "solhint": "^4.0.0",
-    "solidity-coverage": "^0.8.4",
+    "solidity-coverage": "^0.8.16",
     "ts-node": "^10.9.2",
     "typechain": "^8.3.1",
     "typescript": "^5.1.6"
