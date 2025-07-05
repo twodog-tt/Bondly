@@ -210,7 +210,7 @@ npm run dev
 ```
 
 #### 🔧 **bondly-api** - 后端服务
-基于 Node.js + Express + TypeScript 构建的后端服务，提供 RESTful API 接口。
+基于 Golang 构建的高性能后端服务，提供 RESTful API 接口和 gRPC 服务。
 
 **核心功能：**
 - 用户管理（注册、登录、身份验证）
@@ -218,18 +218,26 @@ npm run dev
 - 社交互动（评论、点赞、关注）
 - 区块链集成（智能合约交互、事件监听）
 - 数据分析（用户行为、内容分析）
+- 实时通信（WebSocket、消息推送）
 
 **技术栈：**
-- Node.js + Express + TypeScript
-- PostgreSQL + Redis
-- Prisma ORM
-- Ethers.js + Web3.js
+- **语言框架**：Golang + Gin
+- **数据库**：PostgreSQL + Redis
+- **ORM**：GORM
+- **区块链**：go-ethereum + ethers-go
+- **消息队列**：Apache Kafka
+- **缓存**：Redis
+- **监控**：Prometheus + Grafana
+- **日志**：Zap
+- **容器化**：Docker + Docker Compose
 
 **快速开始：**
 ```bash
 cd bondly-api
-npm install
-npm run dev
+go mod download
+go run main.go
+# 或者使用 Docker
+docker-compose up
 ```
 
 #### ⚡ **bondly-contracts** - 智能合约
@@ -280,6 +288,7 @@ npx hardhat test
 ### 环境要求
 - Node.js >= 18.0.0
 - npm >= 8.0.0
+- Go >= 1.21.0
 - Git
 
 ### 克隆项目
@@ -301,9 +310,11 @@ npm run dev
 #### 2. 启动后端（可选）
 ```bash
 cd bondly-api
-npm install
-npm run dev
-# API 服务运行在 http://localhost:3000
+go mod download
+go run main.go
+# 或者使用 Docker
+docker-compose up
+# API 服务运行在 http://localhost:8080
 ```
 
 #### 3. 部署合约（可选）
