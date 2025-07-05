@@ -98,6 +98,21 @@ contract BondlyRegistry is Ownable {
     }
 
     /**
+     * @dev 查询合约地址（单参数版本，兼容旧接口）
+     * @param name 合约名称
+     * @return 合约地址（返回最新版本）
+     */
+    function getContractAddress(string memory name) public view returns (address) {
+        // 返回最新注册的版本，这里简化处理返回第一个找到的版本
+        for (uint256 i = 0; i < contractList.length; i++) {
+            if (keccak256(bytes(contractList[i].name)) == keccak256(bytes(name))) {
+                return contractRegistry[contractList[i].name][contractList[i].version];
+            }
+        }
+        return address(0);
+    }
+
+    /**
      * @dev 反查合约地址对应的 name 和 version
      * @param addr 合约地址
      * @return name, version

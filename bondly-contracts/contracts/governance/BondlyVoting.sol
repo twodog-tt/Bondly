@@ -71,10 +71,10 @@ contract BondlyVoting is IBondlyVoting, OwnableUpgradeable, PausableUpgradeable,
         uint256 tokenWeight;        ///< @notice 代币权重百分比 (0~100)
         uint256 reputationWeight;   ///< @notice 声誉权重百分比 (0~100)
     }
-    WeightConfig public weightConfig = WeightConfig(50, 50);
+    WeightConfig public weightConfig;
     
     /// @dev Hybrid 权重中 token 占比（0~100），默认 50
-    uint256 public tokenWeightRatio = 50;
+    uint256 public tokenWeightRatio;
     
     /// @dev 权重策略合约地址
     address public weightStrategy;
@@ -193,6 +193,8 @@ contract BondlyVoting is IBondlyVoting, OwnableUpgradeable, PausableUpgradeable,
         registry = IBondlyRegistry(registryAddress);
         transferOwnership(initialOwner);
         daoContract = IBondlyDAO(address(0));
+        weightConfig = WeightConfig(50, 50);
+        tokenWeightRatio = 50;
     }
     
     // ============ 核心功能 ============
