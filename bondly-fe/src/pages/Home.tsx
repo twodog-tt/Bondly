@@ -11,6 +11,31 @@ interface HomeProps {
   onPageChange?: (newPage: string) => void;
 }
 
+// 首页荣誉分Top榜单数据（可后续对接后端）
+const honorTopUsers = [
+  {
+    id: 1,
+    name: "Alice Chen",
+    avatar: "https://randomuser.me/api/portraits/women/68.jpg",
+    honor: 1280,
+    blogCount: 24
+  },
+  {
+    id: 2,
+    name: "Bob Zhang", 
+    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
+    honor: 1105,
+    blogCount: 19
+  },
+  {
+    id: 3,
+    name: "Cathy Wu",
+    avatar: "https://randomuser.me/api/portraits/women/65.jpg", 
+    honor: 980,
+    blogCount: 15
+  }
+];
+
 const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginStep, setLoginStep] = useState(1);
@@ -295,6 +320,103 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         isMobile={isMobile}
         onPageChange={onPageChange}
       />
+
+      {/* 荣誉分Top榜单 */}
+      <section style={{
+        maxWidth: isMobile ? "99%" : "1100px",
+        margin: isMobile ? "-32px auto 32px auto" : "-48px auto 48px auto",
+        background: "rgba(255,255,255,0.04)",
+        borderRadius: "24px",
+        boxShadow: "0 4px 24px rgba(102,126,234,0.08)",
+        border: "1px solid #23244a",
+        padding: isMobile ? "24px 8px" : "40px 56px",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center"
+      }}>
+        <h2 style={{
+          fontSize: isMobile ? "22px" : "30px",
+          fontWeight: 800,
+          marginBottom: "8px",
+          background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
+          backgroundClip: "text",
+          textAlign: "center"
+        }}>
+          🏆 Honor Leaderboard
+        </h2>
+        <p style={{ color: "#b3b8c5", fontSize: isMobile ? "14px" : "17px", marginBottom: isMobile ? "18px" : "28px", textAlign: "center", maxWidth: "600px" }}>
+          Discover the most reputable creators in the Bondly community. The Honor Leaderboard highlights users with the highest honor points and their blogging achievements.
+        </p>
+        <div style={{ display: "flex", flexDirection: isMobile ? "column" : "row", gap: isMobile ? "18px" : "40px", width: "100%", justifyContent: "center", alignItems: "center" }}>
+          {honorTopUsers.map((user, idx) => (
+            <div key={user.id}
+              onClick={() => {
+                const addressOrENS = user.name.toLowerCase().replace(/\s+/g, "");
+                // 这里可以后续添加路由跳转逻辑
+                onPageChange?.("profile");
+              }}
+              style={{
+                background: "linear-gradient(135deg, rgba(102,126,234,0.10) 0%, rgba(118,75,162,0.10) 100%)",
+                borderRadius: "22px",
+                padding: isMobile ? "18px 12px" : "32px 36px",
+                minWidth: isMobile ? "auto" : "220px",
+                textAlign: "center",
+                boxShadow: idx === 0 ? "0 0 0 3px #667eea" : "0 2px 16px rgba(102,126,234,0.08)",
+                border: idx === 0 ? "2.5px solid #667eea" : "1.5px solid #23244a",
+                position: "relative",
+                overflow: "hidden",
+                transition: "transform 0.2s cubic-bezier(.4,2,.6,1)",
+                backdropFilter: "blur(2px)",
+                cursor: "pointer",
+              }}
+              onMouseEnter={e => e.currentTarget.style.transform = "translateY(-4px) scale(1.03)"}
+              onMouseLeave={e => e.currentTarget.style.transform = "none"}
+            >
+              {/* 冠军/亚军/季军角标 */}
+              {(idx === 0 || idx === 1 || idx === 2) && (
+                <div style={{
+                  position: "absolute",
+                  top: "14px",
+                  right: "14px",
+                  background: idx === 0
+                    ? "linear-gradient(90deg, #667eea 0%, #764ba2 100%)"
+                    : idx === 1
+                    ? "linear-gradient(90deg, #60a5fa 0%, #a78bfa 100%)"
+                    : "linear-gradient(90deg, #fbbf24 0%, #f472b6 100%)",
+                  color: "white",
+                  fontWeight: 700,
+                  fontSize: "13px",
+                  padding: "4px 14px 4px 10px",
+                  borderRadius: "0 12px 0 12px",
+                  boxShadow: "0 2px 8px rgba(102,126,234,0.18)",
+                  letterSpacing: "1px",
+                  zIndex: 2
+                }}>
+                  {`No.${idx + 1}`}
+                </div>
+              )}
+              <img src={user.avatar} alt={user.name} style={{
+                width: isMobile ? "56px" : "80px",
+                height: isMobile ? "56px" : "80px",
+                borderRadius: "50%",
+                marginBottom: "14px",
+                border: idx === 0 ? "3px solid #764ba2" : "2px solid #374151",
+                boxShadow: idx === 0 ? "0 0 0 4px #e9d8fd" : undefined,
+              }} />
+              <div style={{ fontWeight: 700, fontSize: isMobile ? "16px" : "20px", marginBottom: "6px", color: idx === 0 ? "#764ba2" : "#fff" }}>{user.name}</div>
+              <div style={{ display: "flex", justifyContent: "center", gap: "14px", marginBottom: "8px" }}>
+                <span style={{ color: "#667eea", fontWeight: 700, fontSize: isMobile ? "15px" : "18px", display: "flex", alignItems: "center", gap: "4px" }}>
+                  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style={{marginRight:2}}><circle cx="10" cy="10" r="10" fill="#667eea"/><text x="50%" y="55%" textAnchor="middle" fill="#fff" fontSize="11" fontWeight="bold" dy=".3em">H</text></svg>
+                  {user.honor}
+                </span>
+              </div>
+              <div style={{ color: "#b3b8c5", fontSize: isMobile ? "13px" : "15px" }}>Blogs: {user.blogCount}</div>
+            </div>
+          ))}
+        </div>
+      </section>
       
       <FeaturedArticles isMobile={isMobile} />
       
