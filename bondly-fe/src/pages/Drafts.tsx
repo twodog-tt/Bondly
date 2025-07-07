@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useState } from "react";
+import CommonNavbar from '../components/CommonNavbar';
 
 interface Draft {
   id: string;
@@ -12,27 +12,25 @@ interface Draft {
 
 interface DraftsProps {
   isMobile: boolean;
+  onPageChange?: (newPage: string) => void;
 }
 
-export default function Drafts({ isMobile }: DraftsProps) {
-  const { t } = useTranslation();
-
-  // 模拟草稿数据
-  const [drafts] = useState<Draft[]>([
+export default function Drafts({ isMobile, onPageChange }: DraftsProps) {
+  const [drafts, setDrafts] = useState<Draft[]>([
     {
       id: "1",
       title: "Uniswap V4 Hook机制深度解析",
       summary: "深入探讨Uniswap V4的Hook机制，分析其对DeFi生态的影响...",
-      lastModified: "2024-01-15T10:30:00Z",
-      wordCount: 2500,
+      lastModified: "2024-01-15T14:30:00Z",
+      wordCount: 2800,
       isAutoSaved: true,
     },
     {
       id: "2",
       title: "Web3安全最佳实践指南",
       summary: "总结Web3开发中的安全要点，包括智能合约审计、私钥管理等...",
-      lastModified: "2024-01-14T15:20:00Z",
-      wordCount: 1800,
+      lastModified: "2024-01-14T10:20:00Z",
+      wordCount: 3500,
       isAutoSaved: false,
     },
     {
@@ -45,10 +43,16 @@ export default function Drafts({ isMobile }: DraftsProps) {
     },
   ]);
 
+  const handleLoginClick = () => {
+    // 处理登录点击
+    console.log("Login clicked");
+  };
+
   const containerStyle = {
     padding: isMobile ? "20px" : "40px",
-    background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+    background: "#0b0c1a",
     minHeight: "100vh",
+    color: "white"
   };
 
   const headerStyle = {
@@ -57,26 +61,27 @@ export default function Drafts({ isMobile }: DraftsProps) {
     justifyContent: "space-between",
     marginBottom: "24px",
     padding: "20px",
-    background: "white",
+    background: "rgba(255, 255, 255, 0.05)",
     borderRadius: "12px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
   };
 
   const titleStyle = {
     fontSize: isMobile ? "20px" : "24px",
     fontWeight: "bold",
-    color: "#2d3748",
+    color: "white",
     margin: 0,
   };
 
   const buttonStyle = {
     padding: "8px 16px",
-    border: "1px solid #e2e8f0",
-    background: "white",
-    color: "#4a5568",
+    border: "1px solid rgba(255, 255, 255, 0.2)",
+    background: "rgba(255, 255, 255, 0.1)",
+    color: "white",
     borderRadius: "8px",
     cursor: "pointer",
     fontSize: "14px",
+    transition: "all 0.2s ease"
   };
 
   const primaryButtonStyle = {
@@ -87,11 +92,11 @@ export default function Drafts({ isMobile }: DraftsProps) {
   };
 
   const draftCardStyle = {
-    background: "white",
+    background: "rgba(255, 255, 255, 0.05)",
     borderRadius: "12px",
     padding: "20px",
     marginBottom: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+    border: "1px solid rgba(255, 255, 255, 0.1)",
     transition: "transform 0.2s ease, box-shadow 0.2s ease",
     cursor: "pointer",
   };
@@ -99,12 +104,12 @@ export default function Drafts({ isMobile }: DraftsProps) {
   const draftTitleStyle = {
     fontSize: "18px",
     fontWeight: "bold",
-    color: "#2d3748",
+    color: "white",
     margin: "0 0 8px 0",
   };
 
   const draftSummaryStyle = {
-    color: "#718096",
+    color: "#9ca3af",
     fontSize: "14px",
     margin: "0 0 12px 0",
     lineHeight: "1.5",
@@ -115,7 +120,7 @@ export default function Drafts({ isMobile }: DraftsProps) {
     alignItems: "center",
     justifyContent: "space-between",
     fontSize: "12px",
-    color: "#a0aec0",
+    color: "#6b7280",
   };
 
   const statusBadgeStyle = (isAutoSaved: boolean) => ({
@@ -123,114 +128,148 @@ export default function Drafts({ isMobile }: DraftsProps) {
     borderRadius: "4px",
     fontSize: "12px",
     fontWeight: "bold",
-    background: isAutoSaved ? "#c6f6d5" : "#fed7d7",
-    color: isAutoSaved ? "#22543d" : "#742a2a",
+    background: isAutoSaved ? "rgba(34, 197, 94, 0.2)" : "rgba(239, 68, 68, 0.2)",
+    color: isAutoSaved ? "#4ade80" : "#f87171",
   });
 
   const handleEditDraft = (draftId: string) => {
     // TODO: 跳转到编辑器页面并加载草稿
-    console.log("编辑草稿:", draftId);
+    console.log("Edit draft:", draftId);
+    onPageChange?.("editor");
   };
 
   const handleDeleteDraft = (draftId: string) => {
     // TODO: 删除草稿确认
-    console.log("删除草稿:", draftId);
+    console.log("Delete draft:", draftId);
   };
 
   return (
-    <div style={containerStyle}>
-      <div style={headerStyle}>
-        <h1 style={titleStyle}>📝 草稿管理</h1>
-        <button style={primaryButtonStyle}>✨ 新建文章</button>
-      </div>
-
-      {drafts.length === 0 ? (
-        <div
-          style={{
-            background: "white",
-            borderRadius: "12px",
-            padding: "60px 20px",
-            textAlign: "center",
-            boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          }}
-        >
-          <div style={{ fontSize: "48px", marginBottom: "16px" }}>📄</div>
-          <h3 style={{ color: "#2d3748", marginBottom: "8px" }}>暂无草稿</h3>
-          <p style={{ color: "#718096", marginBottom: "24px" }}>
-            开始创作您的第一篇文章吧！
-          </p>
-          <button style={primaryButtonStyle}>✨ 开始创作</button>
+    <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
+      <CommonNavbar 
+        isMobile={isMobile} 
+        onPageChange={onPageChange}
+        onLoginClick={handleLoginClick}
+        showHomeButton={true}
+        showWriteButton={true}
+        showExploreButton={true}
+        showDaoButton={true}
+        showProfileButton={true}
+        showDraftsButton={true}
+        currentPage="drafts"
+      />
+      
+      <div style={containerStyle}>
+        <div style={headerStyle}>
+          <h1 style={titleStyle}>📝 Draft Management</h1>
+          <button 
+            style={primaryButtonStyle}
+            onClick={() => onPageChange?.("editor")}
+            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+          >
+            ✨ New Article
+          </button>
         </div>
-      ) : (
-        <div>
-          {drafts.map((draft) => (
-            <div
-              key={draft.id}
-              style={draftCardStyle}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = "translateY(-2px)";
-                e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,0,0,0.12)";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0)";
-                e.currentTarget.style.boxShadow = "0 4px 20px rgba(0,0,0,0.08)";
-              }}
+
+        {drafts.length === 0 ? (
+          <div
+            style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "12px",
+              padding: "60px 20px",
+              textAlign: "center",
+              border: "1px solid rgba(255, 255, 255, 0.1)",
+            }}
+          >
+            <div style={{ fontSize: "48px", marginBottom: "16px" }}>📄</div>
+            <h3 style={{ color: "white", marginBottom: "8px" }}>No drafts</h3>
+            <p style={{ color: "#9ca3af", marginBottom: "24px" }}>
+              Start creating your first article
+            </p>
+            <button 
+              style={primaryButtonStyle}
+              onClick={() => onPageChange?.("editor")}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
             >
-              <h3 style={draftTitleStyle}>{draft.title}</h3>
-              <p style={draftSummaryStyle}>{draft.summary}</p>
+              ✨ Start Creating
+            </button>
+          </div>
+        ) : (
+          <div>
+            {drafts.map((draft) => (
+              <div
+                key={draft.id}
+                style={draftCardStyle}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-2px)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                }}
+              >
+                <h3 style={draftTitleStyle}>{draft.title}</h3>
+                <p style={draftSummaryStyle}>{draft.summary}</p>
 
-              <div style={draftMetaStyle}>
-                <div>
-                  <span>
-                    📅 {new Date(draft.lastModified).toLocaleDateString()}
-                  </span>
-                  <span style={{ margin: "0 8px" }}>•</span>
-                  <span>📊 {draft.wordCount} 字</span>
-                </div>
+                <div style={draftMetaStyle}>
+                  <div>
+                    <span>
+                      📅 {new Date(draft.lastModified).toLocaleDateString()}
+                    </span>
+                    <span style={{ margin: "0 8px" }}>•</span>
+                    <span>📊 {draft.wordCount} words</span>
+                  </div>
 
-                <div
-                  style={{ display: "flex", alignItems: "center", gap: "8px" }}
-                >
-                  <span style={statusBadgeStyle(draft.isAutoSaved)}>
-                    {draft.isAutoSaved ? "💾 已自动保存" : "⚠️ 未保存"}
-                  </span>
-
-                  <button
-                    style={{
-                      ...buttonStyle,
-                      padding: "4px 8px",
-                      fontSize: "12px",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleEditDraft(draft.id);
-                    }}
+                  <div
+                    style={{ display: "flex", alignItems: "center", gap: "8px" }}
                   >
-                    ✏️ 编辑
-                  </button>
+                    <span style={statusBadgeStyle(draft.isAutoSaved)}>
+                      {draft.isAutoSaved ? `💾 Auto Saved` : `⚠️ Not Saved`}
+                    </span>
 
-                  <button
-                    style={{
-                      ...buttonStyle,
-                      padding: "4px 8px",
-                      fontSize: "12px",
-                      background: "#fed7d7",
-                      color: "#742a2a",
-                      border: "1px solid #feb2b2",
-                    }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteDraft(draft.id);
-                    }}
-                  >
-                    🗑️ 删除
-                  </button>
+                    <button
+                      style={{
+                        ...buttonStyle,
+                        padding: "4px 8px",
+                        fontSize: "12px",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleEditDraft(draft.id);
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                    >
+                      ✏️ Edit
+                    </button>
+
+                    <button
+                      style={{
+                        ...buttonStyle,
+                        padding: "4px 8px",
+                        fontSize: "12px",
+                        background: "rgba(239, 68, 68, 0.1)",
+                        border: "1px solid rgba(239, 68, 68, 0.3)",
+                        color: "#f87171",
+                      }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteDraft(draft.id);
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)"}
+                      onMouseLeave={(e) => e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)"}
+                    >
+                      🗑️ Delete
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
-        </div>
-      )}
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

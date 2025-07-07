@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
+import React, { useState, useEffect } from "react";
 import { useNotification } from "./NotificationProvider";
 import ReportModal from "./ReportModal";
+import TipModal from "./TipModal";
 
 interface Comment {
   id: string;
@@ -95,7 +95,6 @@ export default function CommentSection({
   isMobile,
   onTipComment,
 }: CommentSectionProps) {
-  const { t } = useTranslation();
   const { notify } = useNotification();
   const [comments, setComments] = useState<Comment[]>(mockComments);
   const [newComment, setNewComment] = useState("");
@@ -470,7 +469,7 @@ export default function CommentSection({
   return (
     <div style={isMobile ? mobileContainerStyle : containerStyle}>
       <h3 style={isMobile ? mobileTitleStyle : titleStyle}>
-        💬 评论 ({comments.length})
+        💬 Comments ({comments.length})
       </h3>
 
       {/* 发表评论 */}
@@ -479,8 +478,8 @@ export default function CommentSection({
           style={isMobile ? mobileTextareaStyle : textareaStyle}
           placeholder={
             replyTo
-              ? `回复 ${comments.find((c) => c.id === replyTo)?.author.name}...`
-              : "分享你的想法..."
+              ? `Reply to ${comments.find((c) => c.id === replyTo)?.author.name}...`
+              : "Share your thoughts..."
           }
           value={replyTo ? replyContent : newComment}
           onChange={(e) =>
@@ -499,7 +498,7 @@ export default function CommentSection({
             (!!replyTo && !replyContent.trim())
           }
         >
-          {loading ? "发送中..." : replyTo ? "回复" : "发表评论"}
+          {loading ? "Sending..." : replyTo ? "Reply" : "Post Comment"}
         </button>
         {replyTo && (
           <button
@@ -510,7 +509,7 @@ export default function CommentSection({
               setShowReplyForm(null);
             }}
           >
-            取消
+            Cancel
           </button>
         )}
       </div>
@@ -531,12 +530,12 @@ export default function CommentSection({
                   )}
                   {comment.isAuthor && (
                     <span style={{ fontSize: "12px", color: "#667eea" }}>
-                      (作者)
+                      (Author)
                     </span>
                   )}
                 </div>
                 <div style={commentMetaStyle}>
-                  <span>声誉: {comment.author.reputation}</span>
+                  <span>Reputation: {comment.author.reputation}</span>
                   <span> • </span>
                   <span>{formatTime(comment.createdAt)}</span>
                 </div>
@@ -556,7 +555,7 @@ export default function CommentSection({
                 style={actionButtonStyle}
                 onClick={() => handleReply(comment.id)}
               >
-                💬 回复
+                💬 Reply
               </button>
               <button
                 style={actionButtonStyle}
@@ -564,7 +563,7 @@ export default function CommentSection({
                   handleTipComment(comment.id, comment.author.name)
                 }
               >
-                💝 打赏
+                💝 Tip
               </button>
               <button
                 style={actionButtonStyle}
@@ -572,7 +571,7 @@ export default function CommentSection({
                   handleReport(comment.id, comment.content, comment.author.name)
                 }
               >
-                ⚠️ 举报
+                ⚠️ Report
               </button>
             </div>
 
@@ -581,7 +580,7 @@ export default function CommentSection({
               <div style={replyFormStyle}>
                 <textarea
                   style={replyTextareaStyle}
-                  placeholder={`回复 ${comment.author.name}...`}
+                  placeholder={`Reply to ${comment.author.name}...`}
                   value={replyContent}
                   onChange={(e) => setReplyContent(e.target.value)}
                 />
@@ -594,14 +593,14 @@ export default function CommentSection({
                       setReplyTo(null);
                     }}
                   >
-                    取消
+                    Cancel
                   </button>
                   <button
                     style={submitButtonStyle}
                     onClick={handleSubmitComment}
                     disabled={!replyContent.trim()}
                   >
-                    回复
+                    Reply
                   </button>
                 </div>
               </div>
@@ -639,12 +638,12 @@ export default function CommentSection({
                             <span
                               style={{ fontSize: "12px", color: "#667eea" }}
                             >
-                              (作者)
+                              (Author)
                             </span>
                           )}
                         </div>
                         <div style={commentMetaStyle}>
-                          <span>声誉: {reply.author.reputation}</span>
+                          <span>Reputation: {reply.author.reputation}</span>
                           <span> • </span>
                           <span>{formatTime(reply.createdAt)}</span>
                         </div>
@@ -666,7 +665,7 @@ export default function CommentSection({
                           handleTipComment(reply.id, reply.author.name)
                         }
                       >
-                        💝 打赏
+                        💝 Tip
                       </button>
                       <button
                         style={actionButtonStyle}
@@ -678,7 +677,7 @@ export default function CommentSection({
                           )
                         }
                       >
-                        ⚠️ 举报
+                        ⚠️ Report
                       </button>
                     </div>
                   </div>
@@ -697,18 +696,18 @@ export default function CommentSection({
             color: "#718096",
           }}
         >
-          <p>还没有评论，来发表第一条评论吧！</p>
+          <p>No comments yet</p>
         </div>
       )}
 
       {/* 举报模态框 */}
       <ReportModal
-        targetId={reportModal.targetId}
-        targetType={reportModal.targetType}
-        targetContent={reportModal.targetContent}
-        authorName={reportModal.authorName}
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
+        onReport={(reason) => {
+          console.log(`Reporting comment by ${reportModal.authorName}: ${reason}`);
+          setReportModal((prev) => ({ ...prev, isOpen: false }));
+        }}
       />
     </div>
   );

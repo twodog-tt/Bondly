@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
 // import { WagmiProvider } from 'wagmi';
 // import { config } from './config/wagmi';
 import Home from "./pages/Home";
@@ -7,11 +6,9 @@ import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
 import Editor from "./pages/Editor";
 import Drafts from "./pages/Drafts";
-
-// 工具函数：合并样式
-function getStyle(isMobile: boolean, desktop: any, mobile: any) {
-  return isMobile ? { ...desktop, ...mobile } : desktop;
-}
+import BlogListPage from "./pages/BlogListPage";
+import BlogDetailPage from "./pages/BlogDetailPage";
+import DaoPage from "./pages/DaoPage";
 
 // 工具函数：渲染装饰元素
 function renderDecorations(isMobile: boolean) {
@@ -211,9 +208,7 @@ function renderDecorations(isMobile: boolean) {
 }
 
 function AppContent() {
-  const { i18n, t } = useTranslation();
   const [page, setPage] = useState("home");
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // 监听窗口大小变化
@@ -221,41 +216,11 @@ function AppContent() {
     const handleResize = () => {
       const mobile = window.innerWidth <= 768;
       setIsMobile(mobile);
-      if (!mobile) {
-        setMobileMenuOpen(false);
-      }
     };
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  // 点击外部区域关闭移动端菜单
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (
-        mobileMenuOpen &&
-        !target.closest(".mobile-menu") &&
-        !target.closest(".hamburger-button")
-      ) {
-        setMobileMenuOpen(false);
-      }
-    };
-
-    if (mobileMenuOpen) {
-      document.addEventListener("click", handleClickOutside);
-      // 防止页面滚动
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside);
-      document.body.style.overflow = "";
-    };
-  }, [mobileMenuOpen]);
 
   // 页面切换动画
   const handlePageChange = (newPage: string) => {
@@ -290,78 +255,6 @@ function AppContent() {
     setTimeout(() => {
       ripple.remove();
     }, 600);
-  };
-
-  // 优化后的样式对象
-  const navBase = {
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    display: "flex",
-    alignItems: "center",
-    gap: "20px",
-    position: "sticky" as const,
-    top: 0,
-    zIndex: 1000,
-  };
-  const navStyle = { ...navBase, padding: "20px 32px" };
-  const mobileNavStyle = {
-    ...navBase,
-    padding: "16px 20px",
-    flexWrap: "wrap" as const,
-    top: "env(safe-area-inset-top, 0px)",
-    paddingTop: "calc(16px + env(safe-area-inset-top, 0px))",
-    paddingBottom: "calc(16px + env(safe-area-inset-bottom, 0px))",
-    paddingLeft: "calc(20px + env(safe-area-inset-left, 0px))",
-    paddingRight: "calc(20px + env(safe-area-inset-right, 0px))",
-  };
-
-  const buttonStyle = {
-    padding: "12px 20px",
-    border: "1px solid rgba(255,255,255,0.2)",
-    background: "rgba(255,255,255,0.1)",
-    color: "white",
-    cursor: "pointer",
-    fontSize: "16px",
-    borderRadius: "8px",
-    transition: "all 0.3s ease",
-    backdropFilter: "blur(10px)",
-  };
-  const mobileButtonStyle = {
-    ...buttonStyle,
-    padding: "10px 16px",
-    fontSize: "14px",
-  };
-  const activeButtonStyle = {
-    ...buttonStyle,
-    background: "rgba(255,255,255,0.2)",
-    transform: "translateY(-2px)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-  };
-  const mobileActiveButtonStyle = {
-    ...mobileButtonStyle,
-    background: "rgba(255,255,255,0.2)",
-    transform: "translateY(-2px)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-  };
-  const langButtonStyle = {
-    ...buttonStyle,
-    fontSize: "14px",
-    padding: "8px 16px",
-  };
-  const mobileLangButtonStyle = {
-    ...langButtonStyle,
-    fontSize: "12px",
-    padding: "6px 12px",
-  };
-  const hamburgerButtonStyle = {
-    background: "none",
-    border: "none",
-    color: "white",
-    fontSize: "24px",
-    cursor: "pointer",
-    padding: "8px",
-    borderRadius: "4px",
-    transition: "background 0.3s ease",
   };
 
   const backgroundDecorations = {
@@ -536,34 +429,6 @@ function AppContent() {
     }
   `;
 
-  const mobileMenuStyle = {
-    position: "fixed" as const,
-    top: "calc(80px + env(safe-area-inset-top, 0px))",
-    left: 0,
-    right: 0,
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    padding: "20px",
-    boxShadow: "0 8px 32px rgba(0,0,0,0.15)",
-    transform: mobileMenuOpen ? "translateY(0)" : "translateY(-100%)",
-    transition: "transform 0.3s ease",
-    zIndex: 99998,
-    backdropFilter: "blur(10px)",
-    borderBottom: "1px solid rgba(255,255,255,0.1)",
-  };
-  const mobileMenuStyleOptimized = mobileMenuStyle;
-  const mobileMenuButtonStyle = {
-    ...mobileButtonStyle,
-    width: "100%",
-    marginBottom: "12px",
-    justifyContent: "center" as const,
-  };
-  const mobileMenuButtonActiveStyle = {
-    ...mobileMenuButtonStyle,
-    background: "rgba(255,255,255,0.2)",
-    transform: "translateY(-2px)",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-  };
-
   return (
     // <WagmiProvider config={config}>
     <div style={isMobile ? mobileContainerStyle : containerStyle}>
@@ -580,305 +445,35 @@ function AppContent() {
         {renderDecorations(isMobile)}
       </div>
 
-      {/* 正常的导航栏 */}
-      <nav
-        style={
-          isMobile
-            ? {
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                padding: "20px",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "space-between",
-                position: "sticky",
-                top: 0,
-                zIndex: 99999,
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-              }
-            : {
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-                display: "flex",
-                alignItems: "center",
-                gap: "20px",
-                position: "sticky",
-                top: 0,
-                zIndex: 99999,
-                padding: "20px 32px",
-              }
-        }
-      >
-        {/* 桌面端导航按钮 - 平铺显示 */}
-        {!isMobile && (
-          <div
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: "20px",
-              flex: 1,
-            }}
-          >
-            <button
-              style={page === "home" ? activeButtonStyle : buttonStyle}
-              onClick={(e) => {
-                createRipple(e);
-                handlePageChange("home");
-              }}
-              onMouseEnter={(e) => {
-                if (page !== "home") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (page !== "home") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              🏠 {t("home")}
-            </button>
-            <button
-              style={page === "feed" ? activeButtonStyle : buttonStyle}
-              onClick={(e) => {
-                createRipple(e);
-                handlePageChange("feed");
-              }}
-              onMouseEnter={(e) => {
-                if (page !== "feed") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (page !== "feed") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              📱 {t("feed")}
-            </button>
-            <button
-              style={page === "editor" ? activeButtonStyle : buttonStyle}
-              onClick={(e) => {
-                createRipple(e);
-                handlePageChange("editor");
-              }}
-              onMouseEnter={(e) => {
-                if (page !== "editor") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (page !== "editor") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              ✍️ 创作
-            </button>
-            <button
-              style={page === "drafts" ? activeButtonStyle : buttonStyle}
-              onClick={(e) => {
-                createRipple(e);
-                handlePageChange("drafts");
-              }}
-              onMouseEnter={(e) => {
-                if (page !== "drafts") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (page !== "drafts") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              📝 草稿
-            </button>
-            <button
-              style={page === "profile" ? activeButtonStyle : buttonStyle}
-              onClick={(e) => {
-                createRipple(e);
-                handlePageChange("profile");
-              }}
-              onMouseEnter={(e) => {
-                if (page !== "profile") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.15)";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (page !== "profile") {
-                  const target = e.target as HTMLButtonElement;
-                  target.style.background = "rgba(255,255,255,0.1)";
-                }
-              }}
-            >
-              👤 {t("profile")}
-            </button>
-          </div>
-        )}
+      {/* 全局导航栏已移除 - 每个页面使用自己的导航栏 */}
 
-        {/* 移动端汉堡菜单按钮 */}
-        {isMobile && (
-          <button
-            style={{
-              background: "rgba(255,255,255,0.1)",
-              color: "white",
-              border: "1px solid rgba(255,255,255,0.2)",
-              fontSize: "24px",
-              padding: "12px",
-              cursor: "pointer",
-              borderRadius: "8px",
-              zIndex: 100000,
-              position: "relative",
-              transition: "all 0.3s ease",
-              minWidth: "50px",
-              minHeight: "50px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              setMobileMenuOpen(!mobileMenuOpen);
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.2)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = "rgba(255,255,255,0.1)";
-            }}
-          >
-            {mobileMenuOpen ? "✕" : "☰"}
-          </button>
-        )}
-
-        {/* 语言切换按钮 */}
-        <div style={{ display: "flex", gap: "8px" }}>
-          <button
-            style={isMobile ? mobileLangButtonStyle : langButtonStyle}
-            onClick={() => i18n.changeLanguage("zh")}
-            onMouseEnter={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.background = "rgba(255,255,255,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.background = "rgba(255,255,255,0.1)";
-            }}
-          >
-            🇨🇳 中文
-          </button>
-          <button
-            style={isMobile ? mobileLangButtonStyle : langButtonStyle}
-            onClick={() => i18n.changeLanguage("en")}
-            onMouseEnter={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.background = "rgba(255,255,255,0.15)";
-            }}
-            onMouseLeave={(e) => {
-              const target = e.target as HTMLButtonElement;
-              target.style.background = "rgba(255,255,255,0.1)";
-            }}
-          >
-            🇺🇸 EN
-          </button>
-        </div>
-      </nav>
-
-      {/* 移动端菜单 - 只在移动端显示 */}
-      {isMobile && (
-        <div className="mobile-menu" style={mobileMenuStyleOptimized}>
-          <button
-            style={
-              page === "home"
-                ? mobileMenuButtonActiveStyle
-                : mobileMenuButtonStyle
-            }
-            onClick={(e) => {
-              createRipple(e);
-              handlePageChange("home");
-              setMobileMenuOpen(false);
-            }}
-          >
-            🏠 {t("home")}
-          </button>
-          <button
-            style={
-              page === "feed"
-                ? mobileMenuButtonActiveStyle
-                : mobileMenuButtonStyle
-            }
-            onClick={(e) => {
-              createRipple(e);
-              handlePageChange("feed");
-              setMobileMenuOpen(false);
-            }}
-          >
-            📱 {t("feed")}
-          </button>
-          <button
-            style={
-              page === "editor"
-                ? mobileMenuButtonActiveStyle
-                : mobileMenuButtonStyle
-            }
-            onClick={(e) => {
-              createRipple(e);
-              handlePageChange("editor");
-              setMobileMenuOpen(false);
-            }}
-          >
-            ✍️ 创作
-          </button>
-          <button
-            style={
-              page === "drafts"
-                ? mobileMenuButtonActiveStyle
-                : mobileMenuButtonStyle
-            }
-            onClick={(e) => {
-              createRipple(e);
-              handlePageChange("drafts");
-              setMobileMenuOpen(false);
-            }}
-          >
-            📝 草稿
-          </button>
-          <button
-            style={
-              page === "profile"
-                ? mobileMenuButtonActiveStyle
-                : mobileMenuButtonStyle
-            }
-            onClick={(e) => {
-              createRipple(e);
-              handlePageChange("profile");
-              setMobileMenuOpen(false);
-            }}
-          >
-            👤 {t("profile")}
-          </button>
-        </div>
-      )}
+      {/* 移动端菜单已移除 - 每个页面使用自己的导航栏 */}
 
       <div style={pageContainerStyle}>
-        <div style={isMobile ? mobileContentStyle : contentStyle}>
-          {page === "home" && <Home isMobile={isMobile} />}
-          {page === "feed" && <Feed isMobile={isMobile} />}
-          {page === "profile" && <Profile isMobile={isMobile} />}
-          {page === "editor" && <Editor isMobile={isMobile} />}
-          {page === "drafts" && <Drafts isMobile={isMobile} />}
+        <div style={
+          page === "home" 
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "feed"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "blog-detail"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "profile"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "dao"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "editor"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "drafts"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : isMobile ? mobileContentStyle : contentStyle
+        }>
+          {page === "home" && <Home isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "feed" && <BlogListPage isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "profile" && <Profile isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "editor" && <Editor isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "drafts" && <Drafts isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "blog-detail" && <BlogDetailPage isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>
     </div>

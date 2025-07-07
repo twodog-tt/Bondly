@@ -1,8 +1,13 @@
 {
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
-    "preview": "vite preview"
+    "build": "tsc && vite build",
+    "preview": "vite preview",
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "lint:fix": "eslint src --ext ts,tsx --fix",
+    "type-check": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "format:check": "prettier --check \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {
     "@chakra-ui/icons": "^2.2.4",
@@ -11,16 +16,23 @@
     "@emotion/styled": "^11.14.1",
     "@rainbow-me/rainbowkit": "^2.2.8",
     "framer-motion": "^12.19.1",
-    "i18next": "^25.2.1",
-    "react-i18next": "^15.5.3",
+    "sharp": "^0.34.2",
     "viem": "^2.31.4",
     "wagmi": "^2.15.6"
   },
   "devDependencies": {
+    "@types/node": "^24.0.10",
     "@types/react": "^19.1.8",
     "@types/react-dom": "^19.1.6",
-    "@types/react-i18next": "^7.8.3",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
     "@vitejs/plugin-react": "^4.6.0",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.5",
+    "prettier": "^3.2.5",
+    "typescript": "^5.3.3",
     "vite": "^7.0.0"
   }
 }

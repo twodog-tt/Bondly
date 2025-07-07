@@ -1,180 +1,85 @@
-import { useState } from "react";
+import React from 'react';
 
 interface EditorToolbarProps {
-  onFormatChange: (format: string) => void;
-  onInsertMedia: () => void;
+  onFormat: (format: string) => void;
   onInsertCode: () => void;
+  onInsertMedia: () => void;
   onInsertMath: () => void;
-  onPreviewToggle: () => void;
-  showPreview: boolean;
+  onTogglePreview: () => void;
+  activeFormat: string;
 }
 
-export default function EditorToolbar({
-  onFormatChange,
-  onInsertMedia,
+const EditorToolbar: React.FC<EditorToolbarProps> = ({
+  onFormat,
   onInsertCode,
+  onInsertMedia,
   onInsertMath,
-  onPreviewToggle,
-  showPreview,
-}: EditorToolbarProps) {
-  const [activeFormat, setActiveFormat] = useState<string>("");
-
-  const handleFormatClick = (format: string) => {
-    setActiveFormat(format);
-    onFormatChange(format);
-  };
-
-  const toolbarStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    padding: "12px",
-    background: "#f7fafc",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    marginBottom: "16px",
-    flexWrap: "wrap" as const,
+  onTogglePreview,
+  activeFormat
+}) => {
+  const setActiveFormat = (format: string) => {
+    onFormat(format);
   };
 
   const buttonStyle = {
-    padding: "8px 12px",
-    border: "1px solid #e2e8f0",
-    background: "white",
-    color: "#4a5568",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    transition: "all 0.2s ease",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-  };
-
-  const activeButtonStyle = {
-    ...buttonStyle,
-    background: "#667eea",
-    color: "white",
-    border: "1px solid #667eea",
-  };
-
-  const separatorStyle = {
-    width: "1px",
-    height: "24px",
-    background: "#e2e8f0",
-    margin: "0 4px",
+    background: 'none',
+    border: 'none',
+    color: 'white',
+    fontSize: '18px',
+    margin: '0 8px',
+    cursor: 'pointer',
+    padding: '6px 8px',
+    borderRadius: '6px',
+    transition: 'background 0.2s',
+    outline: 'none',
   };
 
   return (
-    <div style={toolbarStyle}>
-      {/* 文本格式 */}
-      <button
-        style={activeFormat === "bold" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("bold")}
-        title="粗体"
-      >
-        <strong>B</strong>
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+      <button style={buttonStyle} onClick={() => setActiveFormat('bold')} title="Bold">
+        <b>B</b>
       </button>
-      <button
-        style={activeFormat === "italic" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("italic")}
-        title="斜体"
-      >
-        <em>I</em>
+      <button style={buttonStyle} onClick={() => setActiveFormat('italic')} title="Italic">
+        <i>I</i>
       </button>
-      <button
-        style={activeFormat === "underline" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("underline")}
-        title="下划线"
-      >
+      <button style={buttonStyle} onClick={() => setActiveFormat('underline')} title="Underline">
         <u>U</u>
       </button>
-      <button
-        style={
-          activeFormat === "strikethrough" ? activeButtonStyle : buttonStyle
-        }
-        onClick={() => handleFormatClick("strikethrough")}
-        title="删除线"
-      >
+      <button style={buttonStyle} onClick={() => setActiveFormat('strikethrough')} title="Strikethrough">
         <s>S</s>
       </button>
-
-      <div style={separatorStyle} />
-
-      {/* 标题格式 */}
-      <button
-        style={activeFormat === "h1" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("h1")}
-        title="标题1"
-      >
+      <button style={buttonStyle} onClick={() => setActiveFormat('heading_1')} title="Heading 1">
         H1
       </button>
-      <button
-        style={activeFormat === "h2" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("h2")}
-        title="标题2"
-      >
+      <button style={buttonStyle} onClick={() => setActiveFormat('heading_2')} title="Heading 2">
         H2
       </button>
-      <button
-        style={activeFormat === "h3" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("h3")}
-        title="标题3"
-      >
+      <button style={buttonStyle} onClick={() => setActiveFormat('heading_3')} title="Heading 3">
         H3
       </button>
-
-      <div style={separatorStyle} />
-
-      {/* 列表 */}
-      <button
-        style={activeFormat === "ul" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("ul")}
-        title="无序列表"
-      >
-        • 列表
+      <button style={buttonStyle} onClick={() => setActiveFormat('unordered_list')} title="Unordered List">
+        • List
       </button>
-      <button
-        style={activeFormat === "ol" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("ol")}
-        title="有序列表"
-      >
-        1. 列表
+      <button style={buttonStyle} onClick={() => setActiveFormat('ordered_list')} title="Ordered List">
+        1. List
       </button>
-
-      <div style={separatorStyle} />
-
-      {/* 引用和代码 */}
-      <button
-        style={activeFormat === "quote" ? activeButtonStyle : buttonStyle}
-        onClick={() => handleFormatClick("quote")}
-        title="引用"
-      >
-        💬 引用
+      <button style={buttonStyle} onClick={() => setActiveFormat('quote')} title="Quote">
+        💬 Quote
       </button>
-      <button style={buttonStyle} onClick={onInsertCode} title="插入代码块">
-        💻 代码
+      <button style={buttonStyle} onClick={onInsertCode} title="Code">
+        💻 Code
       </button>
-
-      <div style={separatorStyle} />
-
-      {/* 媒体和数学公式 */}
-      <button style={buttonStyle} onClick={onInsertMedia} title="插入媒体">
-        🖼️ 媒体
+      <button style={buttonStyle} onClick={onInsertMedia} title="Media">
+        🖼️ Media
       </button>
-      <button style={buttonStyle} onClick={onInsertMath} title="插入数学公式">
-        ∑ 公式
+      <button style={buttonStyle} onClick={onInsertMath} title="Formula">
+        ∑ Formula
       </button>
-
-      <div style={separatorStyle} />
-
-      {/* 预览切换 */}
-      <button
-        style={showPreview ? activeButtonStyle : buttonStyle}
-        onClick={onPreviewToggle}
-        title="切换预览"
-      >
-        👁️ 预览
+      <button style={buttonStyle} onClick={onTogglePreview} title="Toggle Preview">
+        👁️ Preview
       </button>
     </div>
   );
-}
+};
+
+export default EditorToolbar;

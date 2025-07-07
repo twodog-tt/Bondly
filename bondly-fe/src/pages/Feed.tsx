@@ -1,4 +1,3 @@
-import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import CommentSection from "../components/CommentSection";
 import TipModal from "../components/TipModal";
@@ -74,7 +73,7 @@ const mockBlogPosts: BlogPost[] = [
     },
     metadata: {
       tags: ["DeFi", "Uniswap", "智能合约", "流动性"],
-      category: "技术分析",
+      category: "tech_analysis",
       readTime: 8,
       publishDate: "2024-01-15T10:30:00Z",
     },
@@ -109,7 +108,7 @@ const mockBlogPosts: BlogPost[] = [
     },
     metadata: {
       tags: ["安全", "钱包", "Web3", "最佳实践"],
-      category: "安全指南",
+      category: "security_guide",
       readTime: 5,
       publishDate: "2024-01-14T15:20:00Z",
     },
@@ -126,7 +125,6 @@ const mockBlogPosts: BlogPost[] = [
 ];
 
 export default function Feed({ isMobile }: FeedProps) {
-  const { t } = useTranslation();
   const [posts, setPosts] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [visiblePosts, setVisiblePosts] = useState<number[]>([]);
@@ -595,29 +593,29 @@ export default function Feed({ isMobile }: FeedProps) {
   return (
     <div style={isMobile ? mobileContainerStyle : containerStyle}>
       <h1 style={isMobile ? mobileTitleStyle : titleStyle}>
-        📚 Web3 博客动态
+        📚 Feed
         <div style={titleDecoration}></div>
       </h1>
 
       {/* 过滤器 */}
       <div style={filterContainerStyle}>
-        <div style={filterTitleStyle}>筛选内容</div>
+        <div style={filterTitleStyle}>Filter Content</div>
 
         {/* 分类过滤 */}
         <div style={{ marginBottom: "16px" }}>
           <div
             style={{ fontSize: "14px", color: "#718096", marginBottom: "8px" }}
           >
-            分类
+            Category
           </div>
           <div style={categoryContainerStyle}>
-            {["all", "技术分析", "安全指南", "艺术创作"].map((category) => (
+            {["all", "tech_analysis", "security_guide", "art_creation"].map((category) => (
               <button
                 key={category}
                 style={categoryButtonStyle(selectedCategory === category)}
                 onClick={() => setSelectedCategory(category)}
               >
-                {category === "all" ? "全部" : category}
+                {category === "all" ? "All" : category}
               </button>
             ))}
           </div>
@@ -628,7 +626,7 @@ export default function Feed({ isMobile }: FeedProps) {
           <div
             style={{ fontSize: "14px", color: "#718096", marginBottom: "8px" }}
           >
-            标签
+            Tags
           </div>
           <div style={tagsContainerStyle}>
             {allTags.map((tag) => (
@@ -729,7 +727,7 @@ export default function Feed({ isMobile }: FeedProps) {
                       </div>
                       <div style={authorTitleStyle}>{post.author.title}</div>
                       <div style={postMetaStyle}>
-                        <span>声誉: {post.author.reputation}</span>
+                        <span>Reputation: {post.author.reputation}</span>
                         <span>•</span>
                         <span>
                           {new Date(
@@ -737,7 +735,7 @@ export default function Feed({ isMobile }: FeedProps) {
                           ).toLocaleDateString()}
                         </span>
                         <span>•</span>
-                        <span>{post.metadata.readTime} 分钟阅读</span>
+                        <span>{post.metadata.readTime} min read</span>
                       </div>
                     </div>
                   </div>
@@ -821,7 +819,7 @@ export default function Feed({ isMobile }: FeedProps) {
                           handleTip(post.id, post.author.name);
                         }}
                       >
-                        💝 打赏
+                        💝 Tip
                       </button>
                       <button
                         style={actionButtonStyle()}
@@ -830,7 +828,7 @@ export default function Feed({ isMobile }: FeedProps) {
                           // TODO: 实现分享功能
                         }}
                       >
-                        📤 分享
+                        📤 Share
                       </button>
                       <button
                         style={actionButtonStyle()}
@@ -843,7 +841,7 @@ export default function Feed({ isMobile }: FeedProps) {
                           );
                         }}
                       >
-                        ⚠️ 举报
+                        ⚠️ Report
                       </button>
                     </div>
 
@@ -882,30 +880,31 @@ export default function Feed({ isMobile }: FeedProps) {
             fontSize: "16px",
           }}
         >
-          <p>🔍 没有找到符合条件的文章</p>
+          <p>🔍 No posts found</p>
           <p style={{ fontSize: "14px", marginTop: "8px" }}>
-            尝试调整筛选条件或稍后再试
+            Try adjusting your filters
           </p>
         </div>
       )}
 
       {/* 打赏模态框 */}
       <TipModal
-        targetId={tipModal.targetId}
-        targetType={tipModal.targetType}
-        authorName={tipModal.authorName}
         isOpen={tipModal.isOpen}
         onClose={() => setTipModal((prev) => ({ ...prev, isOpen: false }))}
+        onTip={(amount) => {
+          console.log(`Tipping ${amount} to ${tipModal.authorName}`);
+          setTipModal((prev) => ({ ...prev, isOpen: false }));
+        }}
       />
 
       {/* 举报模态框 */}
       <ReportModal
-        targetId={reportModal.targetId}
-        targetType={reportModal.targetType}
-        targetContent={reportModal.targetContent}
-        authorName={reportModal.authorName}
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
+        onReport={(reason) => {
+          console.log(`Reporting ${reportModal.targetContent} by ${reportModal.authorName}: ${reason}`);
+          setReportModal((prev) => ({ ...prev, isOpen: false }));
+        }}
       />
     </div>
   );

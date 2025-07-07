@@ -1,469 +1,522 @@
-import { useTranslation } from "react-i18next";
-import { useState, useEffect } from "react";
+import React from 'react';
+import CommonNavbar from '../components/CommonNavbar';
 
 interface ProfileProps {
   isMobile: boolean;
+  onPageChange?: (newPage: string) => void;
 }
 
-export default function Profile({ isMobile }: ProfileProps) {
-  const { t } = useTranslation();
-  const [visibleStats, setVisibleStats] = useState<number[]>([]);
-
-  // 统计卡片进入动画
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      [0, 1, 2, 3].forEach((index) => {
-        setTimeout(() => {
-          setVisibleStats((prev) => [...prev, index]);
-        }, index * 150);
-      });
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, []);
-
-  // 按钮涟漪效果
-  const createRipple = (event: React.MouseEvent<HTMLButtonElement>) => {
-    const button = event.currentTarget;
-    const rect = button.getBoundingClientRect();
-    const size = Math.max(rect.width, rect.height);
-    const x = event.clientX - rect.left - size / 2;
-    const y = event.clientY - rect.top - size / 2;
-
-    const ripple = document.createElement("span");
-    ripple.style.width = ripple.style.height = size + "px";
-    ripple.style.left = x + "px";
-    ripple.style.top = y + "px";
-    ripple.style.position = "absolute";
-    ripple.style.borderRadius = "50%";
-    ripple.style.background = "rgba(255, 255, 255, 0.3)";
-    ripple.style.transform = "scale(0)";
-    ripple.style.animation = "ripple 0.6s linear";
-    ripple.style.pointerEvents = "none";
-
-    button.style.position = "relative";
-    button.style.overflow = "hidden";
-    button.appendChild(ripple);
-
-    setTimeout(() => {
-      ripple.remove();
-    }, 600);
-  };
-
-  const containerStyle = {
-    maxWidth: "800px",
-    margin: "0 auto",
-    padding: "40px 20px",
-  };
-
-  const mobileContainerStyle = {
-    ...containerStyle,
-    padding: "20px 16px",
-  };
-
-  const titleStyle = {
-    fontSize: "40px",
-    fontWeight: "bold",
-    marginBottom: "32px",
-    textAlign: "center" as const,
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    WebkitBackgroundClip: "text" as const,
-    WebkitTextFillColor: "transparent" as const,
-    backgroundClip: "text" as const,
-  };
-
-  const mobileTitleStyle = {
-    ...titleStyle,
-    fontSize: "28px",
-    marginBottom: "24px",
-  };
-
-  const profileCardStyle = {
-    background: "white",
-    borderRadius: "20px",
-    padding: "40px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-    border: "1px solid rgba(0,0,0,0.05)",
-    marginBottom: "32px",
-  };
-
-  const mobileProfileCardStyle = {
-    ...profileCardStyle,
-    padding: "24px 20px",
-    marginBottom: "24px",
-    borderRadius: "16px",
-  };
-
-  const profileHeaderStyle = {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "32px",
-  };
-
-  const mobileProfileHeaderStyle = {
-    ...profileHeaderStyle,
-    flexDirection: "column" as const,
-    textAlign: "center" as const,
-    marginBottom: "24px",
-  };
-
-  const avatarStyle = {
-    width: "100px",
-    height: "100px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "white",
-    fontSize: "36px",
-    fontWeight: "bold",
-    marginRight: "32px",
-    boxShadow: "0 8px 25px rgba(102, 126, 234, 0.3)",
-  };
-
-  const mobileAvatarStyle = {
-    ...avatarStyle,
-    width: "80px",
-    height: "80px",
-    fontSize: "28px",
-    marginRight: "0",
-    marginBottom: "16px",
-  };
-
-  const userInfoStyle = {
-    flex: 1,
-  };
-
-  const userNameStyle = {
-    fontSize: "32px",
-    fontWeight: "bold",
-    marginBottom: "8px",
-    color: "#2d3748",
-  };
-
-  const mobileUserNameStyle = {
-    ...userNameStyle,
-    fontSize: "24px",
-  };
-
-  const userMetaStyle = {
-    color: "#718096",
-    fontSize: "16px",
-    marginBottom: "4px",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  };
-
-  const statsGridStyle = {
-    display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
-    gap: "24px",
-    marginBottom: "32px",
-  };
-
-  const mobileStatsGridStyle = {
-    ...statsGridStyle,
-    gridTemplateColumns: "repeat(2, 1fr)",
-    gap: "16px",
-    marginBottom: "24px",
-  };
-
-  const statItemStyle = {
-    textAlign: "center" as const,
-    padding: "24px",
-    background: "linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)",
-    borderRadius: "16px",
-    border: "1px solid #e2e8f0",
-    transition: "all 0.3s ease",
-    cursor: "pointer",
-    opacity: 0,
-    transform: "translateY(20px)",
-  };
-
-  const mobileStatItemStyle = {
-    ...statItemStyle,
-    padding: "16px 12px",
-    borderRadius: "12px",
-  };
-
-  const animatedStatItemStyle = (index: number) => ({
-    ...statItemStyle,
-    opacity: visibleStats.includes(index) ? 1 : 0,
-    transform: visibleStats.includes(index)
-      ? "translateY(0)"
-      : "translateY(20px)",
-    transition: `all 0.6s ease ${index * 0.15}s`,
-  });
-
-  const animatedMobileStatItemStyle = (index: number) => ({
-    ...mobileStatItemStyle,
-    opacity: visibleStats.includes(index) ? 1 : 0,
-    transform: visibleStats.includes(index)
-      ? "translateY(0)"
-      : "translateY(20px)",
-    transition: `all 0.6s ease ${index * 0.15}s`,
-  });
-
-  const statValueStyle = {
-    fontSize: "28px",
-    fontWeight: "bold",
-    color: "#2d3748",
-  };
-
-  const mobileStatValueStyle = {
-    ...statValueStyle,
-    fontSize: "20px",
-  };
-
-  const statLabelStyle = {
-    color: "#718096",
-    fontSize: "14px",
-    marginBottom: "8px",
-    fontWeight: "500",
-  };
-
-  const mobileStatLabelStyle = {
-    ...statLabelStyle,
-    fontSize: "12px",
-  };
-
-  const dividerStyle = {
-    height: "2px",
-    background: "linear-gradient(90deg, #667eea 0%, #764ba2 100%)",
-    margin: "32px 0",
-    borderRadius: "1px",
-  };
-
-  const sectionStyle = {
-    marginBottom: "32px",
-  };
-
-  const sectionTitleStyle = {
-    fontSize: "24px",
-    fontWeight: "bold",
-    marginBottom: "20px",
-    color: "#2d3748",
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-  };
-
-  const activityItemStyle = {
-    padding: "20px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    marginBottom: "12px",
-    background: "linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)",
-    transition: "all 0.3s ease",
-    cursor: "pointer",
-  };
-
-  const walletInfoStyle = {
-    padding: "24px",
-    background: "linear-gradient(135deg, #f0fff4 0%, #e6fffa 100%)",
-    borderRadius: "12px",
-    border: "1px solid #9ae6b4",
+const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
+  const handleLoginClick = () => {
+    // 处理登录点击
+    console.log("Login clicked");
   };
 
   return (
-    <div style={isMobile ? mobileContainerStyle : containerStyle}>
-      <h1 style={isMobile ? mobileTitleStyle : titleStyle}>
-        👤 {t("profile_title")}
-      </h1>
-
-      <div style={isMobile ? mobileProfileCardStyle : profileCardStyle}>
-        <div style={isMobile ? mobileProfileHeaderStyle : profileHeaderStyle}>
-          <div style={isMobile ? mobileAvatarStyle : avatarStyle}>A</div>
-          <div style={userInfoStyle}>
-            <div style={isMobile ? mobileUserNameStyle : userNameStyle}>
-              Alice.eth
+    <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
+      <CommonNavbar 
+        isMobile={isMobile} 
+        onPageChange={onPageChange}
+        onLoginClick={handleLoginClick}
+        showHomeButton={true}
+        showWriteButton={true}
+        showExploreButton={true}
+        showDaoButton={true}
+        showProfileButton={true}
+        showDraftsButton={true}
+        currentPage="profile"
+      />
+      
+      <div style={{ padding: isMobile ? "20px" : "40px", maxWidth: "1000px", margin: "0 auto" }}>
+        {/* 个人信息区域 */}
+        <div style={{
+          background: "rgba(255, 255, 255, 0.05)",
+          borderRadius: "16px",
+          padding: "32px",
+          marginBottom: "32px",
+          border: "1px solid rgba(255, 255, 255, 0.1)"
+        }}>
+          <div style={{
+            display: "flex",
+            flexDirection: isMobile ? "column" : "row",
+            gap: "24px",
+            alignItems: isMobile ? "center" : "flex-start"
+          }}>
+            {/* 头像 */}
+            <div style={{
+              width: "120px",
+              height: "120px",
+              borderRadius: "50%",
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontSize: "48px",
+              fontWeight: "bold",
+              color: "white",
+              flexShrink: 0
+            }}>
+              BT
             </div>
-            <div style={userMetaStyle}>
-              <span>🆔 SBT: #123456</span>
-            </div>
-            <div style={userMetaStyle}>
-              <span>⭐ {t("reputation")}: 89</span>
+            
+            {/* 用户信息 */}
+            <div style={{ flex: 1 }}>
+              <h1 style={{
+                fontSize: isMobile ? "24px" : "32px",
+                fontWeight: "bold",
+                marginBottom: "8px",
+                color: "white"
+              }}>
+                Bondly Team
+              </h1>
+              <p style={{
+                fontSize: "16px",
+                color: "#9ca3af",
+                marginBottom: "16px"
+              }}>
+                Official Bondly Team • Member since 2024
+              </p>
+              
+              {/* 统计信息 */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+                gap: "16px",
+                marginBottom: "24px"
+              }}>
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>1,234</div>
+                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Reputation</div>
+                </div>
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>Level 5</div>
+                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Level</div>
+                </div>
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>567</div>
+                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Bond Tokens</div>
+                </div>
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  padding: "16px",
+                  borderRadius: "8px",
+                  textAlign: "center"
+                }}>
+                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>12</div>
+                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>NFTs</div>
+                </div>
+              </div>
+              
+              {/* 操作按钮 */}
+              <div style={{
+                display: "flex",
+                gap: "12px",
+                flexWrap: "wrap"
+              }}>
+                <button style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "opacity 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                >
+                  Edit Profile
+                </button>
+                <button style={{
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  color: "white",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                >
+                  Share Profile
+                </button>
+              </div>
             </div>
           </div>
         </div>
 
-        <div style={isMobile ? mobileStatsGridStyle : statsGridStyle}>
-          <div
-            style={
-              isMobile
-                ? animatedMobileStatItemStyle(0)
-                : animatedStatItemStyle(0)
-            }
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <div style={isMobile ? mobileStatLabelStyle : statLabelStyle}>
-              🎯 {t("level")}
+        {/* 内容区域 */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "1fr" : "2fr 1fr",
+          gap: "32px"
+        }}>
+          {/* 左侧：文章和活动 */}
+          <div>
+            {/* 最近活动 */}
+            <div style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "16px",
+              padding: "24px",
+              marginBottom: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                marginBottom: "20px",
+                color: "white"
+              }}>
+                Recent Activities
+              </h2>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <div style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "white"
+                  }}>
+                    📝
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "500", color: "white" }}>Published new article</div>
+                    <div style={{ fontSize: "14px", color: "#9ca3af" }}>2 hours ago</div>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <div style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "white"
+                  }}>
+                    ❤️
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "500", color: "white" }}>Received 15 likes</div>
+                    <div style={{ fontSize: "14px", color: "#9ca3af" }}>5 hours ago</div>
+                  </div>
+                </div>
+                
+                <div style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "12px",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <div style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "14px",
+                    fontWeight: "bold",
+                    color: "white"
+                  }}>
+                    🎨
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: "500", color: "white" }}>Minted new NFT</div>
+                    <div style={{ fontSize: "14px", color: "#9ca3af" }}>1 day ago</div>
+                  </div>
+                </div>
+              </div>
             </div>
-            <div style={isMobile ? mobileStatValueStyle : statValueStyle}>
-              5
+
+            {/* 发布的文章 */}
+            <div style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "16px",
+              padding: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                marginBottom: "20px",
+                color: "white"
+              }}>
+                Published Articles
+              </h2>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{
+                  padding: "16px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
+                onClick={() => onPageChange?.("blog-detail")}
+                >
+                  <h3 style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    marginBottom: "8px",
+                    color: "white"
+                  }}>
+                    Web3 Social Revolution: How Bondly is Changing the Game
+                  </h3>
+                  <p style={{
+                    fontSize: "14px",
+                    color: "#9ca3af",
+                    marginBottom: "8px",
+                    lineHeight: "1.5"
+                  }}>
+                    Explore how Bondly is revolutionizing social media through blockchain technology...
+                  </p>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    fontSize: "12px",
+                    color: "#6b7280"
+                  }}>
+                    <span>5 min read</span>
+                    <span>•</span>
+                    <span>Jan 15, 2024</span>
+                    <span>•</span>
+                    <span>24 likes</span>
+                  </div>
+                </div>
+                
+                <div style={{
+                  padding: "16px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)"}
+                >
+                  <h3 style={{
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    marginBottom: "8px",
+                    color: "white"
+                  }}>
+                    The Future of Decentralized Social Networks
+                  </h3>
+                  <p style={{
+                    fontSize: "14px",
+                    color: "#9ca3af",
+                    marginBottom: "8px",
+                    lineHeight: "1.5"
+                  }}>
+                    Discover the potential of decentralized social platforms and how they're reshaping...
+                  </p>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "12px",
+                    fontSize: "12px",
+                    color: "#6b7280"
+                  }}>
+                    <span>7 min read</span>
+                    <span>•</span>
+                    <span>Jan 12, 2024</span>
+                    <span>•</span>
+                    <span>18 likes</span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-          <div
-            style={
-              isMobile
-                ? animatedMobileStatItemStyle(1)
-                : animatedStatItemStyle(1)
-            }
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <div style={isMobile ? mobileStatLabelStyle : statLabelStyle}>
-              💰 {t("token_balance")}
+
+          {/* 右侧：NFT展示和钱包信息 */}
+          <div>
+            {/* NFT展示 */}
+            <div style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "16px",
+              padding: "24px",
+              marginBottom: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                marginBottom: "20px",
+                color: "white"
+              }}>
+                My NFTs
+              </h2>
+              
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gap: "12px"
+              }}>
+                {[1, 2, 3, 4].map((i) => (
+                  <div key={i} style={{
+                    aspectRatio: "1",
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    borderRadius: "8px",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: "24px",
+                    cursor: "pointer",
+                    transition: "transform 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+                  >
+                    🎨
+                  </div>
+                ))}
+              </div>
             </div>
-            <div style={isMobile ? mobileStatValueStyle : statValueStyle}>
-              1200 BOND
-            </div>
-          </div>
-          <div
-            style={
-              isMobile
-                ? animatedMobileStatItemStyle(2)
-                : animatedStatItemStyle(2)
-            }
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <div style={isMobile ? mobileStatLabelStyle : statLabelStyle}>
-              🖼️ {t("nft_count")}
-            </div>
-            <div style={isMobile ? mobileStatValueStyle : statValueStyle}>
-              3
-            </div>
-          </div>
-          <div
-            style={
-              isMobile
-                ? animatedMobileStatItemStyle(3)
-                : animatedStatItemStyle(3)
-            }
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 8px 25px rgba(0,0,0,0.1)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-          >
-            <div style={isMobile ? mobileStatLabelStyle : statLabelStyle}>
-              🏛️ {t("dao_rights")}
-            </div>
-            <div style={isMobile ? mobileStatValueStyle : statValueStyle}>
-              {t("connected")}
+
+            {/* 钱包管理 */}
+            <div style={{
+              background: "rgba(255, 255, 255, 0.05)",
+              borderRadius: "16px",
+              padding: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h2 style={{
+                fontSize: "20px",
+                fontWeight: "600",
+                marginBottom: "20px",
+                color: "white"
+              }}>
+                Wallet Management
+              </h2>
+              
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <span style={{ color: "#9ca3af" }}>Current Wallet</span>
+                  <span style={{ color: "white", fontSize: "14px" }}>0x1234...5678</span>
+                </div>
+                
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <span style={{ color: "#9ca3af" }}>Network</span>
+                  <span style={{ color: "white", fontSize: "14px" }}>Ethereum Mainnet</span>
+                </div>
+                
+                <div style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  padding: "12px",
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "8px"
+                }}>
+                  <span style={{ color: "#9ca3af" }}>Connection Status</span>
+                  <span style={{ 
+                    color: "#10b981", 
+                    fontSize: "14px",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "4px"
+                  }}>
+                    <div style={{
+                      width: "8px",
+                      height: "8px",
+                      borderRadius: "50%",
+                      background: "#10b981"
+                    }}></div>
+                    Connected
+                  </span>
+                </div>
+              </div>
+              
+              <button style={{
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                color: "white",
+                padding: "10px 20px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                width: "100%",
+                marginTop: "16px"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
+              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
+              >
+                Disconnect Wallet
+              </button>
             </div>
           </div>
         </div>
-      </div>
-
-      <div style={profileCardStyle}>
-        <div style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>📊 {t("recent_activities")}</h2>
-          <div
-            style={activityItemStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateX(4px)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateX(0)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)";
-            }}
-          >
-            <strong>📝 {t("publish_content")}</strong> - "
-            {t("web3_social_value")}" (2 {t("hours_ago")})
-          </div>
-          <div
-            style={activityItemStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateX(4px)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateX(0)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)";
-            }}
-          >
-            <strong>❤️ {t("received_likes")}</strong> - {t("received_likes")} 12{" "}
-            {t("like")} (3 {t("hours_ago")})
-          </div>
-          <div
-            style={activityItemStyle}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateX(4px)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateX(0)";
-              e.currentTarget.style.background =
-                "linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%)";
-            }}
-          >
-            <strong>🖼️ {t("mint_nft")}</strong> - {t("mint_nft")} "
-            {t("bondly_introduction")}" (1 {t("day_ago")})
-          </div>
-        </div>
-
-        <div style={sectionStyle}>
-          <h2 style={sectionTitleStyle}>🔐 {t("wallet_management")}</h2>
-          <div style={walletInfoStyle}>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>{t("current_wallet")}:</strong> 0x1234...5678
-            </p>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>{t("network")}:</strong> {t("ethereum_mainnet")}
-            </p>
-            <p style={{ marginBottom: "8px" }}>
-              <strong>{t("connection_status")}:</strong>{" "}
-              <span style={{ color: "#38a169" }}>✅ {t("connected")}</span>
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div
-        style={{
-          textAlign: "center" as const,
-          color: "#718096",
-          fontSize: "16px",
-          padding: "40px",
-        }}
-      >
-        <p>🚀 {t("more_features_developing")}</p>
-        <p style={{ fontSize: "14px", marginTop: "8px" }}>
-          {t("continue_exploring")}
-        </p>
       </div>
     </div>
   );
-}
+};
+
+export default Profile;
