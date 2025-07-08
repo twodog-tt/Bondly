@@ -105,10 +105,10 @@ jspm_packages/
 tmp/
 temp/
 
-# Hardhat files
-cache/
-artifacts/
-typechain-types/
+# Hardhat files (只忽略智能合约目录的缓存)
+bondly-contracts/cache/
+bondly-contracts/artifacts/
+bondly-contracts/typechain-types/
 
 # Solidity coverage
 coverage.json
