@@ -1,4 +1,4 @@
-.PHONY: build run test clean deps lint docker-build docker-run dev-build dev-up dev-down dev-logs
+.PHONY: build run test clean deps lint docker-build docker-run dev-build dev-up dev-down dev-logs restart-api api-status api-logs stop-api start-api
 
 # 构建变量
 BINARY_NAME=bondly-api
@@ -82,6 +82,34 @@ dev-logs:
 	@echo "Showing bondly-api logs..."
 	docker logs bondly-api
 
+# 重启 bondly-api 服务
+restart-api:
+	@echo "Restarting bondly-api service..."
+	docker-compose -f docker-compose.dev.yml restart bondly-api
+	@echo "✅ bondly-api service restarted successfully"
+
+# 查看 bondly-api 服务状态
+api-status:
+	@echo "Checking bondly-api service status..."
+	docker-compose -f docker-compose.dev.yml ps bondly-api
+
+# 查看 bondly-api 实时日志
+api-logs:
+	@echo "Following bondly-api logs (Press Ctrl+C to exit)..."
+	docker-compose -f docker-compose.dev.yml logs -f bondly-api
+
+# 停止 bondly-api 服务
+stop-api:
+	@echo "Stopping bondly-api service..."
+	docker-compose -f docker-compose.dev.yml stop bondly-api
+	@echo "✅ bondly-api service stopped"
+
+# 启动 bondly-api 服务
+start-api:
+	@echo "Starting bondly-api service..."
+	docker-compose -f docker-compose.dev.yml start bondly-api
+	@echo "✅ bondly-api service started"
+
 # 重新构建并启动开发环境
 dev-rebuild:
 	@echo "Rebuilding and starting development environment..."
@@ -115,6 +143,13 @@ help:
 	@echo "  dev-down     - Stop development environment"
 	@echo "  dev-logs     - Show bondly-api logs"
 	@echo "  dev-rebuild  - Rebuild and start dev environment"
+	@echo ""
+	@echo "API Service Management:"
+	@echo "  restart-api  - Restart bondly-api service only"
+	@echo "  start-api    - Start bondly-api service"
+	@echo "  stop-api     - Stop bondly-api service"
+	@echo "  api-status   - Check bondly-api service status"
+	@echo "  api-logs     - Follow bondly-api real-time logs"
 	@echo ""
 	@echo "Local Development:"
 	@echo "  build        - Build the application"

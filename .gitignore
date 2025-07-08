@@ -129,3 +129,4 @@ gas-report.txt
 # Go binaries
 bondly-api/bondly-api
 *.exe
+bondly-api/bondly-api
