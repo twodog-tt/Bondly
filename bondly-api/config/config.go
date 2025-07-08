@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/joho/godotenv"
 )
@@ -10,6 +11,7 @@ import (
 type Config struct {
 	Server   ServerConfig
 	Database DatabaseConfig
+	Redis    RedisConfig
 	Ethereum EthereumConfig
 	Kafka    KafkaConfig
 	Logging  LoggingConfig
@@ -28,6 +30,19 @@ type DatabaseConfig struct {
 	Password string
 	Name     string
 	SSLMode  string
+}
+
+type RedisConfig struct {
+	Host         string
+	Port         string
+	Password     string
+	DB           int
+	PoolSize     int
+	MinIdleConns int
+	MaxRetries   int
+	DialTimeout  int // seconds
+	ReadTimeout  int // seconds
+	WriteTimeout int // seconds
 }
 
 type EthereumConfig struct {
@@ -69,13 +84,25 @@ func Load() (*Config, error) {
 			Name:     getEnv("DB_NAME", "bondly_db"),
 			SSLMode:  getEnv("DB_SSL_MODE", "disable"),
 		},
+		Redis: RedisConfig{
+			Host:         getEnv("REDIS_HOST", "localhost"),
+			Port:         getEnv("REDIS_PORT", "6379"),
+			Password:     getEnv("REDIS_PASSWORD", ""),
+			DB:           getEnvAsInt("REDIS_DB", 0),
+			PoolSize:     getEnvAsInt("REDIS_POOL_SIZE", 10),
+			MinIdleConns: getEnvAsInt("REDIS_MIN_IDLE_CONNS", 5),
+			MaxRetries:   getEnvAsInt("REDIS_MAX_RETRIES", 3),
+			DialTimeout:  getEnvAsInt("REDIS_DIAL_TIMEOUT", 5),
+			ReadTimeout:  getEnvAsInt("REDIS_READ_TIMEOUT", 3),
+			WriteTimeout: getEnvAsInt("REDIS_WRITE_TIMEOUT", 3),
+		},
 		Ethereum: EthereumConfig{
 			RPCURL:          getEnv("ETH_RPC_URL", "http://localhost:8545"),
 			PrivateKey:      getEnv("ETH_PRIVATE_KEY", ""),
 			ContractAddress: getEnv("ETH_CONTRACT_ADDRESS", ""),
 		},
 		Kafka: KafkaConfig{
-			Brokers:     []string{getEnv("KAFKA_BROKERS", "localhost:9092")},
+			Brokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),
 			TopicEvents: getEnv("KAFKA_TOPIC_BONDLY_EVENTS", "bondly_events"),
 		},
 		Logging: LoggingConfig{
@@ -83,7 +110,7 @@ func Load() (*Config, error) {
 			Format: getEnv("LOG_FORMAT", "json"),
 		},
 		CORS: CORSConfig{
-			AllowedOrigins: []string{getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173")},
+			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"), ","),
 		},
 	}, nil
 }

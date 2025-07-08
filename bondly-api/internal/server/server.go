@@ -2,25 +2,30 @@ package server
 
 import (
 	"bondly-api/config"
+	"bondly-api/internal/cache"
 	"bondly-api/internal/handlers"
 	"bondly-api/internal/logger"
 	"bondly-api/internal/middleware"
+	"bondly-api/internal/redis"
 	"bondly-api/internal/repositories"
 	"bondly-api/internal/services"
 	"context"
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 )
 
 type Server struct {
-	config *config.Config
-	db     *gorm.DB
-	logger *logger.Logger
-	router *gin.Engine
-	server *http.Server
+	config       *config.Config
+	db           *gorm.DB
+	redisClient  *redis.RedisClient
+	cacheService cache.CacheService
+	logger       *logger.Logger
+	router       *gin.Engine
+	server       *http.Server
 
 	// 依赖注入
 	userHandlers *handlers.UserHandlers
@@ -41,14 +46,26 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 	router.Use(middleware.Logger(logger))
 	router.Use(middleware.CORS(cfg.CORS))
 
+	// 初始化 Redis 客户端
+	redisClient, err := redis.NewRedisClient(cfg.Redis)
+	if err != nil {
+		logger.Fatalf("Failed to connect to Redis: %v", err)
+	}
+	logger.Info("Redis connected successfully")
+
+	// 初始化缓存服务
+	cacheService := cache.NewRedisCacheService(redisClient)
+
 	// 初始化依赖
 	userRepo := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepo)
+	userService := services.NewUserService(userRepo, cacheService)
 	userHandlers := handlers.NewUserHandlers(userService)
 
 	server := &Server{
 		config:       cfg,
 		db:           db,
+		redisClient:  redisClient,
+		cacheService: cacheService,
 		logger:       logger,
 		router:       router,
 		userHandlers: userHandlers,
@@ -69,6 +86,9 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 func (s *Server) setupRoutes() {
 	// 健康检查
 	s.router.GET("/health", handlers.HealthCheck)
+
+	// Redis 状态检查
+	s.router.GET("/health/redis", s.redisHealthCheck)
 
 	// API 版本
 	v1 := s.router.Group("/api/v1")
@@ -102,7 +122,81 @@ func (s *Server) setupRoutes() {
 			governance.GET("/proposals", handlers.GetProposals)
 			governance.GET("/proposals/:id", handlers.GetProposalDetail)
 		}
+
+		// 缓存管理路由（开发环境）
+		if s.config.Logging.Level == "debug" {
+			cacheGroup := v1.Group("/cache")
+			{
+				cacheGroup.DELETE("/clear", s.clearCache)
+				cacheGroup.GET("/stats", s.getCacheStats)
+			}
+		}
 	}
+}
+
+// redisHealthCheck Redis 健康检查
+func (s *Server) redisHealthCheck(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
+	if err := s.redisClient.Ping(ctx); err != nil {
+		c.JSON(http.StatusServiceUnavailable, gin.H{
+			"status":  "error",
+			"message": "Redis connection failed",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	stats := s.redisClient.GetStats()
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
+		"message": "Redis is connected",
+		"stats": gin.H{
+			"hits":        stats.Hits,
+			"misses":      stats.Misses,
+			"timeouts":    stats.Timeouts,
+			"total_conns": stats.TotalConns,
+			"idle_conns":  stats.IdleConns,
+			"stale_conns": stats.StaleConns,
+		},
+	})
+}
+
+// clearCache 清空缓存（仅开发环境）
+func (s *Server) clearCache(c *gin.Context) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	if err := s.redisClient.FlushDB(ctx); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"status":  "error",
+			"message": "Failed to clear cache",
+			"error":   err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"status":  "ok",
+		"message": "Cache cleared successfully",
+	})
+}
+
+// getCacheStats 获取缓存统计
+func (s *Server) getCacheStats(c *gin.Context) {
+	stats := s.redisClient.GetStats()
+	c.JSON(http.StatusOK, gin.H{
+		"status": "ok",
+		"stats": gin.H{
+			"hits":        stats.Hits,
+			"misses":      stats.Misses,
+			"timeouts":    stats.Timeouts,
+			"total_conns": stats.TotalConns,
+			"idle_conns":  stats.IdleConns,
+			"stale_conns": stats.StaleConns,
+		},
+	})
 }
 
 func (s *Server) Start() error {
@@ -112,9 +206,27 @@ func (s *Server) Start() error {
 
 func (s *Server) Shutdown(ctx context.Context) error {
 	s.logger.Info("Server shutting down...")
+
+	// 关闭 Redis 连接
+	if s.redisClient != nil {
+		if err := s.redisClient.Close(); err != nil {
+			s.logger.Errorf("Failed to close Redis connection: %v", err)
+		} else {
+			s.logger.Info("Redis connection closed successfully")
+		}
+	}
+
 	return s.server.Shutdown(ctx)
 }
 
 func (s *Server) GetRouter() *gin.Engine {
 	return s.router
+}
+
+func (s *Server) GetCacheService() cache.CacheService {
+	return s.cacheService
+}
+
+func (s *Server) GetRedisClient() *redis.RedisClient {
+	return s.redisClient
 }

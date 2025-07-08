@@ -9,6 +9,7 @@ Bondly API 是一个基于 Golang + Gin + GORM 构建的后端服务，专门用
 - **Web 框架**: Gin (高性能 HTTP 框架)
 - **ORM**: GORM (Go 的 ORM 库)
 - **数据库**: PostgreSQL (关系型数据库)
+- **缓存**: Redis (内存数据库，用于缓存和会话存储)
 - **消息队列**: Kafka (分布式消息系统)
 - **区块链**: go-ethereum (以太坊客户端)
 - **日志**: Logrus (结构化日志)
@@ -17,9 +18,10 @@ Bondly API 是一个基于 Golang + Gin + GORM 构建的后端服务，专门用
 ### 架构特点
 - **模块化设计**: 清晰的包结构和职责分离
 - **依赖注入**: 通过配置和接口实现松耦合
+- **缓存架构**: Redis 缓存层提升性能，支持用户信息、会话管理等
 - **中间件支持**: 统一的请求处理和日志记录
 - **优雅关闭**: 支持优雅的服务停止
-- **健康检查**: 内置健康检查端点
+- **健康检查**: 内置健康检查端点，包括数据库和缓存状态
 
 ## 项目结构
 
@@ -48,6 +50,10 @@ bondly-api/
 │   │   └── middleware.go
 │   ├── database/          # 数据库管理
 │   │   └── database.go
+│   ├── redis/             # Redis 客户端
+│   │   └── redis.go
+│   ├── cache/             # 缓存服务层
+│   │   └── cache.go
 │   ├── logger/            # 日志管理
 │   │   └── logger.go
 │   ├── blockchain/        # 区块链交互
@@ -71,6 +77,7 @@ bondly-api/
 
 - Go 1.21+
 - PostgreSQL 12+
+- Redis 6+
 - Kafka 2.8+
 - Docker (可选)
 
@@ -207,10 +214,65 @@ make build        # 本地构建
 make test         # 运行测试
 ```
 
+## Redis 缓存功能
+
+### 缓存架构
+
+项目集成了 Redis 作为缓存中间件，提供以下功能：
+
+#### 缓存层次
+- **用户信息缓存**: 用户基本信息、声誉值、余额等
+- **内容缓存**: 文章、帖子等内容数据
+- **会话管理**: 用户会话存储
+- **限流控制**: API 访问频率限制
+- **统计数据**: 实时统计信息缓存
+
+#### 缓存策略
+- **缓存穿透**: 使用空值缓存防止恶意查询
+- **缓存击穿**: 使用互斥锁防止热点数据失效
+- **缓存雪崩**: 使用随机过期时间分散失效
+- **缓存更新**: 采用先更新数据库，再删除缓存的策略
+
+#### 缓存配置
+```go
+// 默认缓存过期时间配置
+UserCacheTTL:      30 * time.Minute    // 用户信息
+ContentCacheTTL:   15 * time.Minute    // 内容信息
+ProposalCacheTTL:  10 * time.Minute    // 提案信息
+SessionCacheTTL:   24 * time.Hour      // 用户会话
+StatsCacheTTL:     5 * time.Minute     // 统计数据
+```
+
+### 缓存 API
+
+#### 健康检查
+- `GET /health/redis` - Redis 连接状态和统计信息
+
+#### 缓存管理（仅开发环境）
+- `DELETE /api/v1/cache/clear` - 清空所有缓存
+- `GET /api/v1/cache/stats` - 获取缓存统计信息
+
+### Redis 配置
+
+#### 环境变量
+```bash
+REDIS_HOST=localhost          # Redis 主机
+REDIS_PORT=6379              # Redis 端口
+REDIS_PASSWORD=              # Redis 密码（可选）
+REDIS_DB=0                   # Redis 数据库编号
+REDIS_POOL_SIZE=10           # 连接池大小
+REDIS_MIN_IDLE_CONNS=5       # 最小空闲连接数
+REDIS_MAX_RETRIES=3          # 最大重试次数
+REDIS_DIAL_TIMEOUT=5         # 连接超时（秒）
+REDIS_READ_TIMEOUT=3         # 读取超时（秒）
+REDIS_WRITE_TIMEOUT=3        # 写入超时（秒）
+```
+
 ## API 端点
 
 ### 健康检查
 - `GET /health` - 服务健康状态
+- `GET /health/redis` - Redis 连接状态
 
 ### 区块链相关
 - `GET /api/v1/blockchain/status` - 获取区块链状态
@@ -324,6 +386,18 @@ make migrate
 - `DB_NAME`: 数据库名称
 - `DB_SSL_MODE`: SSL 模式
 
+### Redis 配置
+- `REDIS_HOST`: Redis 主机
+- `REDIS_PORT`: Redis 端口
+- `REDIS_PASSWORD`: Redis 密码（可选）
+- `REDIS_DB`: Redis 数据库编号
+- `REDIS_POOL_SIZE`: 连接池大小
+- `REDIS_MIN_IDLE_CONNS`: 最小空闲连接数
+- `REDIS_MAX_RETRIES`: 最大重试次数
+- `REDIS_DIAL_TIMEOUT`: 连接超时时间（秒）
+- `REDIS_READ_TIMEOUT`: 读取超时时间（秒）
+- `REDIS_WRITE_TIMEOUT`: 写入超时时间（秒）
+
 ### 以太坊配置
 - `ETH_RPC_URL`: 以太坊 RPC URL
 - `ETH_PRIVATE_KEY`: 私钥（用于交易签名）
@@ -345,6 +419,8 @@ make migrate
 ├─────────────────┤
 │   Services      │  业务逻辑层
 ├─────────────────┤
+│     Cache       │  缓存服务层
+├─────────────────┤
 │ Repositories    │  数据访问层
 ├─────────────────┤
 │   Database      │  数据存储层
@@ -354,7 +430,8 @@ make migrate
 #### 各层职责
 
 - **Handlers**: 处理 HTTP 请求，参数验证，调用业务逻辑
-- **Services**: 实现业务逻辑，数据验证，事务管理
+- **Services**: 实现业务逻辑，数据验证，事务管理，缓存协调
+- **Cache**: 提供统一的缓存接口，管理 Redis 连接和操作
 - **Repositories**: 封装数据库操作，提供数据访问接口
 - **Database**: 数据持久化存储
 

@@ -58,4 +58,4 @@ coverage.html
 # Database
 *.db
 *.sqlite
-*.sqlite3 
+*.sqlite3 bondly-api
