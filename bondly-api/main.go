@@ -1,6 +1,28 @@
+// Bondly API
+// @title Bondly API
+// @version 1.0
+// @description 这是Bondly项目的API文档，提供用户认证、区块链交互、内容管理和治理功能。
+// @termsOfService https://bondly.com/terms
+
+// @contact.name Bondly API Support
+// @contact.url https://bondly.com/support
+// @contact.email support@bondly.com
+
+// @license.name MIT
+// @license.url https://opensource.org/licenses/MIT
+
+// @host localhost:8080
+// @BasePath /api/v1
+
+// @securityDefinitions.apikey ApiKeyAuth
+// @in header
+// @name Authorization
+
 package main
 
 import (
+	_ "bondly-api/docs" // This line is necessary for go-swagger to find your docs!
+
 	"bondly-api/config"
 	"bondly-api/internal/database"
 	"bondly-api/internal/logger"

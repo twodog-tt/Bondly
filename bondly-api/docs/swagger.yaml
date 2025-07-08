@@ -1,0 +1,492 @@
+basePath: /api/v1
+definitions:
+  handlers.SendCodeRequest:
+    properties:
+      email:
+        type: string
+    required:
+    - email
+    type: object
+  handlers.VerifyCodeRequest:
+    properties:
+      code:
+        type: string
+      email:
+        type: string
+    required:
+    - code
+    - email
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@bondly.com
+    name: Bondly API Support
+    url: https://bondly.com/support
+  description: 这是Bondly项目的API文档，提供用户认证、区块链交互、内容管理和治理功能。
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
+  termsOfService: https://bondly.com/terms
+  title: Bondly API
+  version: "1.0"
+paths:
+  /auth/code-status:
+    get:
+      consumes:
+      - application/json
+      description: 查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流
+      parameters:
+      - description: 邮箱地址
+        in: query
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 查询成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 邮箱参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 查询验证码状态
+      tags:
+      - 认证管理
+  /auth/send-code:
+    post:
+      consumes:
+      - application/json
+      description: 向指定邮箱发送6位数字验证码，用于用户身份验证
+      parameters:
+      - description: 发送验证码请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SendCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码发送成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误或邮箱格式无效
+          schema:
+            additionalProperties: true
+            type: object
+        "429":
+          description: 请求过于频繁，请稍后再试
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 发送邮箱验证码
+      tags:
+      - 认证管理
+  /auth/verify-code:
+    post:
+      consumes:
+      - application/json
+      description: 验证用户提交的6位数字验证码是否正确
+      parameters:
+      - description: 验证码验证请求
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.VerifyCodeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 验证码验证成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误或邮箱格式无效
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: 验证码不正确或已过期
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: 服务器内部错误
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 验证邮箱验证码
+      tags:
+      - 认证管理
+  /blockchain/contract/{address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据合约地址获取智能合约的详细信息
+      parameters:
+      - description: 合约地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 合约信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 无效的合约地址
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取智能合约信息
+      tags:
+      - 区块链
+  /blockchain/status:
+    get:
+      consumes:
+      - application/json
+      description: 查询当前区块链网络的连接状态和基本信息
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 区块链状态信息
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取区块链连接状态
+      tags:
+      - 区块链
+  /content:
+    get:
+      consumes:
+      - application/json
+      description: 获取平台上的内容列表，支持分页和筛选
+      parameters:
+      - description: 页码，默认为1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认为20
+        in: query
+        name: limit
+        type: integer
+      - description: 内容分类
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 内容列表
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取内容列表
+      tags:
+      - 内容管理
+  /content/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据内容ID获取详细的内容信息
+      parameters:
+      - description: 内容ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 内容详情
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 内容不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取内容详情
+      tags:
+      - 内容管理
+  /governance/proposals:
+    get:
+      consumes:
+      - application/json
+      description: 获取平台治理提案列表，包括状态、投票情况等信息
+      parameters:
+      - description: 提案状态（active/pending/completed/rejected）
+        in: query
+        name: status
+        type: string
+      - description: 页码，默认为1
+        in: query
+        name: page
+        type: integer
+      - description: 每页数量，默认为20
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 提案列表
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取治理提案列表
+      tags:
+      - 治理管理
+  /governance/proposals/{id}:
+    get:
+      consumes:
+      - application/json
+      description: 根据提案ID获取详细的提案信息，包括投票记录和讨论
+      parameters:
+      - description: 提案ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 提案详情
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 提案不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取提案详情
+      tags:
+      - 治理管理
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: 检查API服务是否正常运行
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务正常运行
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 健康检查
+      tags:
+      - 系统监控
+  /users:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的用户账户，需要提供钱包地址和基本信息
+      parameters:
+      - description: 用户信息
+        in: body
+        name: request
+        required: true
+        schema:
+          properties:
+            address:
+              type: string
+            avatar:
+              type: string
+            bio:
+              type: string
+            username:
+              type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户创建成功
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 请求参数错误或用户已存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 创建新用户
+      tags:
+      - 用户管理
+  /users/{address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介等
+      parameters:
+      - description: 用户钱包地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户详细信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 地址参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 用户不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户详细信息
+      tags:
+      - 用户管理
+  /users/{address}/balance:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的各种代币余额信息
+      parameters:
+      - description: 用户钱包地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户余额信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 地址参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户代币余额
+      tags:
+      - 用户管理
+  /users/{address}/balance-old:
+    get:
+      consumes:
+      - application/json
+      deprecated: true
+      description: 根据用户地址获取用户的代币余额（已弃用，请使用 /users/{address}/balance）
+      parameters:
+      - description: 用户钱包地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户余额信息
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户余额
+      tags:
+      - 用户管理
+  /users/{address}/info:
+    get:
+      consumes:
+      - application/json
+      deprecated: true
+      description: 根据用户地址获取用户的基本信息（已弃用，请使用 /users/{address}）
+      parameters:
+      - description: 用户钱包地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户信息
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户基本信息
+      tags:
+      - 用户管理
+  /users/{address}/reputation:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户在平台上的声誉分数和相关统计信息
+      parameters:
+      - description: 用户钱包地址
+        in: path
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户声誉信息
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: 地址参数缺失
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: 用户不存在
+          schema:
+            additionalProperties: true
+            type: object
+      summary: 获取用户声誉值
+      tags:
+      - 用户管理
+securityDefinitions:
+  ApiKeyAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

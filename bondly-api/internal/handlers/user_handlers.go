@@ -19,6 +19,16 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 }
 
 // GetUserInfo 获取用户信息
+// @Summary 获取用户详细信息
+// @Description 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介等
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param address path string true "用户钱包地址"
+// @Success 200 {object} map[string]interface{} "用户详细信息"
+// @Failure 400 {object} map[string]interface{} "地址参数缺失"
+// @Failure 404 {object} map[string]interface{} "用户不存在"
+// @Router /users/{address} [get]
 func (h *UserHandlers) GetUserInfo(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
@@ -36,6 +46,15 @@ func (h *UserHandlers) GetUserInfo(c *gin.Context) {
 }
 
 // GetUserBalance 获取用户余额
+// @Summary 获取用户代币余额
+// @Description 获取指定用户的各种代币余额信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param address path string true "用户钱包地址"
+// @Success 200 {object} map[string]interface{} "用户余额信息"
+// @Failure 400 {object} map[string]interface{} "地址参数缺失"
+// @Router /users/{address}/balance [get]
 func (h *UserHandlers) GetUserBalance(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
@@ -53,6 +72,16 @@ func (h *UserHandlers) GetUserBalance(c *gin.Context) {
 }
 
 // GetUserReputation 获取用户声誉
+// @Summary 获取用户声誉值
+// @Description 获取用户在平台上的声誉分数和相关统计信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param address path string true "用户钱包地址"
+// @Success 200 {object} map[string]interface{} "用户声誉信息"
+// @Failure 400 {object} map[string]interface{} "地址参数缺失"
+// @Failure 404 {object} map[string]interface{} "用户不存在"
+// @Router /users/{address}/reputation [get]
 func (h *UserHandlers) GetUserReputation(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
@@ -73,6 +102,15 @@ func (h *UserHandlers) GetUserReputation(c *gin.Context) {
 }
 
 // CreateUser 创建用户
+// @Summary 创建新用户
+// @Description 创建新的用户账户，需要提供钱包地址和基本信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param request body object{address=string,username=string,avatar=string,bio=string} true "用户信息"
+// @Success 200 {object} map[string]interface{} "用户创建成功"
+// @Failure 400 {object} map[string]interface{} "请求参数错误或用户已存在"
+// @Router /users [post]
 func (h *UserHandlers) CreateUser(c *gin.Context) {
 	var user struct {
 		Address  string `json:"address" binding:"required"`

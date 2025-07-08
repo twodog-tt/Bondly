@@ -125,3 +125,7 @@ gas-report.txt
 
 # Vite
 .vite/
+
+# Go binaries
+bondly-api/bondly-api
+*.exe
