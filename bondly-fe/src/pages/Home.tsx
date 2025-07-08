@@ -354,8 +354,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
             <div key={user.id}
               onClick={() => {
                 const addressOrENS = user.name.toLowerCase().replace(/\s+/g, "");
-                // 这里可以后续添加路由跳转逻辑
-                onPageChange?.("profile");
+                // 跳转到用户公开个人资料页面
+                onPageChange?.(`user-profile-${addressOrENS}`);
               }}
               style={{
                 background: "linear-gradient(135deg, rgba(102,126,234,0.10) 0%, rgba(118,75,162,0.10) 100%)",

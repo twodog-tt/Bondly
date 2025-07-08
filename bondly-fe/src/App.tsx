@@ -9,6 +9,7 @@ import Drafts from "./pages/Drafts";
 import BlogListPage from "./pages/BlogListPage";
 import BlogDetailPage from "./pages/BlogDetailPage";
 import DaoPage from "./pages/DaoPage";
+import UserPublicProfilePage from "./pages/UserPublicProfilePage";
 
 // 工具函数：渲染装饰元素
 function renderDecorations(isMobile: boolean) {
@@ -227,6 +228,12 @@ function AppContent() {
     if (newPage !== page) {
       setPage(newPage);
     }
+  };
+
+  // 处理用户个人资料页面导航
+  const handleUserProfileNavigation = (address: string) => {
+    // 这里可以添加地址验证逻辑
+    setPage(`user-profile-${address}`);
   };
 
   // 按钮涟漪效果
@@ -465,6 +472,8 @@ function AppContent() {
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page === "drafts"
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page.startsWith("user-profile-")
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : isMobile ? mobileContentStyle : contentStyle
         }>
           {page === "home" && <Home isMobile={isMobile} onPageChange={handlePageChange} />}
@@ -474,6 +483,7 @@ function AppContent() {
           {page === "drafts" && <Drafts isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "blog-detail" && <BlogDetailPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page.startsWith("user-profile-") && <UserPublicProfilePage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>
     </div>
