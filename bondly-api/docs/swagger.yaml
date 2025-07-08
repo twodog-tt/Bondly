@@ -1,52 +1,6 @@
 basePath: /
 definitions:
-  handlers.SendCodeRequest:
-    properties:
-      email:
-        example: user@example.com
-        format: email
-        type: string
-    required:
-    - email
-    type: object
-  handlers.VerifyCodeRequest:
-    properties:
-      code:
-        example: "123456"
-        maxLength: 6
-        minLength: 6
-        type: string
-      email:
-        example: user@example.com
-        format: email
-        type: string
-    required:
-    - code
-    - email
-    type: object
-  models.AuthErrorResponse:
-    properties:
-      error:
-        example: 详细错误信息
-        type: string
-      message:
-        example: 操作失败
-        type: string
-      success:
-        example: false
-        type: boolean
-    type: object
-  models.AuthSuccessResponse:
-    properties:
-      data: {}
-      message:
-        example: 操作成功
-        type: string
-      success:
-        example: true
-        type: boolean
-    type: object
-  models.BlockchainStatusResponse:
+  handlers.BlockchainStatusData:
     properties:
       message:
         example: Blockchain connection status
@@ -58,7 +12,7 @@ definitions:
         example: connected
         type: string
     type: object
-  models.CodeStatusData:
+  handlers.CodeStatusData:
     properties:
       code_exists:
         example: true
@@ -76,16 +30,7 @@ definitions:
         example: false
         type: boolean
     type: object
-  models.ContentListResponse:
-    properties:
-      content:
-        items: {}
-        type: array
-      message:
-        example: Content list
-        type: string
-    type: object
-  models.ContentResponse:
+  handlers.ContentDetailData:
     properties:
       id:
         example: "1"
@@ -94,7 +39,16 @@ definitions:
         example: Content detail
         type: string
     type: object
-  models.ContractInfoResponse:
+  handlers.ContentListData:
+    properties:
+      content:
+        items: {}
+        type: array
+      message:
+        example: Content list
+        type: string
+    type: object
+  handlers.ContractInfoData:
     properties:
       address:
         example: 0x1234567890abcdef1234567890abcdef12345678
@@ -106,39 +60,34 @@ definitions:
         example: active
         type: string
     type: object
-  models.CreateContentRequest:
+  handlers.CreateContentData:
     properties:
-      content:
-        example: 这是一篇关于区块链技术的详细文章...
+      id:
+        example: "1"
         type: string
-      title:
-        example: 区块链技术深度解析
+      message:
+        example: Content created successfully
         type: string
-      type:
-        example: article
-        type: string
-    required:
-    - content
-    - title
-    - type
     type: object
-  models.CreateProposalRequest:
+  handlers.CreateProposalData:
     properties:
-      description:
-        example: 提案详细描述...
+      id:
+        example: "1"
         type: string
-      end_time:
-        example: "2024-02-15T23:59:59Z"
+      message:
+        example: Proposal created successfully
         type: string
-      title:
-        example: 提升平台奖励机制
-        type: string
-    required:
-    - description
-    - end_time
-    - title
     type: object
-  models.CreateUserRequest:
+  handlers.CreateUserData:
+    properties:
+      id:
+        example: "1"
+        type: string
+      message:
+        example: User created successfully
+        type: string
+    type: object
+  handlers.CreateUserRequest:
     properties:
       address:
         example: 0x1234567890abcdef1234567890abcdef12345678
@@ -147,7 +96,7 @@ definitions:
         example: https://example.com/avatar.jpg
         type: string
       bio:
-        example: 区块链开发者，热爱去中心化技术
+        example: Blockchain enthusiast
         type: string
       username:
         example: john_doe
@@ -155,19 +104,7 @@ definitions:
     required:
     - address
     type: object
-  models.ErrorResponse:
-    properties:
-      error:
-        example: 详细错误信息
-        type: string
-      message:
-        example: 操作失败
-        type: string
-      success:
-        example: false
-        type: boolean
-    type: object
-  models.HealthResponse:
+  handlers.HealthData:
     properties:
       message:
         example: Bondly API is running
@@ -179,16 +116,7 @@ definitions:
         example: 1.0.0
         type: string
     type: object
-  models.ProposalListResponse:
-    properties:
-      message:
-        example: Proposals list
-        type: string
-      proposals:
-        items: {}
-        type: array
-    type: object
-  models.ProposalResponse:
+  handlers.ProposalDetailData:
     properties:
       id:
         example: "1"
@@ -197,7 +125,16 @@ definitions:
         example: Proposal detail
         type: string
     type: object
-  models.SendCodeData:
+  handlers.ProposalListData:
+    properties:
+      message:
+        example: Proposals list
+        type: string
+      proposals:
+        items: {}
+        type: array
+    type: object
+  handlers.SendCodeData:
     properties:
       email:
         example: user@example.com
@@ -206,53 +143,22 @@ definitions:
         example: 10分钟
         type: string
     type: object
-  models.StakeRequest:
+  handlers.SendCodeRequest:
     properties:
-      amount:
-        example: "100.5"
+      email:
+        example: user@example.com
+        format: email
         type: string
-      duration:
-        example: 30
-        type: integer
     required:
-    - amount
-    - duration
+    - email
     type: object
-  models.StakeResponse:
+  handlers.StakeData:
     properties:
-      amount:
-        example: "100.5"
-        type: string
-      duration:
-        example: 30
-        type: integer
-      end_time:
-        example: "2024-02-14T10:30:00Z"
-        type: string
-      rewards:
-        example: "5.25"
-        type: string
-      start_time:
-        example: "2024-01-15T10:30:00Z"
-        type: string
-      status:
-        example: active
-        type: string
-      tx_hash:
-        example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
-        type: string
-    type: object
-  models.StandardResponse:
-    properties:
-      data: {}
       message:
-        example: 操作成功
+        example: Tokens staked successfully
         type: string
-      success:
-        example: true
-        type: boolean
     type: object
-  models.StatsResponse:
+  handlers.StatsData:
     properties:
       active_stakers:
         example: 3500
@@ -270,104 +176,284 @@ definitions:
         example: "1250000.50"
         type: string
     type: object
-  models.UserBalanceResponse:
+  handlers.UserBalanceData:
     properties:
       address:
         example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
       balance:
-        example: "1.25"
+        example: "1000.50"
         type: string
-      currency:
-        example: ETH
+      message:
+        example: User balance
         type: string
     type: object
-  models.UserReputationResponse:
+  handlers.UserInfoData:
     properties:
       address:
         example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
-      rank:
-        example: 42
-        type: integer
-      reputation:
-        example: 1500
-        type: integer
-      reputation_level:
-        example: Expert
+      message:
+        example: User information
         type: string
-      total_users:
-        example: 10000
-        type: integer
     type: object
-  models.UserResponse:
+  handlers.UserReputationData:
     properties:
       address:
         example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
-      avatar:
-        example: https://example.com/avatar.jpg
-        type: string
-      bio:
-        example: 区块链开发者，热爱去中心化技术
-        type: string
-      created_at:
-        example: "2024-01-15T10:30:00Z"
-        type: string
-      id:
-        example: 1
-        type: integer
       reputation:
-        example: 1500
+        example: 85
         type: integer
-      updated_at:
-        example: "2024-01-20T15:45:00Z"
-        type: string
-      username:
-        example: john_doe
-        type: string
     type: object
-  models.VerifyCodeData:
+  handlers.VerifyCodeData:
     properties:
       email:
         example: user@example.com
         type: string
       verified_at:
-        additionalProperties: true
-        type: object
-    type: object
-  models.VoteRequest:
-    properties:
-      proposal_id:
-        example: 1
-        type: integer
-      vote:
-        example: true
-        type: boolean
-    required:
-    - proposal_id
-    - vote
-    type: object
-  models.VoteResponse:
-    properties:
-      created_at:
-        example: "2024-01-15T10:30:00Z"
+        example: "2024-01-01T12:00:00Z"
         type: string
-      id:
-        example: 1
+    type: object
+  handlers.VerifyCodeRequest:
+    properties:
+      code:
+        example: "123456"
+        maxLength: 6
+        minLength: 6
+        type: string
+      email:
+        example: user@example.com
+        format: email
+        type: string
+    required:
+    - code
+    - email
+    type: object
+  handlers.VoteData:
+    properties:
+      message:
+        example: Vote submitted successfully
+        type: string
+    type: object
+  response.Response-any:
+    properties:
+      code:
         type: integer
-      proposal_id:
-        example: 1
-        type: integer
-      vote:
-        example: true
+      data: {}
+      message:
+        type: string
+      success:
         type: boolean
-      voter_id:
-        example: 1
+    type: object
+  response.Response-handlers_BlockchainStatusData:
+    properties:
+      code:
         type: integer
-      weight:
-        example: 100
+      data:
+        $ref: '#/definitions/handlers.BlockchainStatusData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_CodeStatusData:
+    properties:
+      code:
         type: integer
+      data:
+        $ref: '#/definitions/handlers.CodeStatusData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_ContentDetailData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.ContentDetailData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_ContentListData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.ContentListData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_ContractInfoData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.ContractInfoData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_CreateContentData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.CreateContentData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_CreateProposalData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.CreateProposalData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_CreateUserData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.CreateUserData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_HealthData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.HealthData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_ProposalDetailData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.ProposalDetailData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_ProposalListData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.ProposalListData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_SendCodeData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.SendCodeData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_StakeData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.StakeData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_StatsData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.StatsData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_UserBalanceData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.UserBalanceData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_UserInfoData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.UserInfoData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_UserReputationData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.UserReputationData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_VerifyCodeData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.VerifyCodeData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_VoteData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.VoteData'
+      message:
+        type: string
+      success:
+        type: boolean
     type: object
 host: localhost:8080
 info:
@@ -400,22 +486,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 查询成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.AuthSuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.CodeStatusData'
-              type: object
-        "400":
           description: 邮箱参数缺失或格式错误
           schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 查询验证码状态
       tags:
       - 认证管理
@@ -435,26 +508,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 验证码发送成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.AuthSuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.SendCodeData'
-              type: object
-        "400":
           description: 请求参数错误或邮箱格式无效
           schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
-        "429":
-          description: 请求过于频繁，请稍后再试
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 发送邮箱验证码
       tags:
       - 认证管理
@@ -474,26 +530,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 验证码验证成功
+          description: 请求参数错误或验证码不正确
           schema:
-            allOf:
-            - $ref: '#/definitions/models.AuthSuccessResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.VerifyCodeData'
-              type: object
-        "400":
-          description: 请求参数错误或邮箱格式无效
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
-        "401":
-          description: 验证码不正确或已过期
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
-        "500":
-          description: 服务器内部错误
-          schema:
-            $ref: '#/definitions/models.AuthErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 验证邮箱验证码
       tags:
       - 认证管理
@@ -515,22 +554,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 合约信息
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ContractInfoResponse'
-              type: object
-        "400":
           description: 无效的合约地址格式
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: 合约不存在或未验证
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取智能合约信息
       tags:
       - 区块链
@@ -545,27 +571,15 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.StakeRequest'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: 质押成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.StakeResponse'
-              type: object
-        "400":
           description: 请求参数错误或余额不足
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: 用户未认证
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 质押BONDLY代币
       tags:
       - 区块链
@@ -580,12 +594,7 @@ paths:
         "200":
           description: 区块链状态信息
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.BlockchainStatusResponse'
-              type: object
+            $ref: '#/definitions/response.Response-handlers_BlockchainStatusData'
       summary: 获取区块链连接状态
       tags:
       - 区块链
@@ -628,12 +637,7 @@ paths:
         "200":
           description: 内容列表
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ContentListResponse'
-              type: object
+            $ref: '#/definitions/response.Response-handlers_ContentListData'
       summary: 获取内容列表
       tags:
       - 内容管理
@@ -647,27 +651,15 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateContentRequest'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: 内容创建成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ContentResponse'
-              type: object
-        "400":
           description: 请求参数错误
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: 用户未认证
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 创建新内容
       tags:
       - 内容管理
@@ -687,18 +679,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 内容详情
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ContentResponse'
-              type: object
-        "404":
           description: 内容不存在或已被删除
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取内容详情
       tags:
       - 内容管理
@@ -738,12 +721,7 @@ paths:
         "200":
           description: 提案列表
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ProposalListResponse'
-              type: object
+            $ref: '#/definitions/response.Response-handlers_ProposalListData'
       summary: 获取治理提案列表
       tags:
       - 治理管理
@@ -757,31 +735,15 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateProposalRequest'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: 提案创建成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ProposalResponse'
-              type: object
-        "400":
           description: 请求参数错误或截止时间无效
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: 用户未认证
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "403":
-          description: 用户权限不足
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 创建治理提案
       tags:
       - 治理管理
@@ -801,18 +763,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 提案详情
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.ProposalResponse'
-              type: object
-        "404":
           description: 提案不存在或已被删除
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取提案详情
       tags:
       - 治理管理
@@ -827,31 +780,15 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.VoteRequest'
+          additionalProperties: true
+          type: object
       produces:
       - application/json
       responses:
         "200":
-          description: 投票成功
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.VoteResponse'
-              type: object
-        "400":
           description: 请求参数错误或提案已结束
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "401":
-          description: 用户未认证
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "409":
-          description: 用户已对此提案投票
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 对提案进行投票
       tags:
       - 治理管理
@@ -866,12 +803,7 @@ paths:
         "200":
           description: 统计信息
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.StatsResponse'
-              type: object
+            $ref: '#/definitions/response.Response-handlers_StatsData'
       summary: 获取平台统计信息
       tags:
       - 系统监控
@@ -886,27 +818,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/models.CreateUserRequest'
+          $ref: '#/definitions/handlers.CreateUserRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 用户创建成功
+          description: 请求参数错误或用户已存在
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.UserResponse'
-              type: object
-        "400":
-          description: 请求参数错误、地址格式无效或用户已存在
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "409":
-          description: 用户地址已被注册
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 创建新用户
       tags:
       - 用户管理
@@ -928,22 +847,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户详细信息
+          description: 地址参数缺失或用户不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.UserResponse'
-              type: object
-        "400":
-          description: 地址参数缺失或格式错误
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: 用户不存在
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取用户详细信息
       tags:
       - 用户管理
@@ -965,18 +871,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户余额信息
-          schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.UserBalanceResponse'
-              type: object
-        "400":
           description: 地址参数缺失或格式错误
           schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取用户代币余额
       tags:
       - 用户管理
@@ -998,22 +895,9 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户声誉信息
+          description: 地址参数缺失或用户不存在
           schema:
-            allOf:
-            - $ref: '#/definitions/models.StandardResponse'
-            - properties:
-                data:
-                  $ref: '#/definitions/models.UserReputationResponse'
-              type: object
-        "400":
-          description: 地址参数缺失或格式错误
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
-        "404":
-          description: 用户不存在
-          schema:
-            $ref: '#/definitions/models.ErrorResponse'
+            $ref: '#/definitions/response.Response-any'
       summary: 获取用户声誉值
       tags:
       - 用户管理
@@ -1028,7 +912,7 @@ paths:
         "200":
           description: 服务正常运行
           schema:
-            $ref: '#/definitions/models.HealthResponse'
+            $ref: '#/definitions/response.Response-handlers_HealthData'
       summary: 健康检查
       tags:
       - 系统监控
@@ -1050,8 +934,7 @@ paths:
         "200":
           description: 用户余额信息
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.Response-handlers_UserBalanceData'
       summary: 获取用户余额
       tags:
       - 用户管理
@@ -1073,8 +956,7 @@ paths:
         "200":
           description: 用户信息
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/response.Response-handlers_UserInfoData'
       summary: 获取用户基本信息
       tags:
       - 用户管理

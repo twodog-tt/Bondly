@@ -1,10 +1,111 @@
 package handlers
 
 import (
-	"net/http"
+	"bondly-api/internal/pkg/response"
 
 	"github.com/gin-gonic/gin"
 )
+
+// HealthData 健康检查响应数据
+type HealthData struct {
+	Status  string `json:"status" example:"ok"`
+	Message string `json:"message" example:"Bondly API is running"`
+	Version string `json:"version" example:"1.0.0"`
+}
+
+// BlockchainStatusData 区块链状态响应数据
+type BlockchainStatusData struct {
+	Status  string `json:"status" example:"connected"`
+	Network string `json:"network" example:"ethereum"`
+	Message string `json:"message" example:"Blockchain connection status"`
+}
+
+// ContractInfoData 合约信息响应数据
+type ContractInfoData struct {
+	Address string `json:"address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Status  string `json:"status" example:"active"`
+	Message string `json:"message" example:"Contract information"`
+}
+
+// UserInfoData 用户信息响应数据
+type UserInfoData struct {
+	Address string `json:"address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Message string `json:"message" example:"User information"`
+}
+
+// UserBalanceData 用户余额响应数据
+type UserBalanceData struct {
+	Address string `json:"address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Balance string `json:"balance" example:"1000.50"`
+	Message string `json:"message" example:"User balance"`
+}
+
+// UserReputationData 用户声誉响应数据
+type UserReputationData struct {
+	Address    string `json:"address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Reputation int    `json:"reputation" example:"85"`
+}
+
+// CreateUserData 创建用户响应数据
+type CreateUserData struct {
+	ID      string `json:"id" example:"1"`
+	Message string `json:"message" example:"User created successfully"`
+}
+
+// ContentListData 内容列表响应数据
+type ContentListData struct {
+	Content []interface{} `json:"content"`
+	Message string        `json:"message" example:"Content list"`
+}
+
+// ContentDetailData 内容详情响应数据
+type ContentDetailData struct {
+	ID      string `json:"id" example:"1"`
+	Message string `json:"message" example:"Content detail"`
+}
+
+// ProposalListData 提案列表响应数据
+type ProposalListData struct {
+	Proposals []interface{} `json:"proposals"`
+	Message   string        `json:"message" example:"Proposals list"`
+}
+
+// ProposalDetailData 提案详情响应数据
+type ProposalDetailData struct {
+	ID      string `json:"id" example:"1"`
+	Message string `json:"message" example:"Proposal detail"`
+}
+
+// CreateContentData 创建内容响应数据
+type CreateContentData struct {
+	ID      string `json:"id" example:"1"`
+	Message string `json:"message" example:"Content created successfully"`
+}
+
+// CreateProposalData 创建提案响应数据
+type CreateProposalData struct {
+	ID      string `json:"id" example:"1"`
+	Message string `json:"message" example:"Proposal created successfully"`
+}
+
+// VoteData 投票响应数据
+type VoteData struct {
+	Message string `json:"message" example:"Vote submitted successfully"`
+}
+
+// StakeData 质押响应数据
+type StakeData struct {
+	Message string `json:"message" example:"Tokens staked successfully"`
+}
+
+// StatsData 统计信息响应数据
+type StatsData struct {
+	TotalUsers       int    `json:"total_users" example:"10000"`
+	TotalContent     int    `json:"total_content" example:"25600"`
+	TotalProposals   int    `json:"total_proposals" example:"125"`
+	ActiveStakers    int    `json:"active_stakers" example:"3500"`
+	TotalValueLocked string `json:"total_value_locked" example:"1250000.50"`
+}
 
 // HealthCheck 健康检查
 // @Summary 健康检查
@@ -12,14 +113,15 @@ import (
 // @Tags 系统监控
 // @Accept json
 // @Produce json
-// @Success 200 {object} models.HealthResponse "服务正常运行"
+// @Success 200 {object} response.Response[HealthData] "服务正常运行"
 // @Router /health [get]
 func HealthCheck(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "ok",
-		"message": "Bondly API is running",
-		"version": "1.0.0",
-	})
+	data := HealthData{
+		Status:  "ok",
+		Message: "Bondly API is running",
+		Version: "1.0.0",
+	}
+	response.OK(c, data, "健康检查成功")
 }
 
 // GetBlockchainStatus 获取区块链状态
@@ -28,14 +130,15 @@ func HealthCheck(c *gin.Context) {
 // @Tags 区块链
 // @Accept json
 // @Produce json
-// @Success 200 {object} models.StandardResponse{data=models.BlockchainStatusResponse} "区块链状态信息"
+// @Success 200 {object} response.Response[BlockchainStatusData] "区块链状态信息"
 // @Router /api/v1/blockchain/status [get]
 func GetBlockchainStatus(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"status":  "connected",
-		"network": "ethereum",
-		"message": "Blockchain connection status",
-	})
+	data := BlockchainStatusData{
+		Status:  "connected",
+		Network: "ethereum",
+		Message: "Blockchain connection status",
+	}
+	response.OK(c, data, "获取区块链状态成功")
 }
 
 // GetContractInfo 获取合约信息
@@ -45,17 +148,17 @@ func GetBlockchainStatus(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "合约地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} models.StandardResponse{data=models.ContractInfoResponse} "合约信息"
-// @Failure 400 {object} models.ErrorResponse "无效的合约地址格式"
-// @Failure 404 {object} models.ErrorResponse "合约不存在或未验证"
+// @Success 200 {object} response.Response[ContractInfoData] "合约信息"
+// @Failure 200 {object} response.Response[any] "无效的合约地址格式"
 // @Router /api/v1/blockchain/contract/{address} [get]
 func GetContractInfo(c *gin.Context) {
 	address := c.Param("address")
-	c.JSON(http.StatusOK, gin.H{
-		"address": address,
-		"status":  "active",
-		"message": "Contract information",
-	})
+	data := ContractInfoData{
+		Address: address,
+		Status:  "active",
+		Message: "Contract information",
+	}
+	response.OK(c, data, "获取合约信息成功")
 }
 
 // GetUserInfo 获取用户信息
@@ -65,15 +168,16 @@ func GetContractInfo(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "用户钱包地址"
-// @Success 200 {object} map[string]interface{} "用户信息"
+// @Success 200 {object} response.Response[UserInfoData] "用户信息"
 // @Deprecated
 // @Router /users/{address}/info [get]
 func GetUserInfo(c *gin.Context) {
 	address := c.Param("address")
-	c.JSON(http.StatusOK, gin.H{
-		"address": address,
-		"message": "User information",
-	})
+	data := UserInfoData{
+		Address: address,
+		Message: "User information",
+	}
+	response.OK(c, data, "获取用户信息成功")
 }
 
 // GetUserBalance 获取用户余额
@@ -83,16 +187,17 @@ func GetUserInfo(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "用户钱包地址"
-// @Success 200 {object} map[string]interface{} "用户余额信息"
+// @Success 200 {object} response.Response[UserBalanceData] "用户余额信息"
 // @Deprecated
 // @Router /users/{address}/balance-old [get]
 func GetUserBalance(c *gin.Context) {
 	address := c.Param("address")
-	c.JSON(http.StatusOK, gin.H{
-		"address": address,
-		"balance": "0",
-		"message": "User balance",
-	})
+	data := UserBalanceData{
+		Address: address,
+		Balance: "0",
+		Message: "User balance",
+	}
+	response.OK(c, data, "获取用户余额成功")
 }
 
 // GetContentList 获取内容列表
@@ -105,13 +210,14 @@ func GetUserBalance(c *gin.Context) {
 // @Param limit query int false "每页数量，默认为20" example(20) minimum(1) maximum(100)
 // @Param category query string false "内容分类" example(article) Enums(article, post, comment)
 // @Param keyword query string false "搜索关键词" example(区块链)
-// @Success 200 {object} models.StandardResponse{data=models.ContentListResponse} "内容列表"
+// @Success 200 {object} response.Response[ContentListData] "内容列表"
 // @Router /api/v1/content [get]
 func GetContentList(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"content": []interface{}{},
-		"message": "Content list",
-	})
+	data := ContentListData{
+		Content: []interface{}{},
+		Message: "Content list",
+	}
+	response.OK(c, data, "获取内容列表成功")
 }
 
 // GetContentDetail 获取内容详情
@@ -121,15 +227,16 @@ func GetContentList(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "内容ID" example(1)
-// @Success 200 {object} models.StandardResponse{data=models.ContentResponse} "内容详情"
-// @Failure 404 {object} models.ErrorResponse "内容不存在或已被删除"
+// @Success 200 {object} response.Response[ContentDetailData] "内容详情"
+// @Failure 200 {object} response.Response[any] "内容不存在或已被删除"
 // @Router /api/v1/content/{id} [get]
 func GetContentDetail(c *gin.Context) {
 	id := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{
-		"id":      id,
-		"message": "Content detail",
-	})
+	data := ContentDetailData{
+		ID:      id,
+		Message: "Content detail",
+	}
+	response.OK(c, data, "获取内容详情成功")
 }
 
 // GetProposals 获取提案列表
@@ -141,13 +248,14 @@ func GetContentDetail(c *gin.Context) {
 // @Param status query string false "提案状态" example(active) Enums(active, pending, completed, rejected, executed)
 // @Param page query int false "页码，默认为1" example(1) minimum(1)
 // @Param limit query int false "每页数量，默认为20" example(20) minimum(1) maximum(100)
-// @Success 200 {object} models.StandardResponse{data=models.ProposalListResponse} "提案列表"
+// @Success 200 {object} response.Response[ProposalListData] "提案列表"
 // @Router /api/v1/governance/proposals [get]
 func GetProposals(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"proposals": []interface{}{},
-		"message":   "Proposals list",
-	})
+	data := ProposalListData{
+		Proposals: []interface{}{},
+		Message:   "Proposals list",
+	}
+	response.OK(c, data, "获取提案列表成功")
 }
 
 // GetProposalDetail 获取提案详情
@@ -157,15 +265,16 @@ func GetProposals(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path string true "提案ID" example(1)
-// @Success 200 {object} models.StandardResponse{data=models.ProposalResponse} "提案详情"
-// @Failure 404 {object} models.ErrorResponse "提案不存在或已被删除"
+// @Success 200 {object} response.Response[ProposalDetailData] "提案详情"
+// @Failure 200 {object} response.Response[any] "提案不存在或已被删除"
 // @Router /api/v1/governance/proposals/{id} [get]
 func GetProposalDetail(c *gin.Context) {
 	id := c.Param("id")
-	c.JSON(http.StatusOK, gin.H{
-		"id":      id,
-		"message": "Proposal detail",
-	})
+	data := ProposalDetailData{
+		ID:      id,
+		Message: "Proposal detail",
+	}
+	response.OK(c, data, "获取提案详情成功")
 }
 
 // CreateContent 创建内容
@@ -174,16 +283,16 @@ func GetProposalDetail(c *gin.Context) {
 // @Tags 内容管理
 // @Accept json
 // @Produce json
-// @Param request body models.CreateContentRequest true "创建内容请求体"
-// @Success 200 {object} models.StandardResponse{data=models.ContentResponse} "内容创建成功"
-// @Failure 400 {object} models.ErrorResponse "请求参数错误"
-// @Failure 401 {object} models.ErrorResponse "用户未认证"
+// @Param request body map[string]interface{} true "创建内容请求体"
+// @Success 200 {object} response.Response[CreateContentData] "内容创建成功"
+// @Failure 200 {object} response.Response[any] "请求参数错误"
 // @Router /api/v1/content [post]
 func CreateContent(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"id":      "1",
-		"message": "Content created successfully",
-	})
+	data := CreateContentData{
+		ID:      "1",
+		Message: "Content created successfully",
+	}
+	response.OK(c, data, "创建内容成功")
 }
 
 // CreateProposal 创建提案
@@ -192,17 +301,16 @@ func CreateContent(c *gin.Context) {
 // @Tags 治理管理
 // @Accept json
 // @Produce json
-// @Param request body models.CreateProposalRequest true "创建提案请求体"
-// @Success 200 {object} models.StandardResponse{data=models.ProposalResponse} "提案创建成功"
-// @Failure 400 {object} models.ErrorResponse "请求参数错误或截止时间无效"
-// @Failure 401 {object} models.ErrorResponse "用户未认证"
-// @Failure 403 {object} models.ErrorResponse "用户权限不足"
+// @Param request body map[string]interface{} true "创建提案请求体"
+// @Success 200 {object} response.Response[CreateProposalData] "提案创建成功"
+// @Failure 200 {object} response.Response[any] "请求参数错误或截止时间无效"
 // @Router /api/v1/governance/proposals [post]
 func CreateProposal(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"id":      "1",
-		"message": "Proposal created successfully",
-	})
+	data := CreateProposalData{
+		ID:      "1",
+		Message: "Proposal created successfully",
+	}
+	response.OK(c, data, "创建提案成功")
 }
 
 // VoteProposal 提案投票
@@ -211,16 +319,15 @@ func CreateProposal(c *gin.Context) {
 // @Tags 治理管理
 // @Accept json
 // @Produce json
-// @Param request body models.VoteRequest true "投票请求体"
-// @Success 200 {object} models.StandardResponse{data=models.VoteResponse} "投票成功"
-// @Failure 400 {object} models.ErrorResponse "请求参数错误或提案已结束"
-// @Failure 401 {object} models.ErrorResponse "用户未认证"
-// @Failure 409 {object} models.ErrorResponse "用户已对此提案投票"
+// @Param request body map[string]interface{} true "投票请求体"
+// @Success 200 {object} response.Response[VoteData] "投票成功"
+// @Failure 200 {object} response.Response[any] "请求参数错误或提案已结束"
 // @Router /api/v1/governance/proposals/vote [post]
 func VoteProposal(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Vote submitted successfully",
-	})
+	data := VoteData{
+		Message: "Vote submitted successfully",
+	}
+	response.OK(c, data, "投票提交成功")
 }
 
 // StakeTokens 质押代币
@@ -229,15 +336,15 @@ func VoteProposal(c *gin.Context) {
 // @Tags 区块链
 // @Accept json
 // @Produce json
-// @Param request body models.StakeRequest true "质押请求体"
-// @Success 200 {object} models.StandardResponse{data=models.StakeResponse} "质押成功"
-// @Failure 400 {object} models.ErrorResponse "请求参数错误或余额不足"
-// @Failure 401 {object} models.ErrorResponse "用户未认证"
+// @Param request body map[string]interface{} true "质押请求体"
+// @Success 200 {object} response.Response[StakeData] "质押成功"
+// @Failure 200 {object} response.Response[any] "请求参数错误或余额不足"
 // @Router /api/v1/blockchain/stake [post]
 func StakeTokens(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"message": "Tokens staked successfully",
-	})
+	data := StakeData{
+		Message: "Tokens staked successfully",
+	}
+	response.OK(c, data, "质押代币成功")
 }
 
 // GetStats 获取统计信息
@@ -246,14 +353,15 @@ func StakeTokens(c *gin.Context) {
 // @Tags 系统监控
 // @Accept json
 // @Produce json
-// @Success 200 {object} models.StandardResponse{data=models.StatsResponse} "统计信息"
+// @Success 200 {object} response.Response[StatsData] "统计信息"
 // @Router /api/v1/stats [get]
 func GetStats(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"total_users":        10000,
-		"total_content":      25600,
-		"total_proposals":    125,
-		"active_stakers":     3500,
-		"total_value_locked": "1250000.50",
-	})
+	data := StatsData{
+		TotalUsers:       10000,
+		TotalContent:     25600,
+		TotalProposals:   125,
+		ActiveStakers:    3500,
+		TotalValueLocked: "1250000.50",
+	}
+	response.OK(c, data, "获取统计信息成功")
 }

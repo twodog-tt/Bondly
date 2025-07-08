@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"bondly-api/internal/models"
+	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
-	"bondly-api/internal/utils"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,6 +18,14 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 	}
 }
 
+// CreateUserRequest 创建用户请求
+type CreateUserRequest struct {
+	Address  string `json:"address" binding:"required" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Username string `json:"username" example:"john_doe"`
+	Avatar   string `json:"avatar" example:"https://example.com/avatar.jpg"`
+	Bio      string `json:"bio" example:"Blockchain enthusiast"`
+}
+
 // GetUserInfo 获取用户信息
 // @Summary 获取用户详细信息
 // @Description 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。
@@ -25,24 +33,27 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 // @Accept json
 // @Produce json
 // @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} models.StandardResponse{data=models.UserResponse} "用户详细信息"
-// @Failure 400 {object} models.ErrorResponse "地址参数缺失或格式错误"
-// @Failure 404 {object} models.ErrorResponse "用户不存在"
+// @Success 200 {object} response.Response[UserInfoData] "用户详细信息"
+// @Failure 200 {object} response.Response[any] "地址参数缺失或用户不存在"
 // @Router /api/v1/users/{address} [get]
 func (h *UserHandlers) GetUserInfo(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
-		utils.BadRequest(c, "address parameter is required")
+		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
 		return
 	}
 
 	user, err := h.userService.GetUserByAddress(address)
 	if err != nil {
-		utils.NotFound(c, "user not found")
+		response.Fail(c, response.CodeNotFound, "user not found")
 		return
 	}
 
-	utils.Success(c, user)
+	data := UserInfoData{
+		Address: user.Address,
+		Message: "User information",
+	}
+	response.OK(c, data, "获取用户信息成功")
 }
 
 // GetUserBalance 获取用户余额
@@ -52,23 +63,24 @@ func (h *UserHandlers) GetUserInfo(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} models.StandardResponse{data=models.UserBalanceResponse} "用户余额信息"
-// @Failure 400 {object} models.ErrorResponse "地址参数缺失或格式错误"
+// @Success 200 {object} response.Response[UserBalanceData] "用户余额信息"
+// @Failure 200 {object} response.Response[any] "地址参数缺失或格式错误"
 // @Router /api/v1/users/{address}/balance [get]
 func (h *UserHandlers) GetUserBalance(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
-		utils.BadRequest(c, "address parameter is required")
+		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
 		return
 	}
 
 	// 这里可以集成区块链服务获取真实余额
 	// 暂时返回模拟数据
-	utils.Success(c, gin.H{
-		"address":  address,
-		"balance":  "0",
-		"currency": "ETH",
-	})
+	data := UserBalanceData{
+		Address: address,
+		Balance: "0",
+		Message: "User balance",
+	}
+	response.OK(c, data, "获取用户余额成功")
 }
 
 // GetUserReputation 获取用户声誉
@@ -78,27 +90,27 @@ func (h *UserHandlers) GetUserBalance(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} models.StandardResponse{data=models.UserReputationResponse} "用户声誉信息"
-// @Failure 400 {object} models.ErrorResponse "地址参数缺失或格式错误"
-// @Failure 404 {object} models.ErrorResponse "用户不存在"
+// @Success 200 {object} response.Response[UserReputationData] "用户声誉信息"
+// @Failure 200 {object} response.Response[any] "地址参数缺失或用户不存在"
 // @Router /api/v1/users/{address}/reputation [get]
 func (h *UserHandlers) GetUserReputation(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
-		utils.BadRequest(c, "address parameter is required")
+		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
 		return
 	}
 
 	reputation, err := h.userService.GetUserReputation(address)
 	if err != nil {
-		utils.NotFound(c, "user not found")
+		response.Fail(c, response.CodeNotFound, "user not found")
 		return
 	}
 
-	utils.Success(c, gin.H{
-		"address":    address,
-		"reputation": reputation,
-	})
+	data := UserReputationData{
+		Address:    address,
+		Reputation: int(reputation), // 转换int64到int
+	}
+	response.OK(c, data, "获取用户声誉成功")
 }
 
 // CreateUser 创建用户
@@ -107,35 +119,33 @@ func (h *UserHandlers) GetUserReputation(c *gin.Context) {
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body models.CreateUserRequest true "用户信息"
-// @Success 200 {object} models.StandardResponse{data=models.UserResponse} "用户创建成功"
-// @Failure 400 {object} models.ErrorResponse "请求参数错误、地址格式无效或用户已存在"
-// @Failure 409 {object} models.ErrorResponse "用户地址已被注册"
+// @Param request body CreateUserRequest true "用户信息"
+// @Success 200 {object} response.Response[CreateUserData] "用户创建成功"
+// @Failure 200 {object} response.Response[any] "请求参数错误或用户已存在"
 // @Router /api/v1/users [post]
 func (h *UserHandlers) CreateUser(c *gin.Context) {
-	var user struct {
-		Address  string `json:"address" binding:"required"`
-		Username string `json:"username"`
-		Avatar   string `json:"avatar"`
-		Bio      string `json:"bio"`
-	}
+	var userReq CreateUserRequest
 
-	if err := c.ShouldBindJSON(&user); err != nil {
-		utils.ValidationError(c, err.Error())
+	if err := c.ShouldBindJSON(&userReq); err != nil {
+		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
 		return
 	}
 
 	newUser := &models.User{
-		Address:  user.Address,
-		Username: user.Username,
-		Avatar:   user.Avatar,
-		Bio:      user.Bio,
+		Address:  userReq.Address,
+		Username: userReq.Username,
+		Avatar:   userReq.Avatar,
+		Bio:      userReq.Bio,
 	}
 
 	if err := h.userService.CreateUser(newUser); err != nil {
-		utils.BadRequest(c, err.Error())
+		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}
 
-	utils.Success(c, newUser)
+	data := CreateUserData{
+		ID:      "1",
+		Message: "User created successfully",
+	}
+	response.OK(c, data, "创建用户成功")
 }

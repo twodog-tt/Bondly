@@ -51,33 +51,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "查询成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.AuthSuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.CodeStatusData"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "邮箱参数缺失或格式错误",
                         "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -109,39 +85,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "验证码发送成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.AuthSuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.SendCodeData"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误或邮箱格式无效",
                         "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
-                        }
-                    },
-                    "429": {
-                        "description": "请求过于频繁，请稍后再试",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -173,39 +119,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "验证码验证成功",
+                        "description": "请求参数错误或验证码不正确",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.AuthSuccessResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.VerifyCodeData"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误或邮箱格式无效",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "验证码不正确或已过期",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "服务器内部错误",
-                        "schema": {
-                            "$ref": "#/definitions/models.AuthErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -238,33 +154,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "合约信息",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ContractInfoResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "无效的合约地址格式",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "合约不存在或未验证",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -290,39 +182,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.StakeRequest"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "质押成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.StakeResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误或余额不足",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "用户未认证",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -345,19 +214,7 @@ const docTemplate = `{
                     "200": {
                         "description": "区块链状态信息",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.BlockchainStatusResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/response.Response-handlers_BlockchainStatusData"
                         }
                     }
                 }
@@ -418,19 +275,7 @@ const docTemplate = `{
                     "200": {
                         "description": "内容列表",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ContentListResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/response.Response-handlers_ContentListData"
                         }
                     }
                 }
@@ -454,39 +299,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateContentRequest"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "内容创建成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ContentResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "用户未认证",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -517,27 +339,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "内容详情",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ContentResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
                         "description": "内容不存在或已被删除",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -593,19 +397,7 @@ const docTemplate = `{
                     "200": {
                         "description": "提案列表",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ProposalListResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/response.Response-handlers_ProposalListData"
                         }
                     }
                 }
@@ -629,45 +421,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateProposalRequest"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "提案创建成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ProposalResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误或截止时间无效",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "用户未认证",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "用户权限不足",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -693,45 +456,16 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.VoteRequest"
+                            "type": "object",
+                            "additionalProperties": true
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "投票成功",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.VoteResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "请求参数错误或提案已结束",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "用户未认证",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "用户已对此提案投票",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -762,27 +496,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "提案详情",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.ProposalResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "404": {
                         "description": "提案不存在或已被删除",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -805,19 +521,7 @@ const docTemplate = `{
                     "200": {
                         "description": "统计信息",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.StatsResponse"
-                                        }
-                                    }
-                                }
-                            ]
+                            "$ref": "#/definitions/response.Response-handlers_StatsData"
                         }
                     }
                 }
@@ -843,39 +547,15 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.CreateUserRequest"
+                            "$ref": "#/definitions/handlers.CreateUserRequest"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户创建成功",
+                        "description": "请求参数错误或用户已存在",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.UserResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "请求参数错误、地址格式无效或用户已存在",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "409": {
-                        "description": "用户地址已被注册",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -908,33 +588,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户详细信息",
+                        "description": "地址参数缺失或用户不存在",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.UserResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "地址参数缺失或格式错误",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "用户不存在",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -967,27 +623,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户余额信息",
-                        "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.UserBalanceResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
                         "description": "地址参数缺失或格式错误",
                         "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -1020,33 +658,9 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户声誉信息",
+                        "description": "地址参数缺失或用户不存在",
                         "schema": {
-                            "allOf": [
-                                {
-                                    "$ref": "#/definitions/models.StandardResponse"
-                                },
-                                {
-                                    "type": "object",
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/definitions/models.UserReputationResponse"
-                                        }
-                                    }
-                                }
-                            ]
-                        }
-                    },
-                    "400": {
-                        "description": "地址参数缺失或格式错误",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "用户不存在",
-                        "schema": {
-                            "$ref": "#/definitions/models.ErrorResponse"
+                            "$ref": "#/definitions/response.Response-any"
                         }
                     }
                 }
@@ -1069,7 +683,7 @@ const docTemplate = `{
                     "200": {
                         "description": "服务正常运行",
                         "schema": {
-                            "$ref": "#/definitions/models.HealthResponse"
+                            "$ref": "#/definitions/response.Response-handlers_HealthData"
                         }
                     }
                 }
@@ -1102,8 +716,7 @@ const docTemplate = `{
                     "200": {
                         "description": "用户余额信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/response.Response-handlers_UserBalanceData"
                         }
                     }
                 }
@@ -1136,8 +749,7 @@ const docTemplate = `{
                     "200": {
                         "description": "用户信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/response.Response-handlers_UserInfoData"
                         }
                     }
                 }
@@ -1145,71 +757,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.SendCodeRequest": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "user@example.com"
-                }
-            }
-        },
-        "handlers.VerifyCodeRequest": {
-            "type": "object",
-            "required": [
-                "code",
-                "email"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6,
-                    "example": "123456"
-                },
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "user@example.com"
-                }
-            }
-        },
-        "models.AuthErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string",
-                    "example": "详细错误信息"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "操作失败"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": false
-                }
-            }
-        },
-        "models.AuthSuccessResponse": {
-            "type": "object",
-            "properties": {
-                "data": {},
-                "message": {
-                    "type": "string",
-                    "example": "操作成功"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "models.BlockchainStatusResponse": {
+        "handlers.BlockchainStatusData": {
             "type": "object",
             "properties": {
                 "message": {
@@ -1226,7 +774,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CodeStatusData": {
+        "handlers.CodeStatusData": {
             "type": "object",
             "properties": {
                 "code_exists": {
@@ -1251,20 +799,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ContentListResponse": {
-            "type": "object",
-            "properties": {
-                "content": {
-                    "type": "array",
-                    "items": {}
-                },
-                "message": {
-                    "type": "string",
-                    "example": "Content list"
-                }
-            }
-        },
-        "models.ContentResponse": {
+        "handlers.ContentDetailData": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1277,7 +812,20 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ContractInfoResponse": {
+        "handlers.ContentListData": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {}
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Content list"
+                }
+            }
+        },
+        "handlers.ContractInfoData": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1294,51 +842,46 @@ const docTemplate = `{
                 }
             }
         },
-        "models.CreateContentRequest": {
+        "handlers.CreateContentData": {
             "type": "object",
-            "required": [
-                "content",
-                "title",
-                "type"
-            ],
             "properties": {
-                "content": {
+                "id": {
                     "type": "string",
-                    "example": "这是一篇关于区块链技术的详细文章..."
+                    "example": "1"
                 },
-                "title": {
+                "message": {
                     "type": "string",
-                    "example": "区块链技术深度解析"
-                },
-                "type": {
-                    "type": "string",
-                    "example": "article"
+                    "example": "Content created successfully"
                 }
             }
         },
-        "models.CreateProposalRequest": {
+        "handlers.CreateProposalData": {
             "type": "object",
-            "required": [
-                "description",
-                "end_time",
-                "title"
-            ],
             "properties": {
-                "description": {
+                "id": {
                     "type": "string",
-                    "example": "提案详细描述..."
+                    "example": "1"
                 },
-                "end_time": {
+                "message": {
                     "type": "string",
-                    "example": "2024-02-15T23:59:59Z"
-                },
-                "title": {
-                    "type": "string",
-                    "example": "提升平台奖励机制"
+                    "example": "Proposal created successfully"
                 }
             }
         },
-        "models.CreateUserRequest": {
+        "handlers.CreateUserData": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "User created successfully"
+                }
+            }
+        },
+        "handlers.CreateUserRequest": {
             "type": "object",
             "required": [
                 "address"
@@ -1354,7 +897,7 @@ const docTemplate = `{
                 },
                 "bio": {
                     "type": "string",
-                    "example": "区块链开发者，热爱去中心化技术"
+                    "example": "Blockchain enthusiast"
                 },
                 "username": {
                     "type": "string",
@@ -1362,24 +905,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ErrorResponse": {
-            "type": "object",
-            "properties": {
-                "error": {
-                    "type": "string",
-                    "example": "详细错误信息"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "操作失败"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": false
-                }
-            }
-        },
-        "models.HealthResponse": {
+        "handlers.HealthData": {
             "type": "object",
             "properties": {
                 "message": {
@@ -1396,20 +922,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.ProposalListResponse": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Proposals list"
-                },
-                "proposals": {
-                    "type": "array",
-                    "items": {}
-                }
-            }
-        },
-        "models.ProposalResponse": {
+        "handlers.ProposalDetailData": {
             "type": "object",
             "properties": {
                 "id": {
@@ -1422,7 +935,20 @@ const docTemplate = `{
                 }
             }
         },
-        "models.SendCodeData": {
+        "handlers.ProposalListData": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Proposals list"
+                },
+                "proposals": {
+                    "type": "array",
+                    "items": {}
+                }
+            }
+        },
+        "handlers.SendCodeData": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1435,71 +961,29 @@ const docTemplate = `{
                 }
             }
         },
-        "models.StakeRequest": {
+        "handlers.SendCodeRequest": {
             "type": "object",
             "required": [
-                "amount",
-                "duration"
+                "email"
             ],
             "properties": {
-                "amount": {
+                "email": {
                     "type": "string",
-                    "example": "100.5"
-                },
-                "duration": {
-                    "type": "integer",
-                    "example": 30
+                    "format": "email",
+                    "example": "user@example.com"
                 }
             }
         },
-        "models.StakeResponse": {
+        "handlers.StakeData": {
             "type": "object",
             "properties": {
-                "amount": {
-                    "type": "string",
-                    "example": "100.5"
-                },
-                "duration": {
-                    "type": "integer",
-                    "example": 30
-                },
-                "end_time": {
-                    "type": "string",
-                    "example": "2024-02-14T10:30:00Z"
-                },
-                "rewards": {
-                    "type": "string",
-                    "example": "5.25"
-                },
-                "start_time": {
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00Z"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "active"
-                },
-                "tx_hash": {
-                    "type": "string",
-                    "example": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
-                }
-            }
-        },
-        "models.StandardResponse": {
-            "type": "object",
-            "properties": {
-                "data": {},
                 "message": {
                     "type": "string",
-                    "example": "操作成功"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
+                    "example": "Tokens staked successfully"
                 }
             }
         },
-        "models.StatsResponse": {
+        "handlers.StatsData": {
             "type": "object",
             "properties": {
                 "active_stakers": {
@@ -1524,7 +1008,7 @@ const docTemplate = `{
                 }
             }
         },
-        "models.UserBalanceResponse": {
+        "handlers.UserBalanceData": {
             "type": "object",
             "properties": {
                 "address": {
@@ -1533,77 +1017,41 @@ const docTemplate = `{
                 },
                 "balance": {
                     "type": "string",
-                    "example": "1.25"
+                    "example": "1000.50"
                 },
-                "currency": {
+                "message": {
                     "type": "string",
-                    "example": "ETH"
+                    "example": "User balance"
                 }
             }
         },
-        "models.UserReputationResponse": {
+        "handlers.UserInfoData": {
             "type": "object",
             "properties": {
                 "address": {
                     "type": "string",
                     "example": "0x1234567890abcdef1234567890abcdef12345678"
                 },
-                "rank": {
-                    "type": "integer",
-                    "example": 42
-                },
-                "reputation": {
-                    "type": "integer",
-                    "example": 1500
-                },
-                "reputation_level": {
+                "message": {
                     "type": "string",
-                    "example": "Expert"
-                },
-                "total_users": {
-                    "type": "integer",
-                    "example": 10000
+                    "example": "User information"
                 }
             }
         },
-        "models.UserResponse": {
+        "handlers.UserReputationData": {
             "type": "object",
             "properties": {
                 "address": {
                     "type": "string",
                     "example": "0x1234567890abcdef1234567890abcdef12345678"
                 },
-                "avatar": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "区块链开发者，热爱去中心化技术"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2024-01-15T10:30:00Z"
-                },
-                "id": {
-                    "type": "integer",
-                    "example": 1
-                },
                 "reputation": {
                     "type": "integer",
-                    "example": 1500
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2024-01-20T15:45:00Z"
-                },
-                "username": {
-                    "type": "string",
-                    "example": "john_doe"
+                    "example": 85
                 }
             }
         },
-        "models.VerifyCodeData": {
+        "handlers.VerifyCodeData": {
             "type": "object",
             "properties": {
                 "email": {
@@ -1611,54 +1059,375 @@ const docTemplate = `{
                     "example": "user@example.com"
                 },
                 "verified_at": {
-                    "type": "object",
-                    "additionalProperties": true
+                    "type": "string",
+                    "example": "2024-01-01T12:00:00Z"
                 }
             }
         },
-        "models.VoteRequest": {
+        "handlers.VerifyCodeRequest": {
             "type": "object",
             "required": [
-                "proposal_id",
-                "vote"
+                "code",
+                "email"
             ],
             "properties": {
-                "proposal_id": {
-                    "type": "integer",
-                    "example": 1
+                "code": {
+                    "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6,
+                    "example": "123456"
                 },
-                "vote": {
-                    "type": "boolean",
-                    "example": true
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
                 }
             }
         },
-        "models.VoteResponse": {
+        "handlers.VoteData": {
             "type": "object",
             "properties": {
-                "created_at": {
+                "message": {
                     "type": "string",
-                    "example": "2024-01-15T10:30:00Z"
+                    "example": "Vote submitted successfully"
+                }
+            }
+        },
+        "response.Response-any": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
                 },
-                "id": {
-                    "type": "integer",
-                    "example": 1
+                "data": {},
+                "message": {
+                    "type": "string"
                 },
-                "proposal_id": {
-                    "type": "integer",
-                    "example": 1
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_BlockchainStatusData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
                 },
-                "vote": {
-                    "type": "boolean",
-                    "example": true
+                "data": {
+                    "$ref": "#/definitions/handlers.BlockchainStatusData"
                 },
-                "voter_id": {
-                    "type": "integer",
-                    "example": 1
+                "message": {
+                    "type": "string"
                 },
-                "weight": {
-                    "type": "integer",
-                    "example": 100
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_CodeStatusData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.CodeStatusData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_ContentDetailData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.ContentDetailData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_ContentListData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.ContentListData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_ContractInfoData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.ContractInfoData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_CreateContentData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.CreateContentData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_CreateProposalData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.CreateProposalData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_CreateUserData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.CreateUserData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_HealthData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.HealthData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_ProposalDetailData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.ProposalDetailData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_ProposalListData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.ProposalListData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_SendCodeData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.SendCodeData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_StakeData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.StakeData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_StatsData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.StatsData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_UserBalanceData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.UserBalanceData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_UserInfoData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.UserInfoData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_UserReputationData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.UserReputationData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_VerifyCodeData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.VerifyCodeData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_VoteData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.VoteData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
                 }
             }
         }
