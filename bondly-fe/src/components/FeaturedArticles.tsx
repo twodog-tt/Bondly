@@ -46,12 +46,19 @@ const FeaturedArticles: React.FC<FeaturedArticlesProps> = ({ isMobile }) => {
         gap: "24px"
       }}>
         {articles.map((article) => (
-          <div key={article.id} style={{
-            border: "1px solid #374151",
-            borderRadius: "16px",
-            padding: "16px",
-            background: "#151728"
-          }}>
+          <div 
+            key={article.id} 
+            style={{
+              border: "1px solid #374151",
+              borderRadius: "16px",
+              padding: "16px",
+              background: "#151728",
+              cursor: "pointer",
+              transition: "transform 0.2s cubic-bezier(.4,2,.6,1)",
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-4px) scale(1.03)"}
+            onMouseLeave={(e) => e.currentTarget.style.transform = "none"}
+          >
             <h3 style={{
               fontSize: "18px",
               fontWeight: "600",
