@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import WalletConnect from './WalletConnect';
 
 interface CommonNavbarProps {
   isMobile: boolean;
@@ -26,6 +27,8 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   currentPage
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   const handleBondlyClick = () => {
     if (currentPage === "home") {
@@ -44,6 +47,20 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const handleMobileNavClick = (page: string) => {
     onPageChange?.(page);
     setMobileMenuOpen(false);
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      // 执行搜索逻辑 - 可以跳转到搜索结果页面或在当前页面显示结果
+      console.log("搜索博客:", searchQuery);
+      // 这里可以添加实际的搜索逻辑
+      onPageChange?.("feed"); // 暂时跳转到博客列表页面
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchQuery(e.target.value);
   };
 
   return (
@@ -75,6 +92,60 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
             Bondly
           </span>
         </div>
+        
+        {/* 搜索框 - 仅在桌面端显示 */}
+        {!isMobile && (
+          <div style={{ 
+            flex: "0 0 auto",
+            marginLeft: "32px",
+            marginRight: "32px"
+          }}>
+            <form onSubmit={handleSearchSubmit} style={{ position: "relative" }}>
+              <input
+                type="text"
+                placeholder="Search blogs..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                onFocus={() => setIsSearchFocused(true)}
+                onBlur={() => setIsSearchFocused(false)}
+                style={{
+                  width: "300px",
+                  padding: "8px 40px 8px 16px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: `1px solid ${isSearchFocused ? "#667eea" : "rgba(255, 255, 255, 0.2)"}`,
+                  borderRadius: "20px",
+                  color: "white",
+                  fontSize: "14px",
+                  outline: "none",
+                  transition: "all 0.2s ease",
+                  backdropFilter: "blur(10px)"
+                }}
+              />
+              
+              {/* 搜索图标 */}
+              <button
+                type="submit"
+                style={{
+                  position: "absolute",
+                  right: "12px",
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "transparent",
+                  border: "none",
+                  color: searchQuery ? "#667eea" : "#9ca3af",
+                  cursor: "pointer",
+                  fontSize: "16px",
+                  padding: "4px",
+                  transition: "color 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.color = "#667eea"}
+                onMouseLeave={(e) => e.currentTarget.style.color = searchQuery ? "#667eea" : "#9ca3af"}
+              >
+                🔍
+              </button>
+            </form>
+          </div>
+        )}
         
         {!isMobile && (
           <nav style={{ display: "flex", gap: "24px", fontSize: "14px" }}>
@@ -204,41 +275,30 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
             </button>
           )}
           
-          <button 
-            style={{
-              background: "white",
-              color: "black",
-              padding: "8px 16px",
-              borderRadius: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              border: "none",
-              cursor: "pointer",
-              transition: "opacity 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-            onClick={onLoginClick}
-          >
-            Login
-          </button>
+          {/* Login 按钮 */}
+          {onLoginClick && (
+            <button 
+              style={{
+                background: "white",
+                color: "black",
+                padding: "8px 16px",
+                borderRadius: "12px",
+                fontSize: "14px",
+                fontWeight: "600",
+                border: "none",
+                cursor: "pointer",
+                transition: "opacity 0.2s ease"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              onClick={onLoginClick}
+            >
+              Login
+            </button>
+          )}
           
-          <button style={{
-            background: "white",
-            color: "black",
-            padding: "8px 16px",
-            borderRadius: "12px",
-            fontSize: "14px",
-            fontWeight: "600",
-            border: "none",
-            cursor: "pointer",
-            transition: "opacity 0.2s ease"
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-          >
-            Connect Wallet
-          </button>
+          {/* 钱包连接按钮 */}
+          <WalletConnect isMobile={isMobile} />
         </div>
       </header>
 
@@ -257,6 +317,31 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
           flexDirection: "column",
           gap: "12px"
         }}>
+          {/* 移动端搜索框 */}
+          <div style={{ marginBottom: "12px" }}>
+            <form onSubmit={handleSearchSubmit}>
+              <input
+                type="text"
+                placeholder="Search blogs..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                style={{
+                  width: "100%",
+                  padding: "12px 16px",
+                  background: "rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
+                  borderRadius: "8px",
+                  color: "white",
+                  fontSize: "16px",
+                  outline: "none",
+                  transition: "border-color 0.2s ease"
+                }}
+                onFocus={(e) => e.currentTarget.style.borderColor = "#667eea"}
+                onBlur={(e) => e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.2)"}
+              />
+            </form>
+          </div>
+
           {showHomeButton && (
             <button
               style={{

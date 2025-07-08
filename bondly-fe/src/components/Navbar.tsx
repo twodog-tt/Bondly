@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
+import WalletConnect from './WalletConnect';
 
 interface NavbarProps {
   isMobile: boolean;
-  onLoginClick: () => void;
   onPageChange?: (newPage: string) => void;
   currentPage?: string;
 }
 
-const Navbar: React.FC<NavbarProps> = ({ isMobile, onLoginClick, onPageChange, currentPage }) => {
+const Navbar: React.FC<NavbarProps> = ({ isMobile, onPageChange, currentPage }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const handleBondlyClick = () => {
@@ -145,41 +145,7 @@ const Navbar: React.FC<NavbarProps> = ({ isMobile, onLoginClick, onPageChange, c
             </button>
           )}
           
-          <button 
-            style={{
-              background: "white",
-              color: "black",
-              padding: "8px 16px",
-              borderRadius: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              border: "none",
-              cursor: "pointer",
-              transition: "opacity 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-            onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-            onClick={onLoginClick}
-          >
-            Login
-          </button>
-          
-          <button style={{
-            background: "white",
-            color: "black",
-            padding: "8px 16px",
-            borderRadius: "12px",
-            fontSize: "14px",
-            fontWeight: "600",
-            border: "none",
-            cursor: "pointer",
-            transition: "opacity 0.2s ease"
-          }}
-          onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-          onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-          >
-            Connect Wallet
-          </button>
+          <WalletConnect isMobile={isMobile} />
         </div>
       </header>
 

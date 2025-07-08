@@ -43,11 +43,6 @@ export default function Drafts({ isMobile, onPageChange }: DraftsProps) {
     },
   ]);
 
-  const handleLoginClick = () => {
-    // 处理登录点击
-    console.log("Login clicked");
-  };
-
   const containerStyle = {
     padding: isMobile ? "20px" : "40px",
     background: "#0b0c1a",
@@ -141,6 +136,10 @@ export default function Drafts({ isMobile, onPageChange }: DraftsProps) {
   const handleDeleteDraft = (draftId: string) => {
     // TODO: 删除草稿确认
     console.log("Delete draft:", draftId);
+  };
+
+  const handleLoginClick = () => {
+    console.log("Login clicked");
   };
 
   return (

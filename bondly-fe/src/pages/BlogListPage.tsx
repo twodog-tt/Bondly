@@ -72,7 +72,6 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
   ];
 
   const handleLoginClick = () => {
-    // 处理登录点击
     console.log("Login clicked");
   };
 

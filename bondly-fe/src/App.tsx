@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
-// import { WagmiProvider } from 'wagmi';
-// import { config } from './config/wagmi';
+import { WagmiProvider } from 'wagmi';
+import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import '@rainbow-me/rainbowkit/styles.css';
+import { config } from './config/wagmi';
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
@@ -437,8 +440,9 @@ function AppContent() {
   `;
 
   return (
-    // <WagmiProvider config={config}>
-    <div style={isMobile ? mobileContainerStyle : containerStyle}>
+    <WagmiProvider config={config}>
+      <RainbowKitProvider>
+        <div style={isMobile ? mobileContainerStyle : containerStyle}>
       <style>{keyframesStyle}</style>
 
       {/* 背景装饰元素 */}
@@ -486,13 +490,21 @@ function AppContent() {
           {page.startsWith("user-profile-") && <UserPublicProfilePage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>
-    </div>
-    // </WagmiProvider>
+        </div>
+      </RainbowKitProvider>
+    </WagmiProvider>
   );
 }
 
+// 创建 QueryClient 实例
+const queryClient = new QueryClient();
+
 function App() {
-  return <AppContent />;
+  return (
+    <QueryClientProvider client={queryClient}>
+      <AppContent />
+    </QueryClientProvider>
+  );
 }
 
 export default App;
