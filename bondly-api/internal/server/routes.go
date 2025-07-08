@@ -19,8 +19,9 @@ func (s *Server) setupRoutes() {
 	// Redis 状态检查
 	s.router.GET("/health/redis", s.redisHealthCheck)
 
-	// Swagger文档路由
-	s.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Swagger文档路由 - 配置支持curl示例
+	url := ginSwagger.URL("http://localhost:8080/swagger/doc.json")
+	s.router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler, url))
 
 	// API 版本
 	v1 := s.router.Group("/api/v1")
@@ -38,6 +39,7 @@ func (s *Server) setupRoutes() {
 		{
 			blockchain.GET("/status", handlers.GetBlockchainStatus)
 			blockchain.GET("/contract/:address", handlers.GetContractInfo)
+			blockchain.POST("/stake", handlers.StakeTokens)
 		}
 
 		// 用户相关路由
@@ -54,6 +56,7 @@ func (s *Server) setupRoutes() {
 		{
 			content.GET("/", handlers.GetContentList)
 			content.GET("/:id", handlers.GetContentDetail)
+			content.POST("/", handlers.CreateContent)
 		}
 
 		// 治理相关路由
@@ -61,7 +64,12 @@ func (s *Server) setupRoutes() {
 		{
 			governance.GET("/proposals", handlers.GetProposals)
 			governance.GET("/proposals/:id", handlers.GetProposalDetail)
+			governance.POST("/proposals", handlers.CreateProposal)
+			governance.POST("/proposals/vote", handlers.VoteProposal)
 		}
+
+		// 统计信息路由
+		v1.GET("/stats", handlers.GetStats)
 
 		// 缓存管理路由（开发环境）
 		if s.config.Logging.Level == "debug" {

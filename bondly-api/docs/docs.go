@@ -25,9 +25,9 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/auth/code-status": {
+        "/api/v1/auth/code-status": {
             "get": {
-                "description": "查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流",
+                "description": "查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流。用于前端显示重发倒计时等功能。",
                 "consumes": [
                     "application/json"
                 ],
@@ -41,6 +41,8 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "format": "email",
+                        "example": "user@example.com",
                         "description": "邮箱地址",
                         "name": "email",
                         "in": "query",
@@ -51,30 +53,39 @@ const docTemplate = `{
                     "200": {
                         "description": "查询成功",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.AuthSuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.CodeStatusData"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "邮箱参数缺失",
+                        "description": "邮箱参数缺失或格式错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/send-code": {
+        "/api/v1/auth/send-code": {
             "post": {
-                "description": "向指定邮箱发送6位数字验证码，用于用户身份验证",
+                "description": "向指定邮箱发送6位数字验证码，用于用户身份验证。验证码有效期为10分钟，60秒内最多只能发送一次。",
                 "consumes": [
                     "application/json"
                 ],
@@ -87,7 +98,7 @@ const docTemplate = `{
                 "summary": "发送邮箱验证码",
                 "parameters": [
                     {
-                        "description": "发送验证码请求",
+                        "description": "发送验证码请求体",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -100,37 +111,45 @@ const docTemplate = `{
                     "200": {
                         "description": "验证码发送成功",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.AuthSuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.SendCodeData"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "请求参数错误或邮箱格式无效",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     },
                     "429": {
                         "description": "请求过于频繁，请稍后再试",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/auth/verify-code": {
+        "/api/v1/auth/verify-code": {
             "post": {
-                "description": "验证用户提交的6位数字验证码是否正确",
+                "description": "验证用户提交的6位数字验证码是否正确。验证成功后，验证码自动失效。",
                 "consumes": [
                     "application/json"
                 ],
@@ -143,7 +162,7 @@ const docTemplate = `{
                 "summary": "验证邮箱验证码",
                 "parameters": [
                     {
-                        "description": "验证码验证请求",
+                        "description": "验证码验证请求体",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -156,37 +175,45 @@ const docTemplate = `{
                     "200": {
                         "description": "验证码验证成功",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.AuthSuccessResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.VerifyCodeData"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "请求参数错误或邮箱格式无效",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     },
                     "401": {
                         "description": "验证码不正确或已过期",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     },
                     "500": {
                         "description": "服务器内部错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.AuthErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/blockchain/contract/{address}": {
+        "/api/v1/blockchain/contract/{address}": {
             "get": {
-                "description": "根据合约地址获取智能合约的详细信息",
+                "description": "根据合约地址获取智能合约的详细信息，包括合约名称、符号、精度、总供应量等基本信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -199,7 +226,10 @@ const docTemplate = `{
                 "summary": "获取智能合约信息",
                 "parameters": [
                     {
+                        "maxLength": 42,
+                        "minLength": 42,
                         "type": "string",
+                        "example": "0x1234567890abcdef1234567890abcdef12345678",
                         "description": "合约地址",
                         "name": "address",
                         "in": "path",
@@ -210,23 +240,97 @@ const docTemplate = `{
                     "200": {
                         "description": "合约信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ContractInfoResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "无效的合约地址",
+                        "description": "无效的合约地址格式",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "合约不存在或未验证",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/blockchain/status": {
+        "/api/v1/blockchain/stake": {
+            "post": {
+                "description": "质押指定数量的BONDLY代币到智能合约，获得治理权重和奖励。质押期间代币被锁定。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "区块链"
+                ],
+                "summary": "质押BONDLY代币",
+                "parameters": [
+                    {
+                        "description": "质押请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.StakeRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "质押成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.StakeResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或余额不足",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未认证",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/blockchain/status": {
             "get": {
-                "description": "查询当前区块链网络的连接状态和基本信息",
+                "description": "查询当前区块链网络的连接状态、网络信息、最新区块号和Gas价格等实时信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -241,16 +345,27 @@ const docTemplate = `{
                     "200": {
                         "description": "区块链状态信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.BlockchainStatusResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             }
         },
-        "/content": {
+        "/api/v1/content": {
             "get": {
-                "description": "获取平台上的内容列表，支持分页和筛选",
+                "description": "获取平台上的内容列表，支持分页、分类筛选和关键词搜索。返回内容摘要、作者信息、点赞数等基本信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -263,21 +378,39 @@ const docTemplate = `{
                 "summary": "获取内容列表",
                 "parameters": [
                     {
+                        "minimum": 1,
                         "type": "integer",
+                        "example": 1,
                         "description": "页码，默认为1",
                         "name": "page",
                         "in": "query"
                     },
                     {
+                        "maximum": 100,
+                        "minimum": 1,
                         "type": "integer",
+                        "example": 20,
                         "description": "每页数量，默认为20",
                         "name": "limit",
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "article",
+                            "post",
+                            "comment"
+                        ],
                         "type": "string",
+                        "example": "article",
                         "description": "内容分类",
                         "name": "category",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "example": "区块链",
+                        "description": "搜索关键词",
+                        "name": "keyword",
                         "in": "query"
                     }
                 ],
@@ -285,16 +418,83 @@ const docTemplate = `{
                     "200": {
                         "description": "内容列表",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ContentListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的内容（文章、帖子等），需要提供标题、内容和类型。内容创建后默认为草稿状态。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "内容管理"
+                ],
+                "summary": "创建新内容",
+                "parameters": [
+                    {
+                        "description": "创建内容请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateContentRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "内容创建成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ContentResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未认证",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/content/{id}": {
+        "/api/v1/content/{id}": {
             "get": {
-                "description": "根据内容ID获取详细的内容信息",
+                "description": "根据内容ID获取详细的内容信息，包括完整内容、作者信息、点赞/踩数、评论统计等。访问时会自动增加浏览次数。",
                 "consumes": [
                     "application/json"
                 ],
@@ -308,6 +508,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "1",
                         "description": "内容ID",
                         "name": "id",
                         "in": "path",
@@ -318,23 +519,33 @@ const docTemplate = `{
                     "200": {
                         "description": "内容详情",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ContentResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "404": {
-                        "description": "内容不存在",
+                        "description": "内容不存在或已被删除",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/governance/proposals": {
+        "/api/v1/governance/proposals": {
             "get": {
-                "description": "获取平台治理提案列表，包括状态、投票情况等信息",
+                "description": "获取平台治理提案列表，包括提案状态、投票情况、截止时间等信息。支持按状态筛选和分页查询。",
                 "consumes": [
                     "application/json"
                 ],
@@ -347,19 +558,32 @@ const docTemplate = `{
                 "summary": "获取治理提案列表",
                 "parameters": [
                     {
+                        "enum": [
+                            "active",
+                            "pending",
+                            "completed",
+                            "rejected",
+                            "executed"
+                        ],
                         "type": "string",
-                        "description": "提案状态（active/pending/completed/rejected）",
+                        "example": "active",
+                        "description": "提案状态",
                         "name": "status",
                         "in": "query"
                     },
                     {
+                        "minimum": 1,
                         "type": "integer",
+                        "example": 1,
                         "description": "页码，默认为1",
                         "name": "page",
                         "in": "query"
                     },
                     {
+                        "maximum": 100,
+                        "minimum": 1,
                         "type": "integer",
+                        "example": 20,
                         "description": "每页数量，默认为20",
                         "name": "limit",
                         "in": "query"
@@ -369,16 +593,153 @@ const docTemplate = `{
                     "200": {
                         "description": "提案列表",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ProposalListResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                }
+            },
+            "post": {
+                "description": "创建新的治理提案，需要提供标题、描述和投票截止时间。提案创建后进入待审核状态。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "治理管理"
+                ],
+                "summary": "创建治理提案",
+                "parameters": [
+                    {
+                        "description": "创建提案请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.CreateProposalRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "提案创建成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ProposalResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或截止时间无效",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未认证",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "用户权限不足",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/governance/proposals/{id}": {
+        "/api/v1/governance/proposals/vote": {
+            "post": {
+                "description": "用户对指定提案投票（赞成或反对）。投票权重根据用户持有的代币数量计算。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "治理管理"
+                ],
+                "summary": "对提案进行投票",
+                "parameters": [
+                    {
+                        "description": "投票请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/models.VoteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "投票成功",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.VoteResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "请求参数错误或提案已结束",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "用户未认证",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "用户已对此提案投票",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/governance/proposals/{id}": {
             "get": {
-                "description": "根据提案ID获取详细的提案信息，包括投票记录和讨论",
+                "description": "根据提案ID获取详细的提案信息，包括完整描述、投票记录、讨论评论、提案者信息等。",
                 "consumes": [
                     "application/json"
                 ],
@@ -392,6 +753,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "example": "1",
                         "description": "提案ID",
                         "name": "id",
                         "in": "path",
@@ -402,23 +764,33 @@ const docTemplate = `{
                     "200": {
                         "description": "提案详情",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.ProposalResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "404": {
-                        "description": "提案不存在",
+                        "description": "提案不存在或已被删除",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/health": {
+        "/api/v1/stats": {
             "get": {
-                "description": "检查API服务是否正常运行",
+                "description": "获取平台的各项统计数据，包括用户数量、内容数量、提案数量、质押总额等信息。",
                 "consumes": [
                     "application/json"
                 ],
@@ -428,21 +800,32 @@ const docTemplate = `{
                 "tags": [
                     "系统监控"
                 ],
-                "summary": "健康检查",
+                "summary": "获取平台统计信息",
                 "responses": {
                     "200": {
-                        "description": "服务正常运行",
+                        "description": "统计信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.StatsResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
             }
         },
-        "/users": {
+        "/api/v1/users": {
             "post": {
-                "description": "创建新的用户账户，需要提供钱包地址和基本信息",
+                "description": "创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。",
                 "consumes": [
                     "application/json"
                 ],
@@ -460,21 +843,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "type": "object",
-                            "properties": {
-                                "address": {
-                                    "type": "string"
-                                },
-                                "avatar": {
-                                    "type": "string"
-                                },
-                                "bio": {
-                                    "type": "string"
-                                },
-                                "username": {
-                                    "type": "string"
-                                }
-                            }
+                            "$ref": "#/definitions/models.CreateUserRequest"
                         }
                     }
                 ],
@@ -482,23 +851,39 @@ const docTemplate = `{
                     "200": {
                         "description": "用户创建成功",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "请求参数错误或用户已存在",
+                        "description": "请求参数错误、地址格式无效或用户已存在",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "用户地址已被注册",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/users/{address}": {
+        "/api/v1/users/{address}": {
             "get": {
-                "description": "根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介等",
+                "description": "根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。",
                 "consumes": [
                     "application/json"
                 ],
@@ -511,7 +896,10 @@ const docTemplate = `{
                 "summary": "获取用户详细信息",
                 "parameters": [
                     {
+                        "maxLength": 42,
+                        "minLength": 42,
                         "type": "string",
+                        "example": "0x1234567890abcdef1234567890abcdef12345678",
                         "description": "用户钱包地址",
                         "name": "address",
                         "in": "path",
@@ -522,30 +910,39 @@ const docTemplate = `{
                     "200": {
                         "description": "用户详细信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UserResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "地址参数缺失",
+                        "description": "地址参数缺失或格式错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     },
                     "404": {
                         "description": "用户不存在",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
                         }
                     }
                 }
             }
         },
-        "/users/{address}/balance": {
+        "/api/v1/users/{address}/balance": {
             "get": {
-                "description": "获取指定用户的各种代币余额信息",
+                "description": "获取指定用户的各种代币余额信息，包括ETH余额、BONDLY代币余额等，以及对应的USD价值。",
                 "consumes": [
                     "application/json"
                 ],
@@ -558,7 +955,10 @@ const docTemplate = `{
                 "summary": "获取用户代币余额",
                 "parameters": [
                     {
+                        "maxLength": 42,
+                        "minLength": 42,
                         "type": "string",
+                        "example": "0x1234567890abcdef1234567890abcdef12345678",
                         "description": "用户钱包地址",
                         "name": "address",
                         "in": "path",
@@ -569,15 +969,107 @@ const docTemplate = `{
                     "200": {
                         "description": "用户余额信息",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UserBalanceResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
-                        "description": "地址参数缺失",
+                        "description": "地址参数缺失或格式错误",
                         "schema": {
-                            "type": "object",
-                            "additionalProperties": true
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/{address}/reputation": {
+            "get": {
+                "description": "获取用户在平台上的声誉分数、排名以及相关统计信息。声誉值反映用户的贡献和活跃度。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户声誉值",
+                "parameters": [
+                    {
+                        "maxLength": 42,
+                        "minLength": 42,
+                        "type": "string",
+                        "example": "0x1234567890abcdef1234567890abcdef12345678",
+                        "description": "用户钱包地址",
+                        "name": "address",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户声誉信息",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/models.StandardResponse"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/models.UserReputationResponse"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "地址参数缺失或格式错误",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/models.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/health": {
+            "get": {
+                "description": "检查API服务是否正常运行，返回服务状态、版本信息和运行时长。用于负载均衡器和监控系统的健康检查。",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "系统监控"
+                ],
+                "summary": "健康检查",
+                "responses": {
+                    "200": {
+                        "description": "服务正常运行",
+                        "schema": {
+                            "$ref": "#/definitions/models.HealthResponse"
                         }
                     }
                 }
@@ -650,53 +1142,6 @@ const docTemplate = `{
                     }
                 }
             }
-        },
-        "/users/{address}/reputation": {
-            "get": {
-                "description": "获取用户在平台上的声誉分数和相关统计信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "用户管理"
-                ],
-                "summary": "获取用户声誉值",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "用户钱包地址",
-                        "name": "address",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "用户声誉信息",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "400": {
-                        "description": "地址参数缺失",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    },
-                    "404": {
-                        "description": "用户不存在",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
         }
     },
     "definitions": {
@@ -707,7 +1152,9 @@ const docTemplate = `{
             ],
             "properties": {
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
                 }
             }
         },
@@ -719,10 +1166,499 @@ const docTemplate = `{
             ],
             "properties": {
                 "code": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6,
+                    "example": "123456"
                 },
                 "email": {
-                    "type": "string"
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                }
+            }
+        },
+        "models.AuthErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "详细错误信息"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "操作失败"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "models.AuthSuccessResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string",
+                    "example": "操作成功"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "models.BlockchainStatusResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Blockchain connection status"
+                },
+                "network": {
+                    "type": "string",
+                    "example": "ethereum"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "connected"
+                }
+            }
+        },
+        "models.CodeStatusData": {
+            "type": "object",
+            "properties": {
+                "code_exists": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "code_ttl_seconds": {
+                    "type": "integer",
+                    "example": 300
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "lock_ttl_seconds": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "locked": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "models.ContentListResponse": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "array",
+                    "items": {}
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Content list"
+                }
+            }
+        },
+        "models.ContentResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Content detail"
+                }
+            }
+        },
+        "models.ContractInfoResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Contract information"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                }
+            }
+        },
+        "models.CreateContentRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "title",
+                "type"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "这是一篇关于区块链技术的详细文章..."
+                },
+                "title": {
+                    "type": "string",
+                    "example": "区块链技术深度解析"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "article"
+                }
+            }
+        },
+        "models.CreateProposalRequest": {
+            "type": "object",
+            "required": [
+                "description",
+                "end_time",
+                "title"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "example": "提案详细描述..."
+                },
+                "end_time": {
+                    "type": "string",
+                    "example": "2024-02-15T23:59:59Z"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "提升平台奖励机制"
+                }
+            }
+        },
+        "models.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "address"
+            ],
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "avatar": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "区块链开发者，热爱去中心化技术"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
+        "models.ErrorResponse": {
+            "type": "object",
+            "properties": {
+                "error": {
+                    "type": "string",
+                    "example": "详细错误信息"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "操作失败"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": false
+                }
+            }
+        },
+        "models.HealthResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Bondly API is running"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "ok"
+                },
+                "version": {
+                    "type": "string",
+                    "example": "1.0.0"
+                }
+            }
+        },
+        "models.ProposalListResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Proposals list"
+                },
+                "proposals": {
+                    "type": "array",
+                    "items": {}
+                }
+            }
+        },
+        "models.ProposalResponse": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string",
+                    "example": "1"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "Proposal detail"
+                }
+            }
+        },
+        "models.SendCodeData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "expires_in": {
+                    "type": "string",
+                    "example": "10分钟"
+                }
+            }
+        },
+        "models.StakeRequest": {
+            "type": "object",
+            "required": [
+                "amount",
+                "duration"
+            ],
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "100.5"
+                },
+                "duration": {
+                    "type": "integer",
+                    "example": 30
+                }
+            }
+        },
+        "models.StakeResponse": {
+            "type": "object",
+            "properties": {
+                "amount": {
+                    "type": "string",
+                    "example": "100.5"
+                },
+                "duration": {
+                    "type": "integer",
+                    "example": 30
+                },
+                "end_time": {
+                    "type": "string",
+                    "example": "2024-02-14T10:30:00Z"
+                },
+                "rewards": {
+                    "type": "string",
+                    "example": "5.25"
+                },
+                "start_time": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "active"
+                },
+                "tx_hash": {
+                    "type": "string",
+                    "example": "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+                }
+            }
+        },
+        "models.StandardResponse": {
+            "type": "object",
+            "properties": {
+                "data": {},
+                "message": {
+                    "type": "string",
+                    "example": "操作成功"
+                },
+                "success": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "models.StatsResponse": {
+            "type": "object",
+            "properties": {
+                "active_stakers": {
+                    "type": "integer",
+                    "example": 3500
+                },
+                "total_content": {
+                    "type": "integer",
+                    "example": 25600
+                },
+                "total_proposals": {
+                    "type": "integer",
+                    "example": 125
+                },
+                "total_users": {
+                    "type": "integer",
+                    "example": 10000
+                },
+                "total_value_locked": {
+                    "type": "string",
+                    "example": "1250000.50"
+                }
+            }
+        },
+        "models.UserBalanceResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "balance": {
+                    "type": "string",
+                    "example": "1.25"
+                },
+                "currency": {
+                    "type": "string",
+                    "example": "ETH"
+                }
+            }
+        },
+        "models.UserReputationResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "rank": {
+                    "type": "integer",
+                    "example": 42
+                },
+                "reputation": {
+                    "type": "integer",
+                    "example": 1500
+                },
+                "reputation_level": {
+                    "type": "string",
+                    "example": "Expert"
+                },
+                "total_users": {
+                    "type": "integer",
+                    "example": 10000
+                }
+            }
+        },
+        "models.UserResponse": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "avatar": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "区块链开发者，热爱去中心化技术"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "reputation": {
+                    "type": "integer",
+                    "example": 1500
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2024-01-20T15:45:00Z"
+                },
+                "username": {
+                    "type": "string",
+                    "example": "john_doe"
+                }
+            }
+        },
+        "models.VerifyCodeData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "verified_at": {
+                    "type": "object",
+                    "additionalProperties": true
+                }
+            }
+        },
+        "models.VoteRequest": {
+            "type": "object",
+            "required": [
+                "proposal_id",
+                "vote"
+            ],
+            "properties": {
+                "proposal_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "vote": {
+                    "type": "boolean",
+                    "example": true
+                }
+            }
+        },
+        "models.VoteResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string",
+                    "example": "2024-01-15T10:30:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "proposal_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "vote": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "voter_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "weight": {
+                    "type": "integer",
+                    "example": 100
                 }
             }
         }
@@ -740,8 +1676,8 @@ const docTemplate = `{
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
-	BasePath:         "/api/v1",
-	Schemes:          []string{},
+	BasePath:         "/",
+	Schemes:          []string{"http", "https"},
 	Title:            "Bondly API",
 	Description:      "这是Bondly项目的API文档，提供用户认证、区块链交互、内容管理和治理功能。",
 	InfoInstanceName: "swagger",

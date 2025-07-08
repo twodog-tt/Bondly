@@ -20,27 +20,27 @@ func NewAuthHandlers(authService *services.AuthService) *AuthHandlers {
 
 // SendCodeRequest 发送验证码请求结构
 type SendCodeRequest struct {
-	Email string `json:"email" binding:"required"`
+	Email string `json:"email" binding:"required" example:"user@example.com" format:"email"`
 }
 
 // VerifyCodeRequest 验证验证码请求结构
 type VerifyCodeRequest struct {
-	Email string `json:"email" binding:"required"`
-	Code  string `json:"code" binding:"required"`
+	Email string `json:"email" binding:"required" example:"user@example.com" format:"email"`
+	Code  string `json:"code" binding:"required" example:"123456" minLength:"6" maxLength:"6"`
 }
 
 // SendVerificationCode 发送验证码接口
 // @Summary 发送邮箱验证码
-// @Description 向指定邮箱发送6位数字验证码，用于用户身份验证
+// @Description 向指定邮箱发送6位数字验证码，用于用户身份验证。验证码有效期为10分钟，60秒内最多只能发送一次。
 // @Tags 认证管理
 // @Accept json
 // @Produce json
-// @Param request body SendCodeRequest true "发送验证码请求"
-// @Success 200 {object} map[string]interface{} "验证码发送成功"
-// @Failure 400 {object} map[string]interface{} "请求参数错误或邮箱格式无效"
-// @Failure 429 {object} map[string]interface{} "请求过于频繁，请稍后再试"
-// @Failure 500 {object} map[string]interface{} "服务器内部错误"
-// @Router /auth/send-code [post]
+// @Param request body SendCodeRequest true "发送验证码请求体"
+// @Success 200 {object} models.AuthSuccessResponse{data=models.SendCodeData} "验证码发送成功"
+// @Failure 400 {object} models.AuthErrorResponse "请求参数错误或邮箱格式无效"
+// @Failure 429 {object} models.AuthErrorResponse "请求过于频繁，请稍后再试"
+// @Failure 500 {object} models.AuthErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/send-code [post]
 func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 	var req SendCodeRequest
 
@@ -98,16 +98,16 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 
 // VerifyCode 验证验证码接口
 // @Summary 验证邮箱验证码
-// @Description 验证用户提交的6位数字验证码是否正确
+// @Description 验证用户提交的6位数字验证码是否正确。验证成功后，验证码自动失效。
 // @Tags 认证管理
 // @Accept json
 // @Produce json
-// @Param request body VerifyCodeRequest true "验证码验证请求"
-// @Success 200 {object} map[string]interface{} "验证码验证成功"
-// @Failure 400 {object} map[string]interface{} "请求参数错误或邮箱格式无效"
-// @Failure 401 {object} map[string]interface{} "验证码不正确或已过期"
-// @Failure 500 {object} map[string]interface{} "服务器内部错误"
-// @Router /auth/verify-code [post]
+// @Param request body VerifyCodeRequest true "验证码验证请求体"
+// @Success 200 {object} models.AuthSuccessResponse{data=models.VerifyCodeData} "验证码验证成功"
+// @Failure 400 {object} models.AuthErrorResponse "请求参数错误或邮箱格式无效"
+// @Failure 401 {object} models.AuthErrorResponse "验证码不正确或已过期"
+// @Failure 500 {object} models.AuthErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/verify-code [post]
 func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 	var req VerifyCodeRequest
 
@@ -166,15 +166,15 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 
 // GetCodeStatus 获取验证码状态接口
 // @Summary 查询验证码状态
-// @Description 查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流
+// @Description 查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流。用于前端显示重发倒计时等功能。
 // @Tags 认证管理
 // @Accept json
 // @Produce json
-// @Param email query string true "邮箱地址"
-// @Success 200 {object} map[string]interface{} "查询成功"
-// @Failure 400 {object} map[string]interface{} "邮箱参数缺失"
-// @Failure 500 {object} map[string]interface{} "服务器内部错误"
-// @Router /auth/code-status [get]
+// @Param email query string true "邮箱地址" format(email) example(user@example.com)
+// @Success 200 {object} models.AuthSuccessResponse{data=models.CodeStatusData} "查询成功"
+// @Failure 400 {object} models.AuthErrorResponse "邮箱参数缺失或格式错误"
+// @Failure 500 {object} models.AuthErrorResponse "服务器内部错误"
+// @Router /api/v1/auth/code-status [get]
 func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	email := c.Query("email")
 	if email == "" {

@@ -1,8 +1,10 @@
-basePath: /api/v1
+basePath: /
 definitions:
   handlers.SendCodeRequest:
     properties:
       email:
+        example: user@example.com
+        format: email
         type: string
     required:
     - email
@@ -10,12 +12,362 @@ definitions:
   handlers.VerifyCodeRequest:
     properties:
       code:
+        example: "123456"
+        maxLength: 6
+        minLength: 6
         type: string
       email:
+        example: user@example.com
+        format: email
         type: string
     required:
     - code
     - email
+    type: object
+  models.AuthErrorResponse:
+    properties:
+      error:
+        example: 详细错误信息
+        type: string
+      message:
+        example: 操作失败
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  models.AuthSuccessResponse:
+    properties:
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.BlockchainStatusResponse:
+    properties:
+      message:
+        example: Blockchain connection status
+        type: string
+      network:
+        example: ethereum
+        type: string
+      status:
+        example: connected
+        type: string
+    type: object
+  models.CodeStatusData:
+    properties:
+      code_exists:
+        example: true
+        type: boolean
+      code_ttl_seconds:
+        example: 300
+        type: integer
+      email:
+        example: user@example.com
+        type: string
+      lock_ttl_seconds:
+        example: 0
+        type: integer
+      locked:
+        example: false
+        type: boolean
+    type: object
+  models.ContentListResponse:
+    properties:
+      content:
+        items: {}
+        type: array
+      message:
+        example: Content list
+        type: string
+    type: object
+  models.ContentResponse:
+    properties:
+      id:
+        example: "1"
+        type: string
+      message:
+        example: Content detail
+        type: string
+    type: object
+  models.ContractInfoResponse:
+    properties:
+      address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      message:
+        example: Contract information
+        type: string
+      status:
+        example: active
+        type: string
+    type: object
+  models.CreateContentRequest:
+    properties:
+      content:
+        example: 这是一篇关于区块链技术的详细文章...
+        type: string
+      title:
+        example: 区块链技术深度解析
+        type: string
+      type:
+        example: article
+        type: string
+    required:
+    - content
+    - title
+    - type
+    type: object
+  models.CreateProposalRequest:
+    properties:
+      description:
+        example: 提案详细描述...
+        type: string
+      end_time:
+        example: "2024-02-15T23:59:59Z"
+        type: string
+      title:
+        example: 提升平台奖励机制
+        type: string
+    required:
+    - description
+    - end_time
+    - title
+    type: object
+  models.CreateUserRequest:
+    properties:
+      address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      avatar:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: 区块链开发者，热爱去中心化技术
+        type: string
+      username:
+        example: john_doe
+        type: string
+    required:
+    - address
+    type: object
+  models.ErrorResponse:
+    properties:
+      error:
+        example: 详细错误信息
+        type: string
+      message:
+        example: 操作失败
+        type: string
+      success:
+        example: false
+        type: boolean
+    type: object
+  models.HealthResponse:
+    properties:
+      message:
+        example: Bondly API is running
+        type: string
+      status:
+        example: ok
+        type: string
+      version:
+        example: 1.0.0
+        type: string
+    type: object
+  models.ProposalListResponse:
+    properties:
+      message:
+        example: Proposals list
+        type: string
+      proposals:
+        items: {}
+        type: array
+    type: object
+  models.ProposalResponse:
+    properties:
+      id:
+        example: "1"
+        type: string
+      message:
+        example: Proposal detail
+        type: string
+    type: object
+  models.SendCodeData:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      expires_in:
+        example: 10分钟
+        type: string
+    type: object
+  models.StakeRequest:
+    properties:
+      amount:
+        example: "100.5"
+        type: string
+      duration:
+        example: 30
+        type: integer
+    required:
+    - amount
+    - duration
+    type: object
+  models.StakeResponse:
+    properties:
+      amount:
+        example: "100.5"
+        type: string
+      duration:
+        example: 30
+        type: integer
+      end_time:
+        example: "2024-02-14T10:30:00Z"
+        type: string
+      rewards:
+        example: "5.25"
+        type: string
+      start_time:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      status:
+        example: active
+        type: string
+      tx_hash:
+        example: 0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890
+        type: string
+    type: object
+  models.StandardResponse:
+    properties:
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  models.StatsResponse:
+    properties:
+      active_stakers:
+        example: 3500
+        type: integer
+      total_content:
+        example: 25600
+        type: integer
+      total_proposals:
+        example: 125
+        type: integer
+      total_users:
+        example: 10000
+        type: integer
+      total_value_locked:
+        example: "1250000.50"
+        type: string
+    type: object
+  models.UserBalanceResponse:
+    properties:
+      address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      balance:
+        example: "1.25"
+        type: string
+      currency:
+        example: ETH
+        type: string
+    type: object
+  models.UserReputationResponse:
+    properties:
+      address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      rank:
+        example: 42
+        type: integer
+      reputation:
+        example: 1500
+        type: integer
+      reputation_level:
+        example: Expert
+        type: string
+      total_users:
+        example: 10000
+        type: integer
+    type: object
+  models.UserResponse:
+    properties:
+      address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      avatar:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: 区块链开发者，热爱去中心化技术
+        type: string
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      reputation:
+        example: 1500
+        type: integer
+      updated_at:
+        example: "2024-01-20T15:45:00Z"
+        type: string
+      username:
+        example: john_doe
+        type: string
+    type: object
+  models.VerifyCodeData:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      verified_at:
+        additionalProperties: true
+        type: object
+    type: object
+  models.VoteRequest:
+    properties:
+      proposal_id:
+        example: 1
+        type: integer
+      vote:
+        example: true
+        type: boolean
+    required:
+    - proposal_id
+    - vote
+    type: object
+  models.VoteResponse:
+    properties:
+      created_at:
+        example: "2024-01-15T10:30:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      proposal_id:
+        example: 1
+        type: integer
+      vote:
+        example: true
+        type: boolean
+      voter_id:
+        example: 1
+        type: integer
+      weight:
+        example: 100
+        type: integer
     type: object
 host: localhost:8080
 info:
@@ -31,13 +383,15 @@ info:
   title: Bondly API
   version: "1.0"
 paths:
-  /auth/code-status:
+  /api/v1/auth/code-status:
     get:
       consumes:
       - application/json
-      description: 查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流
+      description: 查询指定邮箱的验证码是否存在、剩余有效时间以及是否被限流。用于前端显示重发倒计时等功能。
       parameters:
       - description: 邮箱地址
+        example: user@example.com
+        format: email
         in: query
         name: email
         required: true
@@ -48,28 +402,30 @@ paths:
         "200":
           description: 查询成功
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.AuthSuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.CodeStatusData'
+              type: object
         "400":
-          description: 邮箱参数缺失
+          description: 邮箱参数缺失或格式错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
       summary: 查询验证码状态
       tags:
       - 认证管理
-  /auth/send-code:
+  /api/v1/auth/send-code:
     post:
       consumes:
       - application/json
-      description: 向指定邮箱发送6位数字验证码，用于用户身份验证
+      description: 向指定邮箱发送6位数字验证码，用于用户身份验证。验证码有效期为10分钟，60秒内最多只能发送一次。
       parameters:
-      - description: 发送验证码请求
+      - description: 发送验证码请求体
         in: body
         name: request
         required: true
@@ -81,33 +437,34 @@ paths:
         "200":
           description: 验证码发送成功
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.AuthSuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.SendCodeData'
+              type: object
         "400":
           description: 请求参数错误或邮箱格式无效
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
         "429":
           description: 请求过于频繁，请稍后再试
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
       summary: 发送邮箱验证码
       tags:
       - 认证管理
-  /auth/verify-code:
+  /api/v1/auth/verify-code:
     post:
       consumes:
       - application/json
-      description: 验证用户提交的6位数字验证码是否正确
+      description: 验证用户提交的6位数字验证码是否正确。验证成功后，验证码自动失效。
       parameters:
-      - description: 验证码验证请求
+      - description: 验证码验证请求体
         in: body
         name: request
         required: true
@@ -119,34 +476,38 @@ paths:
         "200":
           description: 验证码验证成功
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.AuthSuccessResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.VerifyCodeData'
+              type: object
         "400":
           description: 请求参数错误或邮箱格式无效
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
         "401":
           description: 验证码不正确或已过期
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
         "500":
           description: 服务器内部错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.AuthErrorResponse'
       summary: 验证邮箱验证码
       tags:
       - 认证管理
-  /blockchain/contract/{address}:
+  /api/v1/blockchain/contract/{address}:
     get:
       consumes:
       - application/json
-      description: 根据合约地址获取智能合约的详细信息
+      description: 根据合约地址获取智能合约的详细信息，包括合约名称、符号、精度、总供应量等基本信息
       parameters:
       - description: 合约地址
+        example: 0x1234567890abcdef1234567890abcdef12345678
         in: path
+        maxLength: 42
+        minLength: 42
         name: address
         required: true
         type: string
@@ -156,49 +517,110 @@ paths:
         "200":
           description: 合约信息
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ContractInfoResponse'
+              type: object
         "400":
-          description: 无效的合约地址
+          description: 无效的合约地址格式
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: 合约不存在或未验证
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 获取智能合约信息
       tags:
       - 区块链
-  /blockchain/status:
+  /api/v1/blockchain/stake:
+    post:
+      consumes:
+      - application/json
+      description: 质押指定数量的BONDLY代币到智能合约，获得治理权重和奖励。质押期间代币被锁定。
+      parameters:
+      - description: 质押请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.StakeRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 质押成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.StakeResponse'
+              type: object
+        "400":
+          description: 请求参数错误或余额不足
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 用户未认证
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 质押BONDLY代币
+      tags:
+      - 区块链
+  /api/v1/blockchain/status:
     get:
       consumes:
       - application/json
-      description: 查询当前区块链网络的连接状态和基本信息
+      description: 查询当前区块链网络的连接状态、网络信息、最新区块号和Gas价格等实时信息
       produces:
       - application/json
       responses:
         "200":
           description: 区块链状态信息
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.BlockchainStatusResponse'
+              type: object
       summary: 获取区块链连接状态
       tags:
       - 区块链
-  /content:
+  /api/v1/content:
     get:
       consumes:
       - application/json
-      description: 获取平台上的内容列表，支持分页和筛选
+      description: 获取平台上的内容列表，支持分页、分类筛选和关键词搜索。返回内容摘要、作者信息、点赞数等基本信息。
       parameters:
       - description: 页码，默认为1
+        example: 1
         in: query
+        minimum: 1
         name: page
         type: integer
       - description: 每页数量，默认为20
+        example: 20
         in: query
+        maximum: 100
+        minimum: 1
         name: limit
         type: integer
       - description: 内容分类
+        enum:
+        - article
+        - post
+        - comment
+        example: article
         in: query
         name: category
+        type: string
+      - description: 搜索关键词
+        example: 区块链
+        in: query
+        name: keyword
         type: string
       produces:
       - application/json
@@ -206,18 +628,57 @@ paths:
         "200":
           description: 内容列表
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ContentListResponse'
+              type: object
       summary: 获取内容列表
       tags:
       - 内容管理
-  /content/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的内容（文章、帖子等），需要提供标题、内容和类型。内容创建后默认为草稿状态。
+      parameters:
+      - description: 创建内容请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateContentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 内容创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ContentResponse'
+              type: object
+        "400":
+          description: 请求参数错误
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 用户未认证
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 创建新内容
+      tags:
+      - 内容管理
+  /api/v1/content/{id}:
     get:
       consumes:
       - application/json
-      description: 根据内容ID获取详细的内容信息
+      description: 根据内容ID获取详细的内容信息，包括完整内容、作者信息、点赞/踩数、评论统计等。访问时会自动增加浏览次数。
       parameters:
       - description: 内容ID
+        example: "1"
         in: path
         name: id
         required: true
@@ -228,32 +689,47 @@ paths:
         "200":
           description: 内容详情
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ContentResponse'
+              type: object
         "404":
-          description: 内容不存在
+          description: 内容不存在或已被删除
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 获取内容详情
       tags:
       - 内容管理
-  /governance/proposals:
+  /api/v1/governance/proposals:
     get:
       consumes:
       - application/json
-      description: 获取平台治理提案列表，包括状态、投票情况等信息
+      description: 获取平台治理提案列表，包括提案状态、投票情况、截止时间等信息。支持按状态筛选和分页查询。
       parameters:
-      - description: 提案状态（active/pending/completed/rejected）
+      - description: 提案状态
+        enum:
+        - active
+        - pending
+        - completed
+        - rejected
+        - executed
+        example: active
         in: query
         name: status
         type: string
       - description: 页码，默认为1
+        example: 1
         in: query
+        minimum: 1
         name: page
         type: integer
       - description: 每页数量，默认为20
+        example: 20
         in: query
+        maximum: 100
+        minimum: 1
         name: limit
         type: integer
       produces:
@@ -262,18 +738,61 @@ paths:
         "200":
           description: 提案列表
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ProposalListResponse'
+              type: object
       summary: 获取治理提案列表
       tags:
       - 治理管理
-  /governance/proposals/{id}:
+    post:
+      consumes:
+      - application/json
+      description: 创建新的治理提案，需要提供标题、描述和投票截止时间。提案创建后进入待审核状态。
+      parameters:
+      - description: 创建提案请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateProposalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 提案创建成功
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ProposalResponse'
+              type: object
+        "400":
+          description: 请求参数错误或截止时间无效
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 用户未认证
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "403":
+          description: 用户权限不足
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 创建治理提案
+      tags:
+      - 治理管理
+  /api/v1/governance/proposals/{id}:
     get:
       consumes:
       - application/json
-      description: 根据提案ID获取详细的提案信息，包括投票记录和讨论
+      description: 根据提案ID获取详细的提案信息，包括完整描述、投票记录、讨论评论、提案者信息等。
       parameters:
       - description: 提案ID
+        example: "1"
         in: path
         name: id
         required: true
@@ -284,77 +803,124 @@ paths:
         "200":
           description: 提案详情
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.ProposalResponse'
+              type: object
         "404":
-          description: 提案不存在
+          description: 提案不存在或已被删除
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 获取提案详情
       tags:
       - 治理管理
-  /health:
-    get:
+  /api/v1/governance/proposals/vote:
+    post:
       consumes:
       - application/json
-      description: 检查API服务是否正常运行
+      description: 用户对指定提案投票（赞成或反对）。投票权重根据用户持有的代币数量计算。
+      parameters:
+      - description: 投票请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/models.VoteRequest'
       produces:
       - application/json
       responses:
         "200":
-          description: 服务正常运行
+          description: 投票成功
           schema:
-            additionalProperties: true
-            type: object
-      summary: 健康检查
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.VoteResponse'
+              type: object
+        "400":
+          description: 请求参数错误或提案已结束
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "401":
+          description: 用户未认证
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: 用户已对此提案投票
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 对提案进行投票
+      tags:
+      - 治理管理
+  /api/v1/stats:
+    get:
+      consumes:
+      - application/json
+      description: 获取平台的各项统计数据，包括用户数量、内容数量、提案数量、质押总额等信息。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 统计信息
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.StatsResponse'
+              type: object
+      summary: 获取平台统计信息
       tags:
       - 系统监控
-  /users:
+  /api/v1/users:
     post:
       consumes:
       - application/json
-      description: 创建新的用户账户，需要提供钱包地址和基本信息
+      description: 创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。
       parameters:
       - description: 用户信息
         in: body
         name: request
         required: true
         schema:
-          properties:
-            address:
-              type: string
-            avatar:
-              type: string
-            bio:
-              type: string
-            username:
-              type: string
-          type: object
+          $ref: '#/definitions/models.CreateUserRequest'
       produces:
       - application/json
       responses:
         "200":
           description: 用户创建成功
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserResponse'
+              type: object
         "400":
-          description: 请求参数错误或用户已存在
+          description: 请求参数错误、地址格式无效或用户已存在
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
+        "409":
+          description: 用户地址已被注册
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 创建新用户
       tags:
       - 用户管理
-  /users/{address}:
+  /api/v1/users/{address}:
     get:
       consumes:
       - application/json
-      description: 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介等
+      description: 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。
       parameters:
       - description: 用户钱包地址
+        example: 0x1234567890abcdef1234567890abcdef12345678
         in: path
+        maxLength: 42
+        minLength: 42
         name: address
         required: true
         type: string
@@ -364,29 +930,34 @@ paths:
         "200":
           description: 用户详细信息
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserResponse'
+              type: object
         "400":
-          description: 地址参数缺失
+          description: 地址参数缺失或格式错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
         "404":
           description: 用户不存在
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 获取用户详细信息
       tags:
       - 用户管理
-  /users/{address}/balance:
+  /api/v1/users/{address}/balance:
     get:
       consumes:
       - application/json
-      description: 获取指定用户的各种代币余额信息
+      description: 获取指定用户的各种代币余额信息，包括ETH余额、BONDLY代币余额等，以及对应的USD价值。
       parameters:
       - description: 用户钱包地址
+        example: 0x1234567890abcdef1234567890abcdef12345678
         in: path
+        maxLength: 42
+        minLength: 42
         name: address
         required: true
         type: string
@@ -396,16 +967,71 @@ paths:
         "200":
           description: 用户余额信息
           schema:
-            additionalProperties: true
-            type: object
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserBalanceResponse'
+              type: object
         "400":
-          description: 地址参数缺失
+          description: 地址参数缺失或格式错误
           schema:
-            additionalProperties: true
-            type: object
+            $ref: '#/definitions/models.ErrorResponse'
       summary: 获取用户代币余额
       tags:
       - 用户管理
+  /api/v1/users/{address}/reputation:
+    get:
+      consumes:
+      - application/json
+      description: 获取用户在平台上的声誉分数、排名以及相关统计信息。声誉值反映用户的贡献和活跃度。
+      parameters:
+      - description: 用户钱包地址
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        in: path
+        maxLength: 42
+        minLength: 42
+        name: address
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户声誉信息
+          schema:
+            allOf:
+            - $ref: '#/definitions/models.StandardResponse'
+            - properties:
+                data:
+                  $ref: '#/definitions/models.UserReputationResponse'
+              type: object
+        "400":
+          description: 地址参数缺失或格式错误
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+        "404":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/models.ErrorResponse'
+      summary: 获取用户声誉值
+      tags:
+      - 用户管理
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: 检查API服务是否正常运行，返回服务状态、版本信息和运行时长。用于负载均衡器和监控系统的健康检查。
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 服务正常运行
+          schema:
+            $ref: '#/definitions/models.HealthResponse'
+      summary: 健康检查
+      tags:
+      - 系统监控
   /users/{address}/balance-old:
     get:
       consumes:
@@ -452,38 +1078,9 @@ paths:
       summary: 获取用户基本信息
       tags:
       - 用户管理
-  /users/{address}/reputation:
-    get:
-      consumes:
-      - application/json
-      description: 获取用户在平台上的声誉分数和相关统计信息
-      parameters:
-      - description: 用户钱包地址
-        in: path
-        name: address
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: 用户声誉信息
-          schema:
-            additionalProperties: true
-            type: object
-        "400":
-          description: 地址参数缺失
-          schema:
-            additionalProperties: true
-            type: object
-        "404":
-          description: 用户不存在
-          schema:
-            additionalProperties: true
-            type: object
-      summary: 获取用户声誉值
-      tags:
-      - 用户管理
+schemes:
+- http
+- https
 securityDefinitions:
   ApiKeyAuth:
     in: header
