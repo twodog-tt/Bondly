@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -13,6 +14,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
+
+	"bondly-api/internal/services"
 )
 
 // AuthServiceInterface 定义AuthService接口，用于测试
@@ -68,20 +71,30 @@ func (h *TestAuthHandlers) SendVerificationCode(c *gin.Context) {
 	req.Email = strings.TrimSpace(req.Email)
 
 	if err := h.authService.SendVerificationCode(req.Email); err != nil {
-		if strings.Contains(err.Error(), "邮箱格式") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
-			return
-		}
-
-		if strings.Contains(err.Error(), "过于频繁") {
-			c.JSON(http.StatusTooManyRequests, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
-			return
+		// 使用类型安全的错误检查
+		var authErr *services.AuthError
+		if errors.As(err, &authErr) {
+			switch authErr.Code {
+			case services.ErrorCodeEmailInvalid, services.ErrorCodeEmailEmpty:
+				c.JSON(http.StatusBadRequest, gin.H{
+					"success": false,
+					"message": authErr.Error(),
+				})
+				return
+			case services.ErrorCodeRateLimited:
+				c.JSON(http.StatusTooManyRequests, gin.H{
+					"success": false,
+					"message": authErr.Error(),
+				})
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "验证码发送失败",
+					"error":   authErr.Error(),
+				})
+				return
+			}
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -118,20 +131,30 @@ func (h *TestAuthHandlers) VerifyCode(c *gin.Context) {
 	req.Code = strings.TrimSpace(req.Code)
 
 	if err := h.authService.VerifyCode(req.Email, req.Code); err != nil {
-		if strings.Contains(err.Error(), "邮箱格式") {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
-			return
-		}
-
-		if strings.Contains(err.Error(), "验证码") {
-			c.JSON(http.StatusUnauthorized, gin.H{
-				"success": false,
-				"message": err.Error(),
-			})
-			return
+		// 使用类型安全的错误检查
+		var authErr *services.AuthError
+		if errors.As(err, &authErr) {
+			switch authErr.Code {
+			case services.ErrorCodeEmailInvalid, services.ErrorCodeEmailEmpty:
+				c.JSON(http.StatusBadRequest, gin.H{
+					"success": false,
+					"message": authErr.Error(),
+				})
+				return
+			case services.ErrorCodeExpired, services.ErrorCodeInvalid:
+				c.JSON(http.StatusUnauthorized, gin.H{
+					"success": false,
+					"message": authErr.Error(),
+				})
+				return
+			default:
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "验证失败",
+					"error":   authErr.Error(),
+				})
+				return
+			}
 		}
 
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -261,7 +284,7 @@ func TestAuthHandlers_SendVerificationCode_InvalidEmail(t *testing.T) {
 	email := "invalid-email"
 
 	// Mock服务返回邮箱格式错误
-	mockService.On("SendVerificationCode", email).Return(fmt.Errorf("邮箱格式不正确: 邮箱格式无效"))
+	mockService.On("SendVerificationCode", email).Return(services.NewAuthError(services.ErrEmailInvalid, services.ErrorCodeEmailInvalid))
 
 	// 准备请求
 	requestBody := SendCodeRequest{Email: email}
@@ -293,7 +316,7 @@ func TestAuthHandlers_SendVerificationCode_RateLimited(t *testing.T) {
 	email := "test@example.com"
 
 	// Mock服务返回限流错误
-	mockService.On("SendVerificationCode", email).Return(fmt.Errorf("验证码发送过于频繁，请60秒后再试"))
+	mockService.On("SendVerificationCode", email).Return(services.NewAuthError(services.ErrRateLimited, services.ErrorCodeRateLimited))
 
 	// 准备请求
 	requestBody := SendCodeRequest{Email: email}
@@ -409,7 +432,7 @@ func TestAuthHandlers_VerifyCode_InvalidCode(t *testing.T) {
 	code := "123456"
 
 	// Mock服务返回验证码错误
-	mockService.On("VerifyCode", email, code).Return(fmt.Errorf("验证码不正确"))
+	mockService.On("VerifyCode", email, code).Return(services.NewAuthError(services.ErrCodeInvalid, services.ErrorCodeInvalid))
 
 	// 准备请求
 	requestBody := VerifyCodeRequest{Email: email, Code: code}
@@ -442,7 +465,7 @@ func TestAuthHandlers_VerifyCode_ExpiredCode(t *testing.T) {
 	code := "123456"
 
 	// Mock服务返回验证码过期错误
-	mockService.On("VerifyCode", email, code).Return(fmt.Errorf("验证码已过期或不存在"))
+	mockService.On("VerifyCode", email, code).Return(services.NewAuthError(services.ErrCodeExpired, services.ErrorCodeExpired))
 
 	// 准备请求
 	requestBody := VerifyCodeRequest{Email: email, Code: code}
@@ -664,7 +687,7 @@ func TestAuthHandlers_EdgeCases(t *testing.T) {
 
 	// 测试极长的邮箱地址
 	longEmail := strings.Repeat("a", 100) + "@" + strings.Repeat("b", 100) + ".com"
-	mockService.On("SendVerificationCode", longEmail).Return(fmt.Errorf("邮箱格式不正确: 邮箱格式无效"))
+	mockService.On("SendVerificationCode", longEmail).Return(services.NewAuthError(services.ErrEmailInvalid, services.ErrorCodeEmailInvalid))
 
 	requestBody := SendCodeRequest{Email: longEmail}
 	jsonData, _ := json.Marshal(requestBody)

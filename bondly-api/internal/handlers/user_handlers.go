@@ -4,6 +4,7 @@ import (
 	"bondly-api/internal/models"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
+	"errors"
 
 	"github.com/gin-gonic/gin"
 )
@@ -16,6 +17,30 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 	return &UserHandlers{
 		userService: userService,
 	}
+}
+
+// handleUserError 统一处理用户相关错误
+func (h *UserHandlers) handleUserError(c *gin.Context, err error) {
+	var authErr *services.AuthError
+	if errors.As(err, &authErr) {
+		// 根据错误码返回不同的业务状态码
+		switch authErr.Code {
+		case services.ErrorCodeUserAddressEmpty, services.ErrorCodeUserIDEmpty:
+			response.Fail(c, response.CodeInvalidParams, authErr.Error())
+		case services.ErrorCodeUserAlreadyExists:
+			response.Fail(c, response.CodeInvalidParams, authErr.Error())
+		case services.ErrorCodeUserNotFound:
+			response.Fail(c, response.CodeNotFound, authErr.Error())
+		case services.ErrorCodeUserUpdateFailed, services.ErrorCodeUserCreateFailed, services.ErrorCodeCacheFailed:
+			response.Fail(c, response.CodeInternalError, "服务器内部错误")
+		default:
+			response.Fail(c, response.CodeInternalError, "未知错误")
+		}
+		return
+	}
+
+	// 处理非AuthError类型的错误
+	response.Fail(c, response.CodeInternalError, "服务器内部错误")
 }
 
 // CreateUserRequest 创建用户请求
@@ -45,7 +70,7 @@ func (h *UserHandlers) GetUserInfo(c *gin.Context) {
 
 	user, err := h.userService.GetUserByAddress(address)
 	if err != nil {
-		response.Fail(c, response.CodeNotFound, "user not found")
+		h.handleUserError(c, err)
 		return
 	}
 
@@ -73,11 +98,15 @@ func (h *UserHandlers) GetUserBalance(c *gin.Context) {
 		return
 	}
 
-	// 这里可以集成区块链服务获取真实余额
-	// 暂时返回模拟数据
+	balance, err := h.userService.GetUserBalance(address)
+	if err != nil {
+		h.handleUserError(c, err)
+		return
+	}
+
 	data := UserBalanceData{
 		Address: address,
-		Balance: "0",
+		Balance: balance,
 		Message: "User balance",
 	}
 	response.OK(c, data, "获取用户余额成功")
@@ -102,7 +131,7 @@ func (h *UserHandlers) GetUserReputation(c *gin.Context) {
 
 	reputation, err := h.userService.GetUserReputation(address)
 	if err != nil {
-		response.Fail(c, response.CodeNotFound, "user not found")
+		h.handleUserError(c, err)
 		return
 	}
 
@@ -139,7 +168,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 	}
 
 	if err := h.userService.CreateUser(newUser); err != nil {
-		response.Fail(c, response.CodeInvalidParams, err.Error())
+		h.handleUserError(c, err)
 		return
 	}
 

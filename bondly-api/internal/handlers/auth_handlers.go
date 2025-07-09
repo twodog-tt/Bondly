@@ -3,6 +3,7 @@ package handlers
 import (
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
+	"errors"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -50,6 +51,32 @@ type CodeStatusData struct {
 	LockTTLSeconds int    `json:"lock_ttl_seconds" example:"0"`
 }
 
+// handleAuthError 统一处理认证错误
+func (h *AuthHandlers) handleAuthError(c *gin.Context, err error) {
+	var authErr *services.AuthError
+	if errors.As(err, &authErr) {
+		// 根据错误码返回不同的业务状态码
+		switch authErr.Code {
+		case services.ErrorCodeEmailInvalid, services.ErrorCodeEmailEmpty:
+			response.Fail(c, response.CodeInvalidParams, authErr.Error())
+		case services.ErrorCodeRateLimited:
+			response.Fail(c, response.CodeInvalidParams, authErr.Error())
+		case services.ErrorCodeExpired, services.ErrorCodeInvalid:
+			response.Fail(c, response.CodeVerificationError, authErr.Error())
+		case services.ErrorCodeStorageFailed, services.ErrorCodeLockFailed,
+			services.ErrorCodeLockCheckFailed, services.ErrorCodeTTLFailed,
+			services.ErrorCodeLockTTLFailed:
+			response.Fail(c, response.CodeInternalError, "服务器内部错误")
+		default:
+			response.Fail(c, response.CodeInternalError, "未知错误")
+		}
+		return
+	}
+
+	// 处理非AuthError类型的错误
+	response.Fail(c, response.CodeInternalError, "服务器内部错误")
+}
+
 // SendVerificationCode 发送验证码接口
 // @Summary 发送邮箱验证码
 // @Description 向指定邮箱发送6位数字验证码，用于用户身份验证。验证码有效期为10分钟，60秒内最多只能发送一次。
@@ -74,19 +101,7 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 
 	// 调用服务层发送验证码
 	if err := h.authService.SendVerificationCode(req.Email); err != nil {
-		// 根据错误类型返回不同的业务状态码
-		if strings.Contains(err.Error(), "邮箱格式") {
-			response.Fail(c, response.CodeInvalidParams, err.Error())
-			return
-		}
-
-		if strings.Contains(err.Error(), "过于频繁") {
-			response.Fail(c, response.CodeInvalidParams, err.Error())
-			return
-		}
-
-		// 其他服务器错误
-		response.Fail(c, response.CodeInternalError, "验证码发送失败")
+		h.handleAuthError(c, err)
 		return
 	}
 
@@ -123,19 +138,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 
 	// 验证验证码
 	if err := h.authService.VerifyCode(req.Email, req.Code); err != nil {
-		// 根据错误类型返回不同的业务状态码
-		if strings.Contains(err.Error(), "邮箱格式") {
-			response.Fail(c, response.CodeInvalidParams, err.Error())
-			return
-		}
-
-		if strings.Contains(err.Error(), "验证码") {
-			response.Fail(c, response.CodeVerificationError, err.Error())
-			return
-		}
-
-		// 其他服务器错误
-		response.Fail(c, response.CodeInternalError, "验证失败")
+		h.handleAuthError(c, err)
 		return
 	}
 
@@ -169,14 +172,14 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	// 获取验证码剩余时间
 	codeTTL, err := h.authService.GetCodeTTL(email)
 	if err != nil {
-		response.Fail(c, response.CodeInternalError, "获取验证码状态失败")
+		h.handleAuthError(c, err)
 		return
 	}
 
 	// 获取限流剩余时间
 	lockTTL, err := h.authService.GetLockTTL(email)
 	if err != nil {
-		response.Fail(c, response.CodeInternalError, "获取限流状态失败")
+		h.handleAuthError(c, err)
 		return
 	}
 

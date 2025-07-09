@@ -10,6 +10,17 @@ import (
 	"time"
 )
 
+// 用户服务相关错误
+var (
+	ErrUserAddressEmpty  = errors.New("用户地址不能为空")
+	ErrUserIDEmpty       = errors.New("用户ID不能为空")
+	ErrUserAlreadyExists = errors.New("用户已存在")
+	ErrUserNotFound      = errors.New("用户不存在")
+	ErrUserUpdateFailed  = errors.New("用户更新失败")
+	ErrUserCreateFailed  = errors.New("用户创建失败")
+	ErrCacheFailed       = errors.New("缓存操作失败")
+)
+
 type UserService struct {
 	userRepo     *repositories.UserRepository
 	cacheService cache.CacheService
@@ -29,7 +40,7 @@ func NewUserService(userRepo *repositories.UserRepository, cacheService cache.Ca
 // GetUserByAddress 根据地址获取用户信息（带缓存）
 func (s *UserService) GetUserByAddress(address string) (*models.User, error) {
 	if address == "" {
-		return nil, errors.New("address cannot be empty")
+		return nil, NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
 	}
 
 	ctx := context.Background()
@@ -44,7 +55,7 @@ func (s *UserService) GetUserByAddress(address string) (*models.User, error) {
 	// 缓存未命中，从数据库获取
 	dbUser, err := s.userRepo.GetByAddress(address)
 	if err != nil {
-		return nil, err
+		return nil, NewAuthError(fmt.Errorf("%w: %v", ErrUserNotFound, err), ErrorCodeUserNotFound)
 	}
 
 	// 存储到缓存
@@ -59,18 +70,18 @@ func (s *UserService) GetUserByAddress(address string) (*models.User, error) {
 // CreateUser 创建新用户
 func (s *UserService) CreateUser(user *models.User) error {
 	if user.Address == "" {
-		return errors.New("user address cannot be empty")
+		return NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
 	}
 
 	// 检查用户是否已存在
 	existingUser, _ := s.userRepo.GetByAddress(user.Address)
 	if existingUser != nil {
-		return errors.New("user already exists")
+		return NewAuthError(ErrUserAlreadyExists, ErrorCodeUserAlreadyExists)
 	}
 
 	// 创建用户
 	if err := s.userRepo.Create(user); err != nil {
-		return err
+		return NewAuthError(fmt.Errorf("%w: %v", ErrUserCreateFailed, err), ErrorCodeUserCreateFailed)
 	}
 
 	// 存储到缓存
@@ -86,12 +97,12 @@ func (s *UserService) CreateUser(user *models.User) error {
 // UpdateUser 更新用户信息
 func (s *UserService) UpdateUser(user *models.User) error {
 	if user.ID == 0 {
-		return errors.New("user ID cannot be empty")
+		return NewAuthError(ErrUserIDEmpty, ErrorCodeUserIDEmpty)
 	}
 
 	// 更新数据库
 	if err := s.userRepo.Update(user); err != nil {
-		return err
+		return NewAuthError(fmt.Errorf("%w: %v", ErrUserUpdateFailed, err), ErrorCodeUserUpdateFailed)
 	}
 
 	// 清除缓存
@@ -111,6 +122,10 @@ func (s *UserService) UpdateUser(user *models.User) error {
 
 // GetUserReputation 获取用户声誉（带缓存）
 func (s *UserService) GetUserReputation(address string) (int64, error) {
+	if address == "" {
+		return 0, NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
+	}
+
 	ctx := context.Background()
 	cacheKey := s.keyBuilder.UserReputationKey(address)
 
@@ -123,7 +138,7 @@ func (s *UserService) GetUserReputation(address string) (int64, error) {
 	// 缓存未命中，从数据库获取
 	user, err := s.userRepo.GetByAddress(address)
 	if err != nil {
-		return 0, err
+		return 0, NewAuthError(fmt.Errorf("%w: %v", ErrUserNotFound, err), ErrorCodeUserNotFound)
 	}
 
 	// 缓存声誉值
@@ -137,19 +152,19 @@ func (s *UserService) GetUserReputation(address string) (int64, error) {
 // UpdateUserReputation 更新用户声誉
 func (s *UserService) UpdateUserReputation(address string, reputation int64) error {
 	if address == "" {
-		return errors.New("address cannot be empty")
+		return NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
 	}
 
 	// 获取用户
 	user, err := s.userRepo.GetByAddress(address)
 	if err != nil {
-		return err
+		return NewAuthError(fmt.Errorf("%w: %v", ErrUserNotFound, err), ErrorCodeUserNotFound)
 	}
 
 	// 更新声誉
 	user.Reputation = reputation
 	if err := s.userRepo.Update(user); err != nil {
-		return err
+		return NewAuthError(fmt.Errorf("%w: %v", ErrUserUpdateFailed, err), ErrorCodeUserUpdateFailed)
 	}
 
 	// 更新缓存
@@ -177,7 +192,7 @@ func (s *UserService) UpdateUserReputation(address string, reputation int64) err
 // GetUserBalance 获取用户余额（带缓存）
 func (s *UserService) GetUserBalance(address string) (string, error) {
 	if address == "" {
-		return "", errors.New("address cannot be empty")
+		return "", NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
 	}
 
 	ctx := context.Background()
@@ -201,16 +216,20 @@ func (s *UserService) GetUserBalance(address string) (string, error) {
 	return balance, nil
 }
 
-// ClearUserCache 清除用户相关缓存
+// ClearUserCache 清除用户缓存
 func (s *UserService) ClearUserCache(address string) error {
 	if address == "" {
-		return errors.New("address cannot be empty")
+		return NewAuthError(ErrUserAddressEmpty, ErrorCodeUserAddressEmpty)
 	}
 
 	ctx := context.Background()
-	userKey := s.keyBuilder.UserKey(address)
-	reputationKey := s.keyBuilder.UserReputationKey(address)
-	balanceKey := s.keyBuilder.UserBalanceKey(address)
+	userCacheKey := s.keyBuilder.UserKey(address)
+	reputationCacheKey := s.keyBuilder.UserReputationKey(address)
+	balanceCacheKey := s.keyBuilder.UserBalanceKey(address)
 
-	return s.cacheService.Del(ctx, userKey, reputationKey, balanceKey)
+	if err := s.cacheService.Del(ctx, userCacheKey, reputationCacheKey, balanceCacheKey); err != nil {
+		return NewAuthError(fmt.Errorf("%w: %v", ErrCacheFailed, err), ErrorCodeCacheFailed)
+	}
+
+	return nil
 }

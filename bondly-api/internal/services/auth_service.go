@@ -3,12 +3,49 @@ package services
 import (
 	"bondly-api/internal/redis"
 	"context"
+	"errors"
 	"fmt"
 	"math/rand"
 	"net/mail"
 	"strconv"
 	"time"
 )
+
+// 自定义错误类型
+var (
+	ErrEmailInvalid    = errors.New("邮箱格式不正确")
+	ErrEmailEmpty      = errors.New("邮箱不能为空")
+	ErrRateLimited     = errors.New("验证码发送过于频繁，请60秒后再试")
+	ErrCodeExpired     = errors.New("验证码已过期或不存在")
+	ErrCodeInvalid     = errors.New("验证码不正确")
+	ErrStorageFailed   = errors.New("存储验证码失败")
+	ErrLockFailed      = errors.New("设置限流失败")
+	ErrLockCheckFailed = errors.New("检查限流状态失败")
+	ErrTTLFailed       = errors.New("获取验证码过期时间失败")
+	ErrLockTTLFailed   = errors.New("获取限流时间失败")
+)
+
+// 错误包装器，用于携带额外信息
+type AuthError struct {
+	Err  error
+	Code string // 业务错误码
+}
+
+func (e *AuthError) Error() string {
+	return e.Err.Error()
+}
+
+func (e *AuthError) Unwrap() error {
+	return e.Err
+}
+
+// 创建带错误码的认证错误
+func NewAuthError(err error, code string) *AuthError {
+	return &AuthError{
+		Err:  err,
+		Code: code,
+	}
+}
 
 type AuthService struct {
 	redisClient *redis.RedisClient
@@ -26,17 +63,17 @@ func (s *AuthService) SendVerificationCode(email string) error {
 
 	// 1. 校验邮箱格式
 	if err := s.validateEmail(email); err != nil {
-		return fmt.Errorf("邮箱格式不正确: %v", err)
+		return NewAuthError(err, ErrorCodeEmailInvalid)
 	}
 
 	// 2. 检查是否在限流期内
 	lockKey := fmt.Sprintf("email:lock:%s", email)
 	exists, err := s.redisClient.Exists(ctx, lockKey)
 	if err != nil {
-		return fmt.Errorf("检查限流状态失败: %v", err)
+		return NewAuthError(fmt.Errorf("%w: %v", ErrLockCheckFailed, err), ErrorCodeLockCheckFailed)
 	}
 	if exists > 0 {
-		return fmt.Errorf("验证码发送过于频繁，请60秒后再试")
+		return NewAuthError(ErrRateLimited, ErrorCodeRateLimited)
 	}
 
 	// 3. 生成6位数字验证码
@@ -45,12 +82,12 @@ func (s *AuthService) SendVerificationCode(email string) error {
 	// 4. 将验证码存入Redis，过期时间10分钟
 	verifyKey := fmt.Sprintf("email:verify:%s", email)
 	if err := s.redisClient.Set(ctx, verifyKey, code, 10*time.Minute); err != nil {
-		return fmt.Errorf("存储验证码失败: %v", err)
+		return NewAuthError(fmt.Errorf("%w: %v", ErrStorageFailed, err), ErrorCodeStorageFailed)
 	}
 
 	// 5. 设置限流键，过期时间60秒
 	if err := s.redisClient.Set(ctx, lockKey, "1", 60*time.Second); err != nil {
-		return fmt.Errorf("设置限流失败: %v", err)
+		return NewAuthError(fmt.Errorf("%w: %v", ErrLockFailed, err), ErrorCodeLockFailed)
 	}
 
 	// 6. 发送验证码到邮箱（模拟）
@@ -65,19 +102,19 @@ func (s *AuthService) VerifyCode(email, code string) error {
 
 	// 1. 校验邮箱格式
 	if err := s.validateEmail(email); err != nil {
-		return fmt.Errorf("邮箱格式不正确: %v", err)
+		return NewAuthError(err, ErrorCodeEmailInvalid)
 	}
 
 	// 2. 从Redis获取存储的验证码
 	verifyKey := fmt.Sprintf("email:verify:%s", email)
 	storedCode, err := s.redisClient.Get(ctx, verifyKey)
 	if err != nil {
-		return fmt.Errorf("验证码已过期或不存在")
+		return NewAuthError(ErrCodeExpired, ErrorCodeExpired)
 	}
 
 	// 3. 验证验证码
 	if storedCode != code {
-		return fmt.Errorf("验证码不正确")
+		return NewAuthError(ErrCodeInvalid, ErrorCodeInvalid)
 	}
 
 	// 4. 验证成功后删除验证码
@@ -92,12 +129,12 @@ func (s *AuthService) VerifyCode(email, code string) error {
 // validateEmail 校验邮箱格式
 func (s *AuthService) validateEmail(email string) error {
 	if email == "" {
-		return fmt.Errorf("邮箱不能为空")
+		return ErrEmailEmpty
 	}
 
 	_, err := mail.ParseAddress(email)
 	if err != nil {
-		return fmt.Errorf("邮箱格式无效")
+		return ErrEmailInvalid
 	}
 
 	return nil
@@ -130,7 +167,7 @@ func (s *AuthService) GetCodeTTL(email string) (time.Duration, error) {
 
 	ttl, err := s.redisClient.TTL(ctx, verifyKey)
 	if err != nil {
-		return 0, fmt.Errorf("获取验证码过期时间失败: %v", err)
+		return 0, NewAuthError(fmt.Errorf("%w: %v", ErrTTLFailed, err), ErrorCodeTTLFailed)
 	}
 
 	return ttl, nil
@@ -143,7 +180,7 @@ func (s *AuthService) GetLockTTL(email string) (time.Duration, error) {
 
 	ttl, err := s.redisClient.TTL(ctx, lockKey)
 	if err != nil {
-		return 0, fmt.Errorf("获取限流时间失败: %v", err)
+		return 0, NewAuthError(fmt.Errorf("%w: %v", ErrLockTTLFailed, err), ErrorCodeLockTTLFailed)
 	}
 
 	return ttl, nil
