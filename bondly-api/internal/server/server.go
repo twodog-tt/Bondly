@@ -27,8 +27,9 @@ type Server struct {
 	server       *http.Server
 
 	// 依赖注入
-	userHandlers *handlers.UserHandlers
-	authHandlers *handlers.AuthHandlers
+	userHandlers   *handlers.UserHandlers
+	authHandlers   *handlers.AuthHandlers
+	uploadHandlers *handlers.UploadHandlers
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
@@ -65,15 +66,20 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 	authService := services.NewAuthService(redisClient)
 	authHandlers := handlers.NewAuthHandlers(authService)
 
+	// 初始化上传服务
+	uploadService := services.NewUploadService()
+	uploadHandlers := handlers.NewUploadHandlers(uploadService)
+
 	server := &Server{
-		config:       cfg,
-		db:           db,
-		redisClient:  redisClient,
-		cacheService: cacheService,
-		logger:       logger,
-		router:       router,
-		userHandlers: userHandlers,
-		authHandlers: authHandlers,
+		config:         cfg,
+		db:             db,
+		redisClient:    redisClient,
+		cacheService:   cacheService,
+		logger:         logger,
+		router:         router,
+		userHandlers:   userHandlers,
+		authHandlers:   authHandlers,
+		uploadHandlers: uploadHandlers,
 	}
 
 	// 设置路由

@@ -13,6 +13,9 @@ import (
 
 // setupRoutes 配置所有路由
 func (s *Server) setupRoutes() {
+	// 静态文件服务 - 用于访问上传的图片
+	s.router.Static("/uploads", "./uploads")
+
 	// 健康检查
 	s.router.GET("/health", handlers.HealthCheck)
 
@@ -66,6 +69,12 @@ func (s *Server) setupRoutes() {
 			governance.GET("/proposals/:id", handlers.GetProposalDetail)
 			governance.POST("/proposals", handlers.CreateProposal)
 			governance.POST("/proposals/vote", handlers.VoteProposal)
+		}
+
+		// 文件上传路由
+		upload := v1.Group("/upload")
+		{
+			upload.POST("/image", s.uploadHandlers.UploadImage)
 		}
 
 		// 统计信息路由
