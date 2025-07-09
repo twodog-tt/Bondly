@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bondly-api/internal/dto"
 	"bondly-api/internal/models"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
@@ -19,53 +20,18 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 	}
 }
 
-// CreateUserRequest 创建用户请求结构
-type CreateUserRequest struct {
-	WalletAddress   *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
-	Email           *string `json:"email" example:"user@example.com"`
-	Nickname        string  `json:"nickname" binding:"required" example:"John Doe"`
-	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
-	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
-	Role            string  `json:"role" example:"user"`
-	ReputationScore int     `json:"reputation_score" example:"0"`
-}
-
-// UpdateUserRequest 更新用户请求结构
-type UpdateUserRequest struct {
-	Nickname        *string `json:"nickname" example:"John Doe"`
-	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
-	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
-	Role            *string `json:"role" example:"user"`
-	ReputationScore *int    `json:"reputation_score" example:"100"`
-}
-
-// UserResponse 用户响应结构
-type UserResponse struct {
-	ID              uint    `json:"id" example:"1"`
-	WalletAddress   *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
-	Email           *string `json:"email" example:"user@example.com"`
-	Nickname        string  `json:"nickname" example:"John Doe"`
-	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
-	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
-	Role            string  `json:"role" example:"user"`
-	ReputationScore int     `json:"reputation_score" example:"100"`
-	LastLoginAt     *string `json:"last_login_at" example:"2023-12-01T10:00:00Z"`
-	CreatedAt       string  `json:"created_at" example:"2023-12-01T10:00:00Z"`
-	UpdatedAt       string  `json:"updated_at" example:"2023-12-01T10:00:00Z"`
-}
-
 // CreateUser 创建用户接口
 // @Summary 创建新用户
 // @Description 创建新的用户账户，支持Web2邮箱和Web3钱包地址
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body CreateUserRequest true "创建用户请求体"
-// @Success 200 {object} response.Response[UserResponse] "用户创建成功"
+// @Param request body dto.CreateUserRequest true "创建用户请求体"
+// @Success 200 {object} response.Response[dto.UserResponse] "用户创建成功"
 // @Failure 200 {object} response.Response[any] "请求参数错误或用户已存在"
 // @Router /api/v1/users [post]
 func (h *UserHandlers) CreateUser(c *gin.Context) {
-	var req CreateUserRequest
+	var req dto.CreateUserRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -102,7 +68,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "用户ID"
-// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Success 200 {object} response.Response[dto.UserResponse] "获取用户成功"
 // @Failure 200 {object} response.Response[any] "用户不存在"
 // @Router /api/v1/users/{id} [get]
 func (h *UserHandlers) GetUserByID(c *gin.Context) {
@@ -130,7 +96,7 @@ func (h *UserHandlers) GetUserByID(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param address path string true "钱包地址"
-// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Success 200 {object} response.Response[dto.UserResponse] "获取用户成功"
 // @Failure 200 {object} response.Response[any] "用户不存在"
 // @Router /api/v1/users/wallet/{address} [get]
 func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
@@ -157,7 +123,7 @@ func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param email path string true "邮箱地址"
-// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Success 200 {object} response.Response[dto.UserResponse] "获取用户成功"
 // @Failure 200 {object} response.Response[any] "用户不存在"
 // @Router /api/v1/users/email/{email} [get]
 func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
@@ -184,8 +150,8 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "用户ID"
-// @Param request body UpdateUserRequest true "更新用户请求体"
-// @Success 200 {object} response.Response[UserResponse] "用户更新成功"
+// @Param request body dto.UpdateUserRequest true "更新用户请求体"
+// @Success 200 {object} response.Response[dto.UserResponse] "用户更新成功"
 // @Failure 200 {object} response.Response[any] "用户不存在或更新失败"
 // @Router /api/v1/users/{id} [put]
 func (h *UserHandlers) UpdateUser(c *gin.Context) {
@@ -196,7 +162,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 		return
 	}
 
-	var req UpdateUserRequest
+	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
 		return
@@ -270,7 +236,7 @@ func (h *UserHandlers) DeleteUser(c *gin.Context) {
 // @Produce json
 // @Param page query int false "页码" default(1)
 // @Param limit query int false "每页数量" default(10)
-// @Success 200 {object} response.Response[[]UserResponse] "获取用户列表成功"
+// @Success 200 {object} response.Response[[]dto.UserResponse] "获取用户列表成功"
 // @Router /api/v1/users [get]
 func (h *UserHandlers) ListUsers(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
@@ -290,7 +256,7 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 		return
 	}
 
-	var data []UserResponse
+	var data []dto.UserResponse
 	for _, user := range users {
 		data = append(data, *h.buildUserResponse(&user))
 	}
@@ -305,7 +271,7 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param limit query int false "返回数量" default(10)
-// @Success 200 {object} response.Response[[]UserResponse] "获取排行榜成功"
+// @Success 200 {object} response.Response[[]dto.UserResponse] "获取排行榜成功"
 // @Router /api/v1/users/top [get]
 func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -319,7 +285,7 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 		return
 	}
 
-	var data []UserResponse
+	var data []dto.UserResponse
 	for _, user := range users {
 		data = append(data, *h.buildUserResponse(&user))
 	}
@@ -328,8 +294,8 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 }
 
 // buildUserResponse 构建用户响应数据
-func (h *UserHandlers) buildUserResponse(user *models.User) *UserResponse {
-	response := &UserResponse{
+func (h *UserHandlers) buildUserResponse(user *models.User) *dto.UserResponse {
+	response := &dto.UserResponse{
 		ID:              user.ID,
 		WalletAddress:   user.WalletAddress,
 		Email:           user.Email,

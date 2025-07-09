@@ -79,7 +79,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.SendCodeRequest"
+                            "$ref": "#/definitions/dto.SendCodeRequest"
                         }
                     }
                 ],
@@ -113,7 +113,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.VerifyCodeRequest"
+                            "$ref": "#/definitions/dto.VerifyCodeRequest"
                         }
                     }
                 ],
@@ -539,7 +539,7 @@ const docTemplate = `{
                 "tags": [
                     "文件上传"
                 ],
-                "summary": "上传图片",
+                "summary": "上传图片文件",
                 "parameters": [
                     {
                         "type": "file",
@@ -592,7 +592,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取用户列表成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response-array_handlers_UserResponse"
+                            "$ref": "#/definitions/response.Response-array_dto_UserResponse"
                         }
                     }
                 }
@@ -616,7 +616,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.CreateUserRequest"
+                            "$ref": "#/definitions/dto.CreateUserRequest"
                         }
                     }
                 ],
@@ -688,7 +688,7 @@ const docTemplate = `{
                     "200": {
                         "description": "获取排行榜成功",
                         "schema": {
-                            "$ref": "#/definitions/response.Response-array_handlers_UserResponse"
+                            "$ref": "#/definitions/response.Response-array_dto_UserResponse"
                         }
                     }
                 }
@@ -783,7 +783,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/handlers.UpdateUserRequest"
+                            "$ref": "#/definitions/dto.UpdateUserRequest"
                         }
                     }
                 ],
@@ -918,24 +918,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "handlers.BlockchainStatusData": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string",
-                    "example": "Blockchain connection status"
-                },
-                "network": {
-                    "type": "string",
-                    "example": "ethereum"
-                },
-                "status": {
-                    "type": "string",
-                    "example": "connected"
-                }
-            }
-        },
-        "handlers.CodeStatusData": {
+        "dto.CodeStatusData": {
             "type": "object",
             "properties": {
                 "code_exists": {
@@ -957,6 +940,205 @@ const docTemplate = `{
                 "locked": {
                     "type": "boolean",
                     "example": false
+                }
+            }
+        },
+        "dto.CreateUserRequest": {
+            "type": "object",
+            "required": [
+                "nickname"
+            ],
+            "properties": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Hello, I'm a blockchain enthusiast"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                }
+            }
+        },
+        "dto.SendCodeData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "expires_in": {
+                    "type": "string",
+                    "example": "10分钟"
+                }
+            }
+        },
+        "dto.SendCodeRequest": {
+            "type": "object",
+            "required": [
+                "email"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                }
+            }
+        },
+        "dto.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Hello, I'm a blockchain enthusiast"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                }
+            }
+        },
+        "dto.UploadImageData": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "http://localhost:8080/uploads/2023/12/01/abc123.jpg"
+                }
+            }
+        },
+        "dto.UserResponse": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Hello, I'm a blockchain enthusiast"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_login_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                }
+            }
+        },
+        "dto.VerifyCodeData": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "isValid": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                }
+            }
+        },
+        "dto.VerifyCodeRequest": {
+            "type": "object",
+            "required": [
+                "code",
+                "email"
+            ],
+            "properties": {
+                "code": {
+                    "type": "string",
+                    "maxLength": 6,
+                    "minLength": 6,
+                    "example": "123456"
+                },
+                "email": {
+                    "type": "string",
+                    "format": "email",
+                    "example": "user@example.com"
+                }
+            }
+        },
+        "handlers.BlockchainStatusData": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "Blockchain connection status"
+                },
+                "network": {
+                    "type": "string",
+                    "example": "ethereum"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "connected"
                 }
             }
         },
@@ -1029,42 +1211,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.CreateUserRequest": {
-            "type": "object",
-            "required": [
-                "nickname"
-            ],
-            "properties": {
-                "avatar_url": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "Hello, I'm a blockchain enthusiast"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "reputation_score": {
-                    "type": "integer",
-                    "example": 0
-                },
-                "role": {
-                    "type": "string",
-                    "example": "user"
-                },
-                "wallet_address": {
-                    "type": "string",
-                    "example": "0x1234567890abcdef1234567890abcdef12345678"
-                }
-            }
-        },
         "handlers.HealthData": {
             "type": "object",
             "properties": {
@@ -1108,32 +1254,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.SendCodeData": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "expires_in": {
-                    "type": "string",
-                    "example": "10分钟"
-                }
-            }
-        },
-        "handlers.SendCodeRequest": {
-            "type": "object",
-            "required": [
-                "email"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "user@example.com"
-                }
-            }
-        },
         "handlers.StakeData": {
             "type": "object",
             "properties": {
@@ -1168,40 +1288,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UpdateUserRequest": {
-            "type": "object",
-            "properties": {
-                "avatar_url": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "Hello, I'm a blockchain enthusiast"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "reputation_score": {
-                    "type": "integer",
-                    "example": 100
-                },
-                "role": {
-                    "type": "string",
-                    "example": "user"
-                }
-            }
-        },
-        "handlers.UploadImageData": {
-            "type": "object",
-            "properties": {
-                "url": {
-                    "type": "string",
-                    "example": "http://localhost:8080/uploads/2025/01/abc123.png"
-                }
-            }
-        },
         "handlers.UserBalanceData": {
             "type": "object",
             "properties": {
@@ -1232,92 +1318,6 @@ const docTemplate = `{
                 }
             }
         },
-        "handlers.UserResponse": {
-            "type": "object",
-            "properties": {
-                "avatar_url": {
-                    "type": "string",
-                    "example": "https://example.com/avatar.jpg"
-                },
-                "bio": {
-                    "type": "string",
-                    "example": "Hello, I'm a blockchain enthusiast"
-                },
-                "created_at": {
-                    "type": "string",
-                    "example": "2023-12-01T10:00:00Z"
-                },
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "id": {
-                    "type": "integer",
-                    "example": 1
-                },
-                "last_login_at": {
-                    "type": "string",
-                    "example": "2023-12-01T10:00:00Z"
-                },
-                "nickname": {
-                    "type": "string",
-                    "example": "John Doe"
-                },
-                "reputation_score": {
-                    "type": "integer",
-                    "example": 100
-                },
-                "role": {
-                    "type": "string",
-                    "example": "user"
-                },
-                "updated_at": {
-                    "type": "string",
-                    "example": "2023-12-01T10:00:00Z"
-                },
-                "wallet_address": {
-                    "type": "string",
-                    "example": "0x1234567890abcdef1234567890abcdef12345678"
-                }
-            }
-        },
-        "handlers.VerifyCodeData": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string",
-                    "example": "user@example.com"
-                },
-                "isValid": {
-                    "type": "boolean",
-                    "example": true
-                },
-                "token": {
-                    "type": "string",
-                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
-                }
-            }
-        },
-        "handlers.VerifyCodeRequest": {
-            "type": "object",
-            "required": [
-                "code",
-                "email"
-            ],
-            "properties": {
-                "code": {
-                    "type": "string",
-                    "maxLength": 6,
-                    "minLength": 6,
-                    "example": "123456"
-                },
-                "email": {
-                    "type": "string",
-                    "format": "email",
-                    "example": "user@example.com"
-                }
-            }
-        },
         "handlers.VoteData": {
             "type": "object",
             "properties": {
@@ -1342,7 +1342,7 @@ const docTemplate = `{
                 }
             }
         },
-        "response.Response-array_handlers_UserResponse": {
+        "response.Response-array_dto_UserResponse": {
             "type": "object",
             "properties": {
                 "code": {
@@ -1351,8 +1351,93 @@ const docTemplate = `{
                 "data": {
                     "type": "array",
                     "items": {
-                        "$ref": "#/definitions/handlers.UserResponse"
+                        "$ref": "#/definitions/dto.UserResponse"
                     }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_CodeStatusData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.CodeStatusData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_SendCodeData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.SendCodeData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_UploadImageData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.UploadImageData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_UserResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_VerifyCodeData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.VerifyCodeData"
                 },
                 "message": {
                     "type": "string"
@@ -1370,23 +1455,6 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/handlers.BlockchainStatusData"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "response.Response-handlers_CodeStatusData": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.CodeStatusData"
                 },
                 "message": {
                     "type": "string"
@@ -1532,23 +1600,6 @@ const docTemplate = `{
                 }
             }
         },
-        "response.Response-handlers_SendCodeData": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.SendCodeData"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "response.Response-handlers_StakeData": {
             "type": "object",
             "properties": {
@@ -1583,23 +1634,6 @@ const docTemplate = `{
                 }
             }
         },
-        "response.Response-handlers_UploadImageData": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.UploadImageData"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
         "response.Response-handlers_UserBalanceData": {
             "type": "object",
             "properties": {
@@ -1625,40 +1659,6 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/handlers.UserInfoData"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "response.Response-handlers_UserResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.UserResponse"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "response.Response-handlers_VerifyCodeData": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.VerifyCodeData"
                 },
                 "message": {
                     "type": "string"

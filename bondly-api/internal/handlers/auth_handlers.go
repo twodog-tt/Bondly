@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bondly-api/internal/dto"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
 	"errors"
@@ -17,39 +18,6 @@ func NewAuthHandlers(authService *services.AuthService) *AuthHandlers {
 	return &AuthHandlers{
 		authService: authService,
 	}
-}
-
-// SendCodeRequest 发送验证码请求结构
-type SendCodeRequest struct {
-	Email string `json:"email" binding:"required" example:"user@example.com" format:"email"`
-}
-
-// VerifyCodeRequest 验证验证码请求结构
-type VerifyCodeRequest struct {
-	Email string `json:"email" binding:"required" example:"user@example.com" format:"email"`
-	Code  string `json:"code" binding:"required" example:"123456" minLength:"6" maxLength:"6"`
-}
-
-// SendCodeData 发送验证码响应数据
-type SendCodeData struct {
-	Email     string `json:"email" example:"user@example.com"`
-	ExpiresIn string `json:"expires_in" example:"10分钟"`
-}
-
-// VerifyCodeData 验证码验证响应数据
-type VerifyCodeData struct {
-	Email   string `json:"email" example:"user@example.com"`
-	IsValid bool   `json:"isValid" example:"true"`
-	Token   string `json:"token,omitempty" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
-}
-
-// CodeStatusData 验证码状态响应数据
-type CodeStatusData struct {
-	Email          string `json:"email" example:"user@example.com"`
-	CodeExists     bool   `json:"code_exists" example:"true"`
-	CodeTTLSeconds int    `json:"code_ttl_seconds" example:"300"`
-	Locked         bool   `json:"locked" example:"false"`
-	LockTTLSeconds int    `json:"lock_ttl_seconds" example:"0"`
 }
 
 // handleAuthError 统一处理认证错误
@@ -84,12 +52,12 @@ func (h *AuthHandlers) handleAuthError(c *gin.Context, err error) {
 // @Tags 认证管理
 // @Accept json
 // @Produce json
-// @Param request body SendCodeRequest true "发送验证码请求体"
-// @Success 200 {object} response.Response[SendCodeData] "验证码发送成功"
+// @Param request body dto.SendCodeRequest true "发送验证码请求体"
+// @Success 200 {object} response.Response[dto.SendCodeData] "验证码发送成功"
 // @Failure 200 {object} response.Response[any] "请求参数错误或邮箱格式无效"
 // @Router /api/v1/auth/send-code [post]
 func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
-	var req SendCodeRequest
+	var req dto.SendCodeRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -107,7 +75,7 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 	}
 
 	// 发送成功
-	data := SendCodeData{
+	data := dto.SendCodeData{
 		Email:     req.Email,
 		ExpiresIn: "10分钟",
 	}
@@ -120,12 +88,12 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 // @Tags 认证管理
 // @Accept json
 // @Produce json
-// @Param request body VerifyCodeRequest true "验证码验证请求体"
-// @Success 200 {object} response.Response[VerifyCodeData] "验证码验证成功"
+// @Param request body dto.VerifyCodeRequest true "验证码验证请求体"
+// @Success 200 {object} response.Response[dto.VerifyCodeData] "验证码验证成功"
 // @Failure 200 {object} response.Response[any] "请求参数错误或验证码不正确"
 // @Router /api/v1/auth/verify-code [post]
 func (h *AuthHandlers) VerifyCode(c *gin.Context) {
-	var req VerifyCodeRequest
+	var req dto.VerifyCodeRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
@@ -144,7 +112,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 	}
 
 	// 验证成功
-	data := VerifyCodeData{
+	data := dto.VerifyCodeData{
 		Email:   req.Email,
 		IsValid: true,
 		Token:   "", // 暂时为空，后续可以添加JWT token生成逻辑
@@ -159,7 +127,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param email query string true "邮箱地址" format(email) example(user@example.com)
-// @Success 200 {object} response.Response[CodeStatusData] "查询成功"
+// @Success 200 {object} response.Response[dto.CodeStatusData] "查询成功"
 // @Failure 200 {object} response.Response[any] "邮箱参数缺失或格式错误"
 // @Router /api/v1/auth/code-status [get]
 func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
@@ -185,7 +153,7 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 		return
 	}
 
-	data := CodeStatusData{
+	data := dto.CodeStatusData{
 		Email:          email,
 		CodeExists:     codeTTL > 0,
 		CodeTTLSeconds: int(codeTTL.Seconds()),

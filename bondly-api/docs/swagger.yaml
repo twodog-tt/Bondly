@@ -1,18 +1,6 @@
 basePath: /
 definitions:
-  handlers.BlockchainStatusData:
-    properties:
-      message:
-        example: Blockchain connection status
-        type: string
-      network:
-        example: ethereum
-        type: string
-      status:
-        example: connected
-        type: string
-    type: object
-  handlers.CodeStatusData:
+  dto.CodeStatusData:
     properties:
       code_exists:
         example: true
@@ -29,6 +17,149 @@ definitions:
       locked:
         example: false
         type: boolean
+    type: object
+  dto.CreateUserRequest:
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Hello, I'm a blockchain enthusiast
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 0
+        type: integer
+      role:
+        example: user
+        type: string
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - nickname
+    type: object
+  dto.SendCodeData:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      expires_in:
+        example: 10分钟
+        type: string
+    type: object
+  dto.SendCodeRequest:
+    properties:
+      email:
+        example: user@example.com
+        format: email
+        type: string
+    required:
+    - email
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Hello, I'm a blockchain enthusiast
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 100
+        type: integer
+      role:
+        example: user
+        type: string
+    type: object
+  dto.UploadImageData:
+    properties:
+      url:
+        example: http://localhost:8080/uploads/2023/12/01/abc123.jpg
+        type: string
+    type: object
+  dto.UserResponse:
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Hello, I'm a blockchain enthusiast
+        type: string
+      created_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      last_login_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 100
+        type: integer
+      role:
+        example: user
+        type: string
+      updated_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    type: object
+  dto.VerifyCodeData:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      isValid:
+        example: true
+        type: boolean
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+    type: object
+  dto.VerifyCodeRequest:
+    properties:
+      code:
+        example: "123456"
+        maxLength: 6
+        minLength: 6
+        type: string
+      email:
+        example: user@example.com
+        format: email
+        type: string
+    required:
+    - code
+    - email
+    type: object
+  handlers.BlockchainStatusData:
+    properties:
+      message:
+        example: Blockchain connection status
+        type: string
+      network:
+        example: ethereum
+        type: string
+      status:
+        example: connected
+        type: string
     type: object
   handlers.ContentDetailData:
     properties:
@@ -78,32 +209,6 @@ definitions:
         example: Proposal created successfully
         type: string
     type: object
-  handlers.CreateUserRequest:
-    properties:
-      avatar_url:
-        example: https://example.com/avatar.jpg
-        type: string
-      bio:
-        example: Hello, I'm a blockchain enthusiast
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      nickname:
-        example: John Doe
-        type: string
-      reputation_score:
-        example: 0
-        type: integer
-      role:
-        example: user
-        type: string
-      wallet_address:
-        example: 0x1234567890abcdef1234567890abcdef12345678
-        type: string
-    required:
-    - nickname
-    type: object
   handlers.HealthData:
     properties:
       message:
@@ -134,24 +239,6 @@ definitions:
         items: {}
         type: array
     type: object
-  handlers.SendCodeData:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      expires_in:
-        example: 10分钟
-        type: string
-    type: object
-  handlers.SendCodeRequest:
-    properties:
-      email:
-        example: user@example.com
-        format: email
-        type: string
-    required:
-    - email
-    type: object
   handlers.StakeData:
     properties:
       message:
@@ -176,30 +263,6 @@ definitions:
         example: "1250000.50"
         type: string
     type: object
-  handlers.UpdateUserRequest:
-    properties:
-      avatar_url:
-        example: https://example.com/avatar.jpg
-        type: string
-      bio:
-        example: Hello, I'm a blockchain enthusiast
-        type: string
-      nickname:
-        example: John Doe
-        type: string
-      reputation_score:
-        example: 100
-        type: integer
-      role:
-        example: user
-        type: string
-    type: object
-  handlers.UploadImageData:
-    properties:
-      url:
-        example: http://localhost:8080/uploads/2025/01/abc123.png
-        type: string
-    type: object
   handlers.UserBalanceData:
     properties:
       address:
@@ -221,69 +284,6 @@ definitions:
         example: User information
         type: string
     type: object
-  handlers.UserResponse:
-    properties:
-      avatar_url:
-        example: https://example.com/avatar.jpg
-        type: string
-      bio:
-        example: Hello, I'm a blockchain enthusiast
-        type: string
-      created_at:
-        example: "2023-12-01T10:00:00Z"
-        type: string
-      email:
-        example: user@example.com
-        type: string
-      id:
-        example: 1
-        type: integer
-      last_login_at:
-        example: "2023-12-01T10:00:00Z"
-        type: string
-      nickname:
-        example: John Doe
-        type: string
-      reputation_score:
-        example: 100
-        type: integer
-      role:
-        example: user
-        type: string
-      updated_at:
-        example: "2023-12-01T10:00:00Z"
-        type: string
-      wallet_address:
-        example: 0x1234567890abcdef1234567890abcdef12345678
-        type: string
-    type: object
-  handlers.VerifyCodeData:
-    properties:
-      email:
-        example: user@example.com
-        type: string
-      isValid:
-        example: true
-        type: boolean
-      token:
-        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-        type: string
-    type: object
-  handlers.VerifyCodeRequest:
-    properties:
-      code:
-        example: "123456"
-        maxLength: 6
-        minLength: 6
-        type: string
-      email:
-        example: user@example.com
-        format: email
-        type: string
-    required:
-    - code
-    - email
-    type: object
   handlers.VoteData:
     properties:
       message:
@@ -300,14 +300,69 @@ definitions:
       success:
         type: boolean
     type: object
-  response.Response-array_handlers_UserResponse:
+  response.Response-array_dto_UserResponse:
     properties:
       code:
         type: integer
       data:
         items:
-          $ref: '#/definitions/handlers.UserResponse'
+          $ref: '#/definitions/dto.UserResponse'
         type: array
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_CodeStatusData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.CodeStatusData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_SendCodeData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.SendCodeData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_UploadImageData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.UploadImageData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_UserResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.UserResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_VerifyCodeData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.VerifyCodeData'
       message:
         type: string
       success:
@@ -319,17 +374,6 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/handlers.BlockchainStatusData'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  response.Response-handlers_CodeStatusData:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.CodeStatusData'
       message:
         type: string
       success:
@@ -423,17 +467,6 @@ definitions:
       success:
         type: boolean
     type: object
-  response.Response-handlers_SendCodeData:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.SendCodeData'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
   response.Response-handlers_StakeData:
     properties:
       code:
@@ -456,17 +489,6 @@ definitions:
       success:
         type: boolean
     type: object
-  response.Response-handlers_UploadImageData:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.UploadImageData'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
   response.Response-handlers_UserBalanceData:
     properties:
       code:
@@ -484,28 +506,6 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/handlers.UserInfoData'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  response.Response-handlers_UserResponse:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.UserResponse'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  response.Response-handlers_VerifyCodeData:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.VerifyCodeData'
       message:
         type: string
       success:
@@ -570,7 +570,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.SendCodeRequest'
+          $ref: '#/definitions/dto.SendCodeRequest'
       produces:
       - application/json
       responses:
@@ -592,7 +592,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.VerifyCodeRequest'
+          $ref: '#/definitions/dto.VerifyCodeRequest'
       produces:
       - application/json
       responses:
@@ -892,7 +892,7 @@ paths:
           description: 文件格式错误或上传失败
           schema:
             $ref: '#/definitions/response.Response-any'
-      summary: 上传图片
+      summary: 上传图片文件
       tags:
       - 文件上传
   /api/v1/users:
@@ -917,7 +917,7 @@ paths:
         "200":
           description: 获取用户列表成功
           schema:
-            $ref: '#/definitions/response.Response-array_handlers_UserResponse'
+            $ref: '#/definitions/response.Response-array_dto_UserResponse'
       summary: 获取用户列表
       tags:
       - 用户管理
@@ -931,7 +931,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.CreateUserRequest'
+          $ref: '#/definitions/dto.CreateUserRequest'
       produces:
       - application/json
       responses:
@@ -998,7 +998,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/handlers.UpdateUserRequest'
+          $ref: '#/definitions/dto.UpdateUserRequest'
       produces:
       - application/json
       responses:
@@ -1047,7 +1047,7 @@ paths:
         "200":
           description: 获取排行榜成功
           schema:
-            $ref: '#/definitions/response.Response-array_handlers_UserResponse'
+            $ref: '#/definitions/response.Response-array_dto_UserResponse'
       summary: 获取声誉积分排行榜
       tags:
       - 用户管理
