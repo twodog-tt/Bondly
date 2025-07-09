@@ -35,6 +35,11 @@ export interface VerifyCodeData {
   token?: string;
 }
 
+// 图片上传响应数据
+export interface UploadImageData {
+  url: string;
+}
+
 // API错误类
 export class ApiError extends Error {
   constructor(
@@ -63,6 +68,57 @@ async function request<T>(
     const response = await fetch(url, {
       ...options,
       headers: defaultHeaders,
+    });
+
+    // 检查网络错误
+    if (!response.ok) {
+      throw new ApiError(
+        response.status,
+        `HTTP Error: ${response.status} ${response.statusText}`
+      );
+    }
+
+    const result: ApiResponse<T> = await response.json();
+
+    // 检查业务逻辑错误
+    if (!result.success) {
+      throw new ApiError(
+        result.code,
+        result.message || 'Unknown error'
+      );
+    }
+
+    return result.data as T;
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+    
+    // 网络错误或其他错误
+    throw new ApiError(
+      0,
+      error instanceof Error ? error.message : 'Network error',
+      error
+    );
+  }
+}
+
+// 文件上传请求函数
+async function uploadFile<T>(
+  endpoint: string,
+  file: File,
+  options: RequestInit = {}
+): Promise<T> {
+  const url = `${config.apiUrl}${endpoint}`;
+  
+  const formData = new FormData();
+  formData.append('file', file);
+
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      body: formData,
+      ...options,
     });
 
     // 检查网络错误
@@ -161,5 +217,13 @@ export const userApi = {
   },
 };
 
+// 文件上传相关API
+export const uploadApi = {
+  // 上传图片
+  async uploadImage(file: File): Promise<UploadImageData> {
+    return uploadFile<UploadImageData>('/api/v1/upload/image', file);
+  },
+};
+
 // 导出默认的请求函数
-export default { get, post, put, del, authApi, userApi, ApiError }; 
+export default { get, post, put, del, authApi, userApi, uploadApi, ApiError }; 

@@ -27,18 +27,9 @@ export default function MediaUploader({
     setUploading(true);
 
     try {
-      // TODO: 实现文件上传到后端
-      // const formData = new FormData();
-      // formData.append('file', file);
-      // const response = await fetch('/api/upload', {
-      //   method: 'POST',
-      //   body: formData
-      // });
-      // const result = await response.json();
-
-      // 模拟上传成功
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      const mockUrl = URL.createObjectURL(file);
+      // 调用真实的后端API上传图片
+      const { uploadApi } = await import('../../utils/api');
+      const result = await uploadApi.uploadImage(file);
 
       const mediaType = file.type.startsWith("image/")
         ? "image"
@@ -46,10 +37,17 @@ export default function MediaUploader({
           ? "video"
           : "audio";
 
-      onInsert(mockUrl, mediaType);
+      onInsert(result.url, mediaType);
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("上传失败:", error);
+      
+      // 显示错误信息
+      if (error instanceof Error) {
+        alert(`上传失败: ${error.message}`);
+      } else {
+        alert("上传失败，请重试");
+      }
     } finally {
       setUploading(false);
     }

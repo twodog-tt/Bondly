@@ -131,17 +131,28 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
+      try {
+        // 调用真实的后端API上传图片
+        const { uploadApi } = await import('../utils/api');
+        const result = await uploadApi.uploadImage(file);
+        
         setArticleData(prev => ({
           ...prev,
-          coverImage: e.target?.result as string
+          coverImage: result.url
         }));
-      };
-      reader.readAsDataURL(file);
+      } catch (error: any) {
+        console.error("封面图片上传失败:", error);
+        
+        // 显示错误信息
+        if (error instanceof Error) {
+          alert(`封面图片上传失败: ${error.message}`);
+        } else {
+          alert("封面图片上传失败，请重试");
+        }
+      }
     }
   };
 

@@ -289,15 +289,26 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   };
 
   // 处理头像文件选择
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      setLoginData(prev => ({ ...prev, avatar: file }));
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        setAvatarPreview(event.target?.result as string);
-      };
-      reader.readAsDataURL(file);
+      try {
+        // 调用真实的后端API上传图片
+        const { uploadApi } = await import('../utils/api');
+        const result = await uploadApi.uploadImage(file);
+        
+        setLoginData(prev => ({ ...prev, avatar: file }));
+        setAvatarPreview(result.url);
+      } catch (error: any) {
+        console.error("头像上传失败:", error);
+        
+        // 显示错误信息
+        if (error instanceof Error) {
+          alert(`头像上传失败: ${error.message}`);
+        } else {
+          alert("头像上传失败，请重试");
+        }
+      }
     }
   };
 
