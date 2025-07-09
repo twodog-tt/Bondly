@@ -207,7 +207,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       
       // 调用真实的后端API
       const { authApi } = await import('../utils/api');
-      const result = await authApi.sendCode(loginData.email, 'register');
+      const result = await authApi.sendCode(loginData.email);
       
       console.log('验证码发送成功:', result);
       setIsCodeSent(true);
@@ -252,8 +252,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       const { authApi } = await import('../utils/api');
       const result = await authApi.verifyCode(
         loginData.email, 
-        loginData.verificationCode, 
-        'register'
+        loginData.verificationCode
       );
       
       console.log('验证码验证成功:', result);

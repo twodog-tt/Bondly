@@ -8,24 +8,21 @@ export interface ApiResponse<T = any> {
   success: boolean;
 }
 
-// 发送验证码请求参数
+// 发送验证码请求数据
 export interface SendCodeRequest {
   email: string;
-  type: string;
 }
 
 // 发送验证码响应数据
 export interface SendCodeData {
   email: string;
-  expiresAt: string;
-  codeId: string;
+  expires_in: string;
 }
 
-// 验证验证码请求参数
+// 验证验证码请求数据
 export interface VerifyCodeRequest {
   email: string;
   code: string;
-  type: string;
 }
 
 // 验证验证码响应数据
@@ -189,18 +186,18 @@ export async function del<T>(endpoint: string): Promise<T> {
 // 认证相关API
 export const authApi = {
   // 发送验证码
-  async sendCode(email: string, type: string = 'register'): Promise<SendCodeData> {
-    return post<SendCodeData>('/api/v1/auth/send-code', { email, type });
+  async sendCode(email: string): Promise<SendCodeData> {
+    return post<SendCodeData>('/api/v1/auth/send-code', { email });
   },
 
   // 验证验证码
-  async verifyCode(email: string, code: string, type: string = 'register'): Promise<VerifyCodeData> {
-    return post<VerifyCodeData>('/api/v1/auth/verify-code', { email, code, type });
+  async verifyCode(email: string, code: string): Promise<VerifyCodeData> {
+    return post<VerifyCodeData>('/api/v1/auth/verify-code', { email, code });
   },
 
   // 获取验证码状态
-  async getCodeStatus(email: string, type: string = 'register'): Promise<any> {
-    return get<any>(`/api/v1/auth/code-status?email=${encodeURIComponent(email)}&type=${type}`);
+  async getCodeStatus(email: string): Promise<any> {
+    return get<any>(`/api/v1/auth/code-status?email=${encodeURIComponent(email)}`);
   },
 };
 
