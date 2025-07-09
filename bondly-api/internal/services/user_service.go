@@ -216,28 +216,6 @@ func (s *UserService) UpdateReputationScore(id int64, score int) error {
 	return nil
 }
 
-// DeleteUser 删除用户
-func (s *UserService) DeleteUser(id int64) error {
-	// 检查用户是否存在
-	_, err := s.userRepo.GetByID(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("用户不存在")
-		}
-		return fmt.Errorf("获取用户失败: %w", err)
-	}
-
-	// 删除用户
-	if err := s.userRepo.Delete(id); err != nil {
-		return fmt.Errorf("删除用户失败: %w", err)
-	}
-
-	// 清除缓存
-	s.clearUserCache(id)
-
-	return nil
-}
-
 // ListUsers 获取用户列表
 func (s *UserService) ListUsers(offset, limit int) ([]models.User, error) {
 	return s.userRepo.List(offset, limit)

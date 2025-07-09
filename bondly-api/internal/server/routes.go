@@ -53,7 +53,6 @@ func (s *Server) setupRoutes() {
 			users.GET("/top", s.userHandlers.GetTopUsersByReputation)            // 获取声誉排行榜
 			users.GET("/:id", s.userHandlers.GetUserByID)                        // 根据ID获取用户
 			users.PUT("/:id", s.userHandlers.UpdateUser)                         // 更新用户
-			users.DELETE("/:id", s.userHandlers.DeleteUser)                      // 删除用户
 			users.GET("/wallet/:address", s.userHandlers.GetUserByWalletAddress) // 根据钱包地址获取用户
 			users.GET("/email/:email", s.userHandlers.GetUserByEmail)            // 根据邮箱获取用户
 		}

@@ -202,32 +202,6 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	response.OK(c, data, "用户更新成功")
 }
 
-// DeleteUser 删除用户接口
-// @Summary 删除用户
-// @Description 删除指定的用户账户
-// @Tags 用户管理
-// @Accept json
-// @Produce json
-// @Param id path int true "用户ID"
-// @Success 200 {object} response.Response[any] "用户删除成功"
-// @Failure 200 {object} response.Response[any] "用户不存在或删除失败"
-// @Router /api/v1/users/{id} [delete]
-func (h *UserHandlers) DeleteUser(c *gin.Context) {
-	idStr := c.Param("id")
-	id, err := strconv.ParseInt(idStr, 10, 64)
-	if err != nil {
-		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
-		return
-	}
-
-	if err := h.userService.DeleteUser(int64(id)); err != nil {
-		response.Fail(c, response.CodeInvalidParams, err.Error())
-		return
-	}
-
-	response.OK(c, gin.H{}, "用户删除成功")
-}
-
 // ListUsers 获取用户列表接口
 // @Summary 获取用户列表
 // @Description 分页获取用户列表

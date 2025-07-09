@@ -67,11 +67,6 @@ func (r *UserRepository) UpdateReputationScore(id int64, score int) error {
 	return r.db.Model(&models.User{}).Where("id = ?", id).Update("reputation_score", score).Error
 }
 
-// Delete 删除用户
-func (r *UserRepository) Delete(id int64) error {
-	return r.db.Delete(&models.User{}, id).Error
-}
-
 // List 获取用户列表
 func (r *UserRepository) List(offset, limit int) ([]models.User, error) {
 	var users []models.User
