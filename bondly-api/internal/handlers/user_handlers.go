@@ -73,13 +73,13 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 // @Router /api/v1/users/{id} [get]
 func (h *UserHandlers) GetUserByID(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
 		return
 	}
 
-	user, err := h.userService.GetUserByID(uint(id))
+	user, err := h.userService.GetUserByID(int64(id))
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -156,7 +156,7 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 // @Router /api/v1/users/{id} [put]
 func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
 		return
@@ -169,7 +169,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	}
 
 	// 获取现有用户
-	user, err := h.userService.GetUserByID(uint(id))
+	user, err := h.userService.GetUserByID(int64(id))
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -214,13 +214,13 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 // @Router /api/v1/users/{id} [delete]
 func (h *UserHandlers) DeleteUser(c *gin.Context) {
 	idStr := c.Param("id")
-	id, err := strconv.ParseUint(idStr, 10, 32)
+	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
 		return
 	}
 
-	if err := h.userService.DeleteUser(uint(id)); err != nil {
+	if err := h.userService.DeleteUser(int64(id)); err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}

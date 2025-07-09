@@ -22,7 +22,7 @@ type UpdateUserRequest struct {
 
 // UserResponse 用户响应结构
 type UserResponse struct {
-	ID              uint    `json:"id" example:"1"`
+	ID              int64   `json:"id" example:"1"`
 	WalletAddress   *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
 	Email           *string `json:"email" example:"user@example.com"`
 	Nickname        string  `json:"nickname" example:"John Doe"`

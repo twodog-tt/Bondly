@@ -18,7 +18,7 @@ func NewUserRepository(db *gorm.DB) *UserRepository {
 }
 
 // GetByID 根据ID获取用户
-func (r *UserRepository) GetByID(id uint) (*models.User, error) {
+func (r *UserRepository) GetByID(id int64) (*models.User, error) {
 	var user models.User
 	err := r.db.First(&user, id).Error
 	if err != nil {
@@ -58,17 +58,17 @@ func (r *UserRepository) Update(user *models.User) error {
 }
 
 // UpdateLastLogin 更新最后登录时间
-func (r *UserRepository) UpdateLastLogin(id uint) error {
+func (r *UserRepository) UpdateLastLogin(id int64) error {
 	return r.db.Model(&models.User{}).Where("id = ?", id).Update("last_login_at", time.Now()).Error
 }
 
 // UpdateReputationScore 更新声誉积分
-func (r *UserRepository) UpdateReputationScore(id uint, score int) error {
+func (r *UserRepository) UpdateReputationScore(id int64, score int) error {
 	return r.db.Model(&models.User{}).Where("id = ?", id).Update("reputation_score", score).Error
 }
 
 // Delete 删除用户
-func (r *UserRepository) Delete(id uint) error {
+func (r *UserRepository) Delete(id int64) error {
 	return r.db.Delete(&models.User{}, id).Error
 }
 

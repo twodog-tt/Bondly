@@ -71,7 +71,7 @@ func (s *UserService) CreateUser(user *models.User) error {
 }
 
 // GetUserByID 根据ID获取用户
-func (s *UserService) GetUserByID(id uint) (*models.User, error) {
+func (s *UserService) GetUserByID(id int64) (*models.User, error) {
 	ctx := context.Background()
 
 	// 尝试从缓存获取
@@ -193,7 +193,7 @@ func (s *UserService) UpdateUser(user *models.User) error {
 }
 
 // UpdateLastLogin 更新最后登录时间
-func (s *UserService) UpdateLastLogin(id uint) error {
+func (s *UserService) UpdateLastLogin(id int64) error {
 	if err := s.userRepo.UpdateLastLogin(id); err != nil {
 		return fmt.Errorf("更新最后登录时间失败: %w", err)
 	}
@@ -205,7 +205,7 @@ func (s *UserService) UpdateLastLogin(id uint) error {
 }
 
 // UpdateReputationScore 更新声誉积分
-func (s *UserService) UpdateReputationScore(id uint, score int) error {
+func (s *UserService) UpdateReputationScore(id int64, score int) error {
 	if err := s.userRepo.UpdateReputationScore(id, score); err != nil {
 		return fmt.Errorf("更新声誉积分失败: %w", err)
 	}
@@ -217,7 +217,7 @@ func (s *UserService) UpdateReputationScore(id uint, score int) error {
 }
 
 // DeleteUser 删除用户
-func (s *UserService) DeleteUser(id uint) error {
+func (s *UserService) DeleteUser(id int64) error {
 	// 检查用户是否存在
 	_, err := s.userRepo.GetByID(id)
 	if err != nil {
@@ -264,7 +264,7 @@ func (s *UserService) GetUserCountByRole(role string) (int64, error) {
 }
 
 // clearUserCache 清除用户相关缓存
-func (s *UserService) clearUserCache(userID uint) {
+func (s *UserService) clearUserCache(userID int64) {
 	ctx := context.Background()
 
 	// 清除用户ID缓存
