@@ -59,6 +59,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/login": {
+            "post": {
+                "description": "用户登录，如果用户不存在则自动创建新用户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证管理"
+                ],
+                "summary": "用户登录",
+                "parameters": [
+                    {
+                        "description": "登录请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.LoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "登录失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/send-code": {
             "post": {
                 "description": "向指定邮箱发送6位数字验证码，用于用户身份验证。验证码有效期为10分钟，60秒内最多只能发送一次。",
@@ -949,6 +983,56 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.LoginRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "nickname"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                }
+            }
+        },
+        "dto.LoginResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "expires_in": {
+                    "type": "string",
+                    "example": "24小时"
+                },
+                "is_new_user": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
         "dto.SendCodeData": {
             "type": "object",
             "properties": {
@@ -1079,7 +1163,8 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "code",
-                "email"
+                "email",
+                "nickname"
             ],
             "properties": {
                 "code": {
@@ -1092,6 +1177,10 @@ const docTemplate = `{
                     "type": "string",
                     "format": "email",
                     "example": "user@example.com"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "twodog"
                 }
             }
         },
@@ -1340,6 +1429,23 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/dto.CodeStatusData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_LoginResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.LoginResponse"
                 },
                 "message": {
                     "type": "string"

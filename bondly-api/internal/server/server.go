@@ -63,7 +63,7 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 	userHandlers := handlers.NewUserHandlers(userService)
 
 	// 初始化认证服务
-	authService := services.NewAuthService(redisClient)
+	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret)
 	authHandlers := handlers.NewAuthHandlers(authService)
 
 	// 初始化上传服务

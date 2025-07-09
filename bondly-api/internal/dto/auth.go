@@ -32,3 +32,20 @@ type CodeStatusData struct {
 	Locked         bool   `json:"locked" example:"false"`
 	LockTTLSeconds int    `json:"lock_ttl_seconds" example:"0"`
 }
+
+// LoginRequest 登录请求结构
+type LoginRequest struct {
+	Email    string `json:"email" binding:"required" example:"user@example.com"`
+	Nickname string `json:"nickname" binding:"required" example:"John Doe"`
+}
+
+// LoginResponse 登录响应结构
+type LoginResponse struct {
+	Token     string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	UserID    int64  `json:"user_id" example:"1"`
+	Email     string `json:"email" example:"user@example.com"`
+	Nickname  string `json:"nickname" example:"John Doe"`
+	Role      string `json:"role" example:"user"`
+	IsNewUser bool   `json:"is_new_user" example:"false"`
+	ExpiresIn string `json:"expires_in" example:"24小时"`
+}

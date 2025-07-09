@@ -16,6 +16,7 @@ type Config struct {
 	Kafka    KafkaConfig
 	Logging  LoggingConfig
 	CORS     CORSConfig
+	JWT      JWTConfig
 }
 
 type ServerConfig struct {
@@ -65,6 +66,10 @@ type CORSConfig struct {
 	AllowedOrigins []string
 }
 
+type JWTConfig struct {
+	Secret string
+}
+
 func Load() (*Config, error) {
 	// 加载 .env 文件
 	if err := godotenv.Load(); err != nil {
@@ -111,6 +116,9 @@ func Load() (*Config, error) {
 		},
 		CORS: CORSConfig{
 			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"), ","),
+		},
+		JWT: JWTConfig{
+			Secret: getEnv("JWT_SECRET", "your-secret-key"),
 		},
 	}, nil
 }

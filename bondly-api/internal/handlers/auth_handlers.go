@@ -24,26 +24,15 @@ func NewAuthHandlers(authService *services.AuthService) *AuthHandlers {
 func (h *AuthHandlers) handleAuthError(c *gin.Context, err error) {
 	var authErr *services.AuthError
 	if errors.As(err, &authErr) {
-		// 根据错误码返回不同的业务状态码
-		switch authErr.Code {
-		case services.ErrorCodeEmailInvalid, services.ErrorCodeEmailEmpty:
-			response.Fail(c, response.CodeInvalidParams, authErr.Error())
-		case services.ErrorCodeRateLimited:
-			response.Fail(c, response.CodeInvalidParams, authErr.Error())
-		case services.ErrorCodeExpired, services.ErrorCodeInvalid:
-			response.Fail(c, response.CodeVerificationError, authErr.Error())
-		case services.ErrorCodeStorageFailed, services.ErrorCodeLockFailed,
-			services.ErrorCodeLockCheckFailed, services.ErrorCodeTTLFailed,
-			services.ErrorCodeLockTTLFailed:
-			response.Fail(c, response.CodeInternalError, "服务器内部错误")
-		default:
-			response.Fail(c, response.CodeInternalError, "未知错误")
-		}
+		// 获取对应的业务错误码
+		businessCode := response.GetBusinessCode(authErr.Code)
+		// 返回统一的错误响应
+		response.Fail(c, businessCode, authErr.Error())
 		return
 	}
 
 	// 处理非AuthError类型的错误
-	response.Fail(c, response.CodeInternalError, "服务器内部错误")
+	response.Fail(c, response.CodeInternalError, response.MsgInternalError)
 }
 
 // SendVerificationCode 发送验证码接口
@@ -61,7 +50,7 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
+		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
 		return
 	}
 
@@ -79,7 +68,7 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 		Email:     req.Email,
 		ExpiresIn: "10分钟",
 	}
-	response.OK(c, data, "验证码发送成功")
+	response.OK(c, data, response.MsgVerificationCodeSent)
 }
 
 // VerifyCode 验证验证码接口
@@ -97,7 +86,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
+		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
 		return
 	}
 
@@ -117,7 +106,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 		IsValid: true,
 		Token:   "", // 暂时为空，后续可以添加JWT token生成逻辑
 	}
-	response.OK(c, data, "验证码验证成功")
+	response.OK(c, data, response.MsgVerificationCodeValid)
 }
 
 // GetCodeStatus 获取验证码状态接口
@@ -133,7 +122,7 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	email := c.Query("email")
 	if email == "" {
-		response.Fail(c, response.CodeInvalidParams, "邮箱参数不能为空")
+		response.Fail(c, response.CodeEmailParamEmpty, response.GetMessage(response.CodeEmailParamEmpty))
 		return
 	}
 
@@ -160,5 +149,39 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 		Locked:         lockTTL > 0,
 		LockTTLSeconds: int(lockTTL.Seconds()),
 	}
-	response.OK(c, data, "获取状态成功")
+	response.OK(c, data, response.MsgGetStatusSuccess)
+}
+
+// Login 用户登录接口
+// @Summary 用户登录
+// @Description 用户登录，如果用户不存在则自动创建新用户
+// @Tags 认证管理
+// @Accept json
+// @Produce json
+// @Param request body dto.LoginRequest true "登录请求体"
+// @Success 200 {object} response.Response[dto.LoginResponse] "登录成功"
+// @Failure 200 {object} response.Response[any] "登录失败"
+// @Router /api/v1/auth/login [post]
+func (h *AuthHandlers) Login(c *gin.Context) {
+	var req dto.LoginRequest
+
+	// 绑定请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
+		return
+	}
+
+	// 清理参数
+	req.Email = strings.TrimSpace(req.Email)
+	req.Nickname = strings.TrimSpace(req.Nickname)
+
+	// 调用服务层登录
+	loginData, err := h.authService.LoginIn(req.Email, req.Nickname)
+	if err != nil {
+		h.handleAuthError(c, err)
+		return
+	}
+
+	// 登录成功
+	response.OK(c, loginData, response.MsgLoginSuccess)
 }

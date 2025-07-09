@@ -1,35 +1,43 @@
 package services
 
 import (
+	"bondly-api/internal/dto"
 	"bondly-api/internal/logger"
+	"bondly-api/internal/models"
+	"bondly-api/internal/pkg/errors"
+	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/redis"
+	"bondly-api/internal/repositories"
+	"bondly-api/internal/utils"
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"math/rand"
 	"net/mail"
 	"strconv"
 	"time"
+
+	"gorm.io/gorm"
 )
 
-// 自定义错误类型
+// 自定义错误类型 - 使用统一错误码
 var (
-	ErrEmailInvalid    = errors.New("邮箱格式不正确")
-	ErrEmailEmpty      = errors.New("邮箱不能为空")
-	ErrRateLimited     = errors.New("验证码发送过于频繁，请60秒后再试")
-	ErrCodeExpired     = errors.New("验证码已过期或不存在")
-	ErrCodeInvalid     = errors.New("验证码不正确")
-	ErrStorageFailed   = errors.New("存储验证码失败")
-	ErrLockFailed      = errors.New("设置限流失败")
-	ErrLockCheckFailed = errors.New("检查限流状态失败")
-	ErrTTLFailed       = errors.New("获取验证码过期时间失败")
-	ErrLockTTLFailed   = errors.New("获取限流时间失败")
+	ErrEmailInvalid    = NewAuthError(stderrors.New(response.MsgEmailInvalid), response.CodeEmailInvalid)
+	ErrEmailEmpty      = NewAuthError(stderrors.New(response.MsgEmailEmpty), response.CodeEmailEmpty)
+	ErrRateLimited     = NewAuthError(stderrors.New(response.MsgRateLimited), response.CodeRateLimited)
+	ErrCodeExpired     = NewAuthError(stderrors.New(response.MsgExpired), response.CodeExpired)
+	ErrCodeInvalid     = NewAuthError(stderrors.New(response.MsgInvalid), response.CodeInvalid)
+	ErrStorageFailed   = NewAuthError(stderrors.New(response.MsgStorageFailed), response.CodeStorageFailed)
+	ErrLockFailed      = NewAuthError(stderrors.New(response.MsgLockFailed), response.CodeLockFailed)
+	ErrLockCheckFailed = NewAuthError(stderrors.New(response.MsgLockCheckFailed), response.CodeLockCheckFailed)
+	ErrTTLFailed       = NewAuthError(stderrors.New(response.MsgTTLFailed), response.CodeTTLFailed)
+	ErrLockTTLFailed   = NewAuthError(stderrors.New(response.MsgLockTTLFailed), response.CodeLockTTLFailed)
 )
 
 // 错误包装器，用于携带额外信息
 type AuthError struct {
 	Err  error
-	Code string // 业务错误码
+	Code int // 业务错误码
 }
 
 func (e *AuthError) Error() string {
@@ -41,21 +49,27 @@ func (e *AuthError) Unwrap() error {
 }
 
 // 创建带错误码的认证错误
-func NewAuthError(err error, code string) *AuthError {
+func NewAuthError(err error, code int) *AuthError {
 	return &AuthError{
 		Err:  err,
 		Code: code,
 	}
 }
 
+// 注意：错误码和错误消息已统一在 response/error_code.go 中管理
+
 type AuthService struct {
 	redisClient *redis.RedisClient
+	userRepo    *repositories.UserRepository
+	jwtUtil     *utils.JWTUtil
 	logger      *logger.Logger
 }
 
-func NewAuthService(redisClient *redis.RedisClient) *AuthService {
+func NewAuthService(redisClient *redis.RedisClient, userRepo *repositories.UserRepository, jwtSecret string) *AuthService {
 	return &AuthService{
 		redisClient: redisClient,
+		userRepo:    userRepo,
+		jwtUtil:     utils.NewJWTUtil(jwtSecret, 24*time.Hour), // JWT token有效期24小时
 		logger:      logger.NewLogger(),
 	}
 }
@@ -75,7 +89,7 @@ func (s *AuthService) SendVerificationCode(email string) error {
 			"email": email,
 			"error": err.Error(),
 		}).Warn("邮箱格式验证失败")
-		return NewAuthError(err, ErrorCodeEmailInvalid)
+		return errors.NewEmailInvalidError(err)
 	}
 
 	s.logger.WithField("email", email).Debug("邮箱格式验证通过")
@@ -89,7 +103,7 @@ func (s *AuthService) SendVerificationCode(email string) error {
 			"lockKey": lockKey,
 			"error":   err.Error(),
 		}).Error("检查限流状态失败")
-		return NewAuthError(fmt.Errorf("%w: %v", ErrLockCheckFailed, err), ErrorCodeLockCheckFailed)
+		return errors.NewLockCheckFailedError(fmt.Errorf("%w: %v", ErrLockCheckFailed, err))
 	}
 
 	if exists > 0 {
@@ -97,7 +111,7 @@ func (s *AuthService) SendVerificationCode(email string) error {
 			"email":   email,
 			"lockKey": lockKey,
 		}).Warn("验证码发送过于频繁，触发限流")
-		return NewAuthError(ErrRateLimited, ErrorCodeRateLimited)
+		return errors.NewRateLimitedError()
 	}
 
 	s.logger.WithField("email", email).Debug("限流检查通过")
@@ -117,7 +131,7 @@ func (s *AuthService) SendVerificationCode(email string) error {
 			"verifyKey": verifyKey,
 			"error":     err.Error(),
 		}).Error("存储验证码到Redis失败")
-		return NewAuthError(fmt.Errorf("%w: %v", ErrStorageFailed, err), ErrorCodeStorageFailed)
+		return errors.NewStorageFailedError(fmt.Errorf("%w: %v", ErrStorageFailed, err))
 	}
 
 	s.logger.WithFields(map[string]interface{}{
@@ -133,7 +147,7 @@ func (s *AuthService) SendVerificationCode(email string) error {
 			"lockKey": lockKey,
 			"error":   err.Error(),
 		}).Error("设置限流键失败")
-		return NewAuthError(fmt.Errorf("%w: %v", ErrLockFailed, err), ErrorCodeLockFailed)
+		return errors.NewLockFailedError(fmt.Errorf("%w: %v", ErrLockFailed, err))
 	}
 
 	s.logger.WithFields(map[string]interface{}{
@@ -151,6 +165,126 @@ func (s *AuthService) SendVerificationCode(email string) error {
 	}).Info("验证码发送成功")
 
 	return nil
+}
+
+// LoginIn 登录 - 使用统一的错误码管理
+func (s *AuthService) LoginIn(email, nickname string) (*dto.LoginResponse, error) {
+	s.logger.WithFields(map[string]interface{}{
+		"email":    email,
+		"nickname": nickname,
+		"action":   "login",
+	}).Info("开始处理用户登录")
+
+	// 1. 校验邮箱格式
+	if err := s.validateEmail(email); err != nil {
+		s.logger.WithFields(map[string]interface{}{
+			"email": email,
+			"error": err.Error(),
+		}).Warn("登录时邮箱格式验证失败")
+		return nil, errors.NewEmailInvalidError(err)
+	}
+
+	// 2. 检查用户是否存在
+	user, err := s.userRepo.GetByEmail(email)
+	var isNewUser bool
+
+	if err != nil {
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			// 用户不存在，创建新用户
+			s.logger.WithFields(map[string]interface{}{
+				"email":    email,
+				"nickname": nickname,
+			}).Info("用户不存在，开始创建新用户")
+
+			user = &models.User{
+				Email:    &email,
+				Nickname: nickname,
+				Role:     "user", // 默认角色
+			}
+
+			if err := s.userRepo.Create(user); err != nil {
+				s.logger.WithFields(map[string]interface{}{
+					"email":    email,
+					"nickname": nickname,
+					"error":    err.Error(),
+				}).Error("创建新用户失败")
+				return nil, errors.NewUserCreateFailedError(err)
+			}
+
+			isNewUser = true
+			s.logger.WithFields(map[string]interface{}{
+				"userID":   user.ID,
+				"email":    email,
+				"nickname": nickname,
+			}).Info("新用户创建成功")
+		} else {
+			s.logger.WithFields(map[string]interface{}{
+				"email": email,
+				"error": err.Error(),
+			}).Error("查询用户失败")
+			return nil, errors.NewInternalError(err)
+		}
+	} else {
+		// 用户存在，更新昵称（如果不同）和最后登录时间
+		if user.Nickname != nickname {
+			user.Nickname = nickname
+			if err := s.userRepo.Update(user); err != nil {
+				s.logger.WithFields(map[string]interface{}{
+					"userID":   user.ID,
+					"email":    email,
+					"nickname": nickname,
+					"error":    err.Error(),
+				}).Error("更新用户昵称失败")
+				return nil, errors.NewUserUpdateFailedError(err)
+			}
+		}
+
+		// 更新最后登录时间
+		if err := s.userRepo.UpdateLastLogin(user.ID); err != nil {
+			s.logger.WithFields(map[string]interface{}{
+				"userID": user.ID,
+				"email":  email,
+				"error":  err.Error(),
+			}).Error("更新最后登录时间失败")
+			return nil, errors.NewUserUpdateFailedError(err)
+		}
+
+		isNewUser = false
+		s.logger.WithFields(map[string]interface{}{
+			"userID":   user.ID,
+			"email":    email,
+			"nickname": nickname,
+		}).Info("现有用户登录成功")
+	}
+
+	// 3. 生成JWT Token
+	token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role)
+	if err != nil {
+		s.logger.WithFields(map[string]interface{}{
+			"userID": user.ID,
+			"email":  email,
+			"error":  err.Error(),
+		}).Error("生成JWT Token失败")
+		return nil, errors.NewInternalError(err)
+	}
+
+	s.logger.WithFields(map[string]interface{}{
+		"userID":    user.ID,
+		"email":     email,
+		"nickname":  nickname,
+		"isNewUser": isNewUser,
+	}).Info("用户登录处理完成")
+
+	// 4. 返回登录响应
+	return &dto.LoginResponse{
+		Token:     token,
+		UserID:    user.ID,
+		Email:     email,
+		Nickname:  user.Nickname,
+		Role:      user.Role,
+		IsNewUser: isNewUser,
+		ExpiresIn: "24小时",
+	}, nil
 }
 
 // VerifyCode 验证验证码

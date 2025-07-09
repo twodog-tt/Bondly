@@ -35,7 +35,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
+		response.Fail(c, response.CodeRequestFormatError, response.MsgRequestFormatError)
 		return
 	}
 
@@ -58,7 +58,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 
 	// 构建响应数据
 	data := h.buildUserResponse(user)
-	response.OK(c, data, "用户创建成功")
+	response.OK(c, data, response.MsgUserCreated)
 }
 
 // GetUserByID 根据ID获取用户接口
@@ -75,7 +75,7 @@ func (h *UserHandlers) GetUserByID(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
+		response.Fail(c, response.CodeUserIDInvalid, response.MsgUserIDInvalid)
 		return
 	}
 
@@ -86,7 +86,7 @@ func (h *UserHandlers) GetUserByID(c *gin.Context) {
 	}
 
 	data := h.buildUserResponse(user)
-	response.OK(c, data, "获取用户成功")
+	response.OK(c, data, response.MsgUserRetrieved)
 }
 
 // GetUserByWalletAddress 根据钱包地址获取用户接口
@@ -102,7 +102,7 @@ func (h *UserHandlers) GetUserByID(c *gin.Context) {
 func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
 	address := c.Param("address")
 	if address == "" {
-		response.Fail(c, response.CodeInvalidParams, "钱包地址不能为空")
+		response.Fail(c, response.CodeWalletAddressEmpty, response.MsgWalletAddressEmpty)
 		return
 	}
 
@@ -113,7 +113,7 @@ func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
 	}
 
 	data := h.buildUserResponse(user)
-	response.OK(c, data, "获取用户成功")
+	response.OK(c, data, response.MsgUserRetrieved)
 }
 
 // GetUserByEmail 根据邮箱获取用户接口
@@ -129,7 +129,7 @@ func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
 func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 	email := c.Param("email")
 	if email == "" {
-		response.Fail(c, response.CodeInvalidParams, "邮箱地址不能为空")
+		response.Fail(c, response.CodeEmailAddressEmpty, response.MsgEmailAddressEmpty)
 		return
 	}
 
@@ -140,7 +140,7 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 	}
 
 	data := h.buildUserResponse(user)
-	response.OK(c, data, "获取用户成功")
+	response.OK(c, data, response.MsgUserRetrieved)
 }
 
 // UpdateUser 更新用户接口
@@ -158,13 +158,13 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
-		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
+		response.Fail(c, response.CodeUserIDInvalid, response.MsgUserIDInvalid)
 		return
 	}
 
 	var req dto.UpdateUserRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
-		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
+		response.Fail(c, response.CodeRequestFormatError, response.MsgRequestFormatError)
 		return
 	}
 
@@ -199,7 +199,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	}
 
 	data := h.buildUserResponse(user)
-	response.OK(c, data, "用户更新成功")
+	response.OK(c, data, response.MsgUserUpdated)
 }
 
 // ListUsers 获取用户列表接口
@@ -226,7 +226,7 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 	offset := (page - 1) * limit
 	users, err := h.userService.ListUsers(offset, limit)
 	if err != nil {
-		response.Fail(c, response.CodeInternalError, "获取用户列表失败")
+		response.Fail(c, response.CodeGetUserListFailed, response.MsgGetUserListFailed)
 		return
 	}
 
@@ -235,7 +235,7 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 		data = append(data, *h.buildUserResponse(&user))
 	}
 
-	response.OK(c, data, "获取用户列表成功")
+	response.OK(c, data, response.MsgUserListRetrieved)
 }
 
 // GetTopUsersByReputation 获取声誉积分最高的用户接口
@@ -255,7 +255,7 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 
 	users, err := h.userService.GetTopUsersByReputation(limit)
 	if err != nil {
-		response.Fail(c, response.CodeInternalError, "获取排行榜失败")
+		response.Fail(c, response.CodeGetRankingFailed, response.MsgGetRankingFailed)
 		return
 	}
 
@@ -264,7 +264,7 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 		data = append(data, *h.buildUserResponse(&user))
 	}
 
-	response.OK(c, data, "获取排行榜成功")
+	response.OK(c, data, response.MsgRankingRetrieved)
 }
 
 // buildUserResponse 构建用户响应数据

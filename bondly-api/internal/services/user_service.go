@@ -2,10 +2,13 @@ package services
 
 import (
 	"bondly-api/internal/cache"
+	"bondly-api/internal/logger"
 	"bondly-api/internal/models"
+	"bondly-api/internal/pkg/errors"
+	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/repositories"
 	"context"
-	"errors"
+	stderrors "errors"
 	"fmt"
 	"time"
 
@@ -15,12 +18,14 @@ import (
 type UserService struct {
 	userRepo     *repositories.UserRepository
 	cacheService cache.CacheService
+	logger       *logger.Logger
 }
 
 func NewUserService(userRepo *repositories.UserRepository, cacheService cache.CacheService) *UserService {
 	return &UserService{
 		userRepo:     userRepo,
 		cacheService: cacheService,
+		logger:       logger.NewLogger(),
 	}
 }
 
@@ -30,10 +35,10 @@ func (s *UserService) CreateUser(user *models.User) error {
 	if user.Email != nil {
 		exists, err := s.userRepo.ExistsByEmail(*user.Email)
 		if err != nil {
-			return fmt.Errorf("检查邮箱失败: %w", err)
+			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgEmailCheckFailed, err))
 		}
 		if exists {
-			return errors.New("邮箱已存在")
+			return errors.NewUserAlreadyExistsError()
 		}
 	}
 
@@ -41,10 +46,10 @@ func (s *UserService) CreateUser(user *models.User) error {
 	if user.WalletAddress != nil {
 		exists, err := s.userRepo.ExistsByWalletAddress(*user.WalletAddress)
 		if err != nil {
-			return fmt.Errorf("检查钱包地址失败: %w", err)
+			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgWalletCheckFailed, err))
 		}
 		if exists {
-			return errors.New("钱包地址已存在")
+			return errors.NewUserAlreadyExistsError()
 		}
 	}
 
@@ -61,7 +66,7 @@ func (s *UserService) CreateUser(user *models.User) error {
 
 	// 创建用户
 	if err := s.userRepo.Create(user); err != nil {
-		return fmt.Errorf("创建用户失败: %w", err)
+		return errors.NewUserCreateFailedError(err)
 	}
 
 	// 清除缓存
@@ -84,10 +89,10 @@ func (s *UserService) GetUserByID(id int64) (*models.User, error) {
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByID(id)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("用户不存在")
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NewUserNotFoundError()
 		}
-		return nil, fmt.Errorf("获取用户失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 缓存用户信息
@@ -110,10 +115,10 @@ func (s *UserService) GetUserByWalletAddress(walletAddress string) (*models.User
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByWalletAddress(walletAddress)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("用户不存在")
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NewUserNotFoundError()
 		}
-		return nil, fmt.Errorf("获取用户失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 缓存用户信息
@@ -136,10 +141,10 @@ func (s *UserService) GetUserByEmail(email string) (*models.User, error) {
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByEmail(email)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("用户不存在")
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, errors.NewUserNotFoundError()
 		}
-		return nil, fmt.Errorf("获取用户失败: %w", err)
+		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 缓存用户信息
@@ -153,20 +158,20 @@ func (s *UserService) UpdateUser(user *models.User) error {
 	// 检查用户是否存在
 	existingUser, err := s.userRepo.GetByID(user.ID)
 	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("用户不存在")
+		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			return errors.NewUserNotFoundError()
 		}
-		return fmt.Errorf("获取用户失败: %w", err)
+		return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 检查邮箱唯一性
 	if user.Email != nil && *user.Email != *existingUser.Email {
 		exists, err := s.userRepo.ExistsByEmail(*user.Email)
 		if err != nil {
-			return fmt.Errorf("检查邮箱失败: %w", err)
+			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgEmailCheckFailed, err))
 		}
 		if exists {
-			return errors.New("邮箱已存在")
+			return errors.NewUserAlreadyExistsError()
 		}
 	}
 
@@ -174,16 +179,16 @@ func (s *UserService) UpdateUser(user *models.User) error {
 	if user.WalletAddress != nil && *user.WalletAddress != *existingUser.WalletAddress {
 		exists, err := s.userRepo.ExistsByWalletAddress(*user.WalletAddress)
 		if err != nil {
-			return fmt.Errorf("检查钱包地址失败: %w", err)
+			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgWalletCheckFailed, err))
 		}
 		if exists {
-			return errors.New("钱包地址已存在")
+			return errors.NewUserAlreadyExistsError()
 		}
 	}
 
 	// 更新用户
 	if err := s.userRepo.Update(user); err != nil {
-		return fmt.Errorf("更新用户失败: %w", err)
+		return errors.NewUserUpdateFailedError(err)
 	}
 
 	// 清除缓存
@@ -195,7 +200,7 @@ func (s *UserService) UpdateUser(user *models.User) error {
 // UpdateLastLogin 更新最后登录时间
 func (s *UserService) UpdateLastLogin(id int64) error {
 	if err := s.userRepo.UpdateLastLogin(id); err != nil {
-		return fmt.Errorf("更新最后登录时间失败: %w", err)
+		return errors.NewUserUpdateFailedError(err)
 	}
 
 	// 清除缓存
@@ -207,7 +212,7 @@ func (s *UserService) UpdateLastLogin(id int64) error {
 // UpdateReputationScore 更新声誉积分
 func (s *UserService) UpdateReputationScore(id int64, score int) error {
 	if err := s.userRepo.UpdateReputationScore(id, score); err != nil {
-		return fmt.Errorf("更新声誉积分失败: %w", err)
+		return errors.NewUserUpdateFailedError(err)
 	}
 
 	// 清除缓存

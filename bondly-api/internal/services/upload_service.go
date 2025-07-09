@@ -2,7 +2,8 @@ package services
 
 import (
 	"bondly-api/internal/logger"
-	"errors"
+	"bondly-api/internal/pkg/response"
+	stderrors "errors"
 	"fmt"
 	"mime/multipart"
 	"os"
@@ -20,19 +21,19 @@ const (
 	AllowedImageTypes = "image/jpeg,image/jpg,image/png,image/gif,image/webp"
 )
 
-// 自定义错误类型
+// 自定义错误类型 - 使用统一错误码
 var (
-	ErrFileTooLarge    = errors.New("文件大小超过限制，最大允许5MB")
-	ErrInvalidFileType = errors.New("不支持的文件类型，仅支持jpg、jpeg、png、gif、webp")
-	ErrNoFileUploaded  = errors.New("请选择要上传的图片文件")
-	ErrCreateDirectory = errors.New("创建上传目录失败")
-	ErrSaveFile        = errors.New("文件保存失败")
+	ErrFileTooLarge    = NewUploadError(stderrors.New(response.MsgFileTooLarge), response.CodeFileTooLarge)
+	ErrInvalidFileType = NewUploadError(stderrors.New(response.MsgInvalidFileType), response.CodeInvalidFileType)
+	ErrNoFileUploaded  = NewUploadError(stderrors.New(response.MsgNoFileSelected), response.CodeNoFileSelected)
+	ErrCreateDirectory = NewUploadError(stderrors.New(response.MsgCreateDirectory), response.CodeCreateDirectory)
+	ErrSaveFile        = NewUploadError(stderrors.New(response.MsgSaveFile), response.CodeSaveFile)
 )
 
 // 错误包装器，用于携带额外信息
 type UploadError struct {
 	Err  error
-	Code string // 业务错误码
+	Code int // 业务错误码
 }
 
 func (e *UploadError) Error() string {
@@ -44,7 +45,7 @@ func (e *UploadError) Unwrap() error {
 }
 
 // 创建带错误码的上传错误
-func NewUploadError(err error, code string) *UploadError {
+func NewUploadError(err error, code int) *UploadError {
 	return &UploadError{
 		Err:  err,
 		Code: code,
@@ -53,11 +54,11 @@ func NewUploadError(err error, code string) *UploadError {
 
 // 错误码常量
 const (
-	ErrorCodeFileTooLarge    = "FILE_TOO_LARGE"
-	ErrorCodeInvalidFileType = "INVALID_FILE_TYPE"
-	ErrorCodeNoFileUploaded  = "NO_FILE_UPLOADED"
-	ErrorCodeCreateDirectory = "CREATE_DIRECTORY_FAILED"
-	ErrorCodeSaveFile        = "SAVE_FILE_FAILED"
+	ErrorCodeFileTooLarge    = response.CodeFileTooLarge
+	ErrorCodeInvalidFileType = response.CodeInvalidFileType
+	ErrorCodeNoFileUploaded  = response.CodeNoFileUploaded
+	ErrorCodeCreateDirectory = response.CodeCreateDirectory
+	ErrorCodeSaveFile        = response.CodeSaveFile
 )
 
 // UploadResult 上传结果

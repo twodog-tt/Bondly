@@ -98,6 +98,26 @@ api-logs:
 	@echo "Following bondly-api logs (Press Ctrl+C to exit)..."
 	docker-compose -f docker-compose.dev.yml logs -f bondly-api
 
+# 监控API服务日志（智能选择）
+logs-tail:
+	@echo "Monitoring API service logs (Press Ctrl+C to exit)..."
+	@if docker-compose -f docker-compose.dev.yml ps bondly-api | grep -q "Up"; then \
+		echo "📦 API service running in Docker - using container logs..."; \
+		docker-compose -f docker-compose.dev.yml logs -f bondly-api; \
+	elif [ -f "logs/app.log" ]; then \
+		echo "📄 Using local log file: logs/app.log"; \
+		tail -f logs/app.log; \
+	elif [ -f "app.log" ]; then \
+		echo "📄 Using local log file: app.log"; \
+		tail -f app.log; \
+	else \
+		echo "❌ No log source found. Available options:"; \
+		echo "   - Start Docker service: make dev-up"; \
+		echo "   - Create local log file"; \
+		echo "   - Use 'make api-logs' for Docker container logs only"; \
+		exit 1; \
+	fi
+
 # 停止 bondly-api 服务
 stop-api:
 	@echo "Stopping bondly-api service..."
@@ -149,7 +169,8 @@ help:
 	@echo "  start-api    - Start bondly-api service"
 	@echo "  stop-api     - Stop bondly-api service"
 	@echo "  api-status   - Check bondly-api service status"
-	@echo "  api-logs     - Follow bondly-api real-time logs"
+	@echo "  api-logs     - Follow bondly-api real-time logs (Docker)"
+	@echo "  logs-tail    - Monitor local log files (tail -f)"
 	@echo ""
 	@echo "Local Development:"
 	@echo "  build        - Build the application"

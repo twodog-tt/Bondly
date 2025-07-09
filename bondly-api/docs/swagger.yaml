@@ -44,6 +44,42 @@ definitions:
     required:
     - nickname
     type: object
+  dto.LoginRequest:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+    required:
+    - email
+    - nickname
+    type: object
+  dto.LoginResponse:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      expires_in:
+        example: 24小时
+        type: string
+      is_new_user:
+        example: false
+        type: boolean
+      nickname:
+        example: John Doe
+        type: string
+      role:
+        example: user
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
   dto.SendCodeData:
     properties:
       email:
@@ -145,9 +181,13 @@ definitions:
         example: user@example.com
         format: email
         type: string
+      nickname:
+        example: twodog
+        type: string
     required:
     - code
     - email
+    - nickname
     type: object
   handlers.BlockchainStatusData:
     properties:
@@ -319,6 +359,17 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/dto.CodeStatusData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_LoginResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.LoginResponse'
       message:
         type: string
       success:
@@ -557,6 +608,28 @@ paths:
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 查询验证码状态
+      tags:
+      - 认证管理
+  /api/v1/auth/login:
+    post:
+      consumes:
+      - application/json
+      description: 用户登录，如果用户不存在则自动创建新用户
+      parameters:
+      - description: 登录请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.LoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 登录失败
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 用户登录
       tags:
       - 认证管理
   /api/v1/auth/send-code:

@@ -121,7 +121,7 @@ func HealthCheck(c *gin.Context) {
 		Message: "Bondly API is running",
 		Version: "1.0.0",
 	}
-	response.OK(c, data, "健康检查成功")
+	response.OK(c, data, response.MsgHealthCheckSuccess)
 }
 
 // GetBlockchainStatus 获取区块链状态
@@ -138,7 +138,7 @@ func GetBlockchainStatus(c *gin.Context) {
 		Network: "ethereum",
 		Message: "Blockchain connection status",
 	}
-	response.OK(c, data, "获取区块链状态成功")
+	response.OK(c, data, response.MsgBlockchainStatusRetrieved)
 }
 
 // GetContractInfo 获取合约信息
@@ -158,7 +158,7 @@ func GetContractInfo(c *gin.Context) {
 		Status:  "active",
 		Message: "Contract information",
 	}
-	response.OK(c, data, "获取合约信息成功")
+	response.OK(c, data, response.MsgContractInfoRetrieved)
 }
 
 // GetUserInfo 获取用户信息
@@ -177,7 +177,7 @@ func GetUserInfo(c *gin.Context) {
 		Address: address,
 		Message: "User information",
 	}
-	response.OK(c, data, "获取用户信息成功")
+	response.OK(c, data, response.MsgUserInfoRetrieved)
 }
 
 // GetUserBalance 获取用户余额
@@ -197,7 +197,7 @@ func GetUserBalance(c *gin.Context) {
 		Balance: "0",
 		Message: "User balance",
 	}
-	response.OK(c, data, "获取用户余额成功")
+	response.OK(c, data, response.MsgUserBalanceRetrieved)
 }
 
 // GetContentList 获取内容列表
@@ -217,7 +217,7 @@ func GetContentList(c *gin.Context) {
 		Content: []interface{}{},
 		Message: "Content list",
 	}
-	response.OK(c, data, "获取内容列表成功")
+	response.OK(c, data, response.MsgContentListRetrieved)
 }
 
 // GetContentDetail 获取内容详情
@@ -236,7 +236,7 @@ func GetContentDetail(c *gin.Context) {
 		ID:      id,
 		Message: "Content detail",
 	}
-	response.OK(c, data, "获取内容详情成功")
+	response.OK(c, data, response.MsgContentDetailRetrieved)
 }
 
 // GetProposals 获取提案列表
@@ -255,7 +255,7 @@ func GetProposals(c *gin.Context) {
 		Proposals: []interface{}{},
 		Message:   "Proposals list",
 	}
-	response.OK(c, data, "获取提案列表成功")
+	response.OK(c, data, response.MsgProposalListRetrieved)
 }
 
 // GetProposalDetail 获取提案详情
@@ -274,7 +274,7 @@ func GetProposalDetail(c *gin.Context) {
 		ID:      id,
 		Message: "Proposal detail",
 	}
-	response.OK(c, data, "获取提案详情成功")
+	response.OK(c, data, response.MsgProposalDetailRetrieved)
 }
 
 // CreateContent 创建内容
@@ -292,7 +292,7 @@ func CreateContent(c *gin.Context) {
 		ID:      "1",
 		Message: "Content created successfully",
 	}
-	response.OK(c, data, "创建内容成功")
+	response.OK(c, data, response.MsgContentCreated)
 }
 
 // CreateProposal 创建提案
@@ -310,7 +310,7 @@ func CreateProposal(c *gin.Context) {
 		ID:      "1",
 		Message: "Proposal created successfully",
 	}
-	response.OK(c, data, "创建提案成功")
+	response.OK(c, data, response.MsgProposalCreated)
 }
 
 // VoteProposal 提案投票
@@ -327,7 +327,7 @@ func VoteProposal(c *gin.Context) {
 	data := VoteData{
 		Message: "Vote submitted successfully",
 	}
-	response.OK(c, data, "投票提交成功")
+	response.OK(c, data, response.MsgVoteSubmitted)
 }
 
 // StakeTokens 质押代币
@@ -344,7 +344,7 @@ func StakeTokens(c *gin.Context) {
 	data := StakeData{
 		Message: "Tokens staked successfully",
 	}
-	response.OK(c, data, "质押代币成功")
+	response.OK(c, data, response.MsgTokenStaked)
 }
 
 // GetStats 获取统计信息
@@ -363,5 +363,5 @@ func GetStats(c *gin.Context) {
 		ActiveStakers:    3500,
 		TotalValueLocked: "1250000.50",
 	}
-	response.OK(c, data, "获取统计信息成功")
+	response.OK(c, data, response.MsgStatisticsRetrieved)
 }

@@ -36,7 +36,7 @@ func (h *UploadHandlers) UploadImage(c *gin.Context) {
 	// 获取上传的文件
 	file, err := c.FormFile("file")
 	if err != nil {
-		response.Fail(c, response.CodeInvalidParams, "请选择要上传的文件")
+		response.Fail(c, response.CodeNoFileSelected, response.MsgNoFileSelected)
 		return
 	}
 
@@ -55,7 +55,7 @@ func (h *UploadHandlers) UploadImage(c *gin.Context) {
 	// 上传文件
 	result, err := h.uploadService.UploadImage(file, baseURL)
 	if err != nil {
-		response.Fail(c, response.CodeInternalError, fmt.Sprintf("文件上传失败: %v", err))
+		response.Fail(c, response.CodeFileUploadFailed, response.MsgFileUploadFailed)
 		return
 	}
 
@@ -63,7 +63,7 @@ func (h *UploadHandlers) UploadImage(c *gin.Context) {
 	data := dto.UploadImageData{
 		URL: result.AccessURL,
 	}
-	response.OK(c, data, "图片上传成功")
+	response.OK(c, data, response.MsgImageUploaded)
 }
 
 // validateImageFile 验证图片文件
@@ -71,7 +71,7 @@ func (h *UploadHandlers) validateImageFile(file *multipart.FileHeader) error {
 	// 检查文件大小（5MB）
 	const maxSize = 5 * 1024 * 1024
 	if file.Size > maxSize {
-		return fmt.Errorf("文件大小不能超过5MB")
+		return fmt.Errorf(response.MsgFileTooLarge)
 	}
 
 	// 检查文件类型
@@ -87,7 +87,7 @@ func (h *UploadHandlers) validateImageFile(file *multipart.FileHeader) error {
 	}
 
 	if !isAllowed {
-		return fmt.Errorf("只支持jpg、jpeg、png、gif、webp格式的图片")
+		return fmt.Errorf(response.MsgInvalidFileType)
 	}
 
 	return nil
