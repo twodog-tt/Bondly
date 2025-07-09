@@ -38,8 +38,9 @@ type SendCodeData struct {
 
 // VerifyCodeData 验证码验证响应数据
 type VerifyCodeData struct {
-	Email      string `json:"email" example:"user@example.com"`
-	VerifiedAt string `json:"verified_at" example:"2024-01-01T12:00:00Z"`
+	Email   string `json:"email" example:"user@example.com"`
+	IsValid bool   `json:"isValid" example:"true"`
+	Token   string `json:"token,omitempty" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 }
 
 // CodeStatusData 验证码状态响应数据
@@ -144,8 +145,9 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 
 	// 验证成功
 	data := VerifyCodeData{
-		Email:      req.Email,
-		VerifiedAt: "2024-01-01T12:00:00Z",
+		Email:   req.Email,
+		IsValid: true,
+		Token:   "", // 暂时为空，后续可以添加JWT token生成逻辑
 	}
 	response.OK(c, data, "验证码验证成功")
 }

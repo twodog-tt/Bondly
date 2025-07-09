@@ -103,25 +103,25 @@ func TestAuthService_EmailValidation_DetailedCases(t *testing.T) {
 			name:        "无效格式",
 			email:       "invalid-email",
 			expectError: true,
-			errorMsg:    "邮箱格式无效",
+			errorMsg:    "邮箱格式不正确",
 		},
 		{
 			name:        "缺少域名",
 			email:       "test@",
 			expectError: true,
-			errorMsg:    "邮箱格式无效",
+			errorMsg:    "邮箱格式不正确",
 		},
 		{
 			name:        "缺少用户名",
 			email:       "@example.com",
 			expectError: true,
-			errorMsg:    "邮箱格式无效",
+			errorMsg:    "邮箱格式不正确",
 		},
 		{
 			name:        "包含空格",
 			email:       "test @example.com",
 			expectError: true,
-			errorMsg:    "邮箱格式无效",
+			errorMsg:    "邮箱格式不正确",
 		},
 	}
 
