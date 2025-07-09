@@ -204,8 +204,12 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
 
     try {
       setIsVerifying(true);
-      // 模拟发送验证码
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      
+      // 调用真实的后端API
+      const { authApi } = await import('../utils/api');
+      const result = await authApi.sendCode(loginData.email, 'register');
+      
+      console.log('验证码发送成功:', result);
       setIsCodeSent(true);
       setCountdown(60);
 
@@ -218,9 +222,16 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
           return prev - 1;
         });
       }, 1000);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to send verification code:", error);
-      alert("Failed to send verification code");
+      
+      if (error instanceof Error) {
+        // 如果是API错误，显示具体的错误信息
+        const errorMessage = error.message || "发送验证码失败";
+        setEmailError(errorMessage);
+      } else {
+        setEmailError("发送验证码失败，请稍后重试");
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -236,14 +247,33 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
 
     try {
       setIsVerifying(true);
-      // 模拟验证验证码
-      await new Promise((resolve) => setTimeout(resolve, 1000));
       
-      // 验证成功，进入下一步
-      setLoginStep(3);
-    } catch (error) {
+      // 调用真实的后端API
+      const { authApi } = await import('../utils/api');
+      const result = await authApi.verifyCode(
+        loginData.email, 
+        loginData.verificationCode, 
+        'register'
+      );
+      
+      console.log('验证码验证成功:', result);
+      
+      if (result.isValid) {
+        // 验证成功，进入下一步
+        setLoginStep(3);
+      } else {
+        setVerificationCodeError("验证码无效，请重新输入");
+      }
+    } catch (error: any) {
       console.error("Verification code verification failed:", error);
-      setVerificationCodeError("Verification code error, please re-enter");
+      
+      if (error instanceof Error) {
+        // 如果是API错误，显示具体的错误信息
+        const errorMessage = error.message || "验证码验证失败";
+        setVerificationCodeError(errorMessage);
+      } else {
+        setVerificationCodeError("验证码验证失败，请重新输入");
+      }
     } finally {
       setIsVerifying(false);
     }
