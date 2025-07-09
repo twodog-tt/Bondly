@@ -176,6 +176,12 @@ definitions:
         example: "1250000.50"
         type: string
     type: object
+  handlers.UploadImageData:
+    properties:
+      url:
+        example: http://localhost:8080/uploads/2025/01/abc123.png
+        type: string
+    type: object
   handlers.UserBalanceData:
     properties:
       address:
@@ -211,8 +217,11 @@ definitions:
       email:
         example: user@example.com
         type: string
-      verified_at:
-        example: "2024-01-01T12:00:00Z"
+      isValid:
+        example: true
+        type: boolean
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
     type: object
   handlers.VerifyCodeRequest:
@@ -395,6 +404,17 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/handlers.StatsData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-handlers_UploadImageData:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/handlers.UploadImageData'
       message:
         type: string
       success:
@@ -807,6 +827,27 @@ paths:
       summary: 获取平台统计信息
       tags:
       - 系统监控
+  /api/v1/upload/image:
+    post:
+      consumes:
+      - multipart/form-data
+      description: 上传图片文件，支持jpg、jpeg、png、gif、webp格式，文件大小限制5MB
+      parameters:
+      - description: 图片文件
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 文件格式错误或上传失败
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 上传图片
+      tags:
+      - 文件上传
   /api/v1/users:
     post:
       consumes:

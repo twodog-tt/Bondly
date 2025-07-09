@@ -527,6 +527,38 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/upload/image": {
+            "post": {
+                "description": "上传图片文件，支持jpg、jpeg、png、gif、webp格式，文件大小限制5MB",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "文件上传"
+                ],
+                "summary": "上传图片",
+                "parameters": [
+                    {
+                        "type": "file",
+                        "description": "图片文件",
+                        "name": "file",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "文件格式错误或上传失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users": {
             "post": {
                 "description": "创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。",
@@ -1008,6 +1040,15 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.UploadImageData": {
+            "type": "object",
+            "properties": {
+                "url": {
+                    "type": "string",
+                    "example": "http://localhost:8080/uploads/2025/01/abc123.png"
+                }
+            }
+        },
         "handlers.UserBalanceData": {
             "type": "object",
             "properties": {
@@ -1058,9 +1099,13 @@ const docTemplate = `{
                     "type": "string",
                     "example": "user@example.com"
                 },
-                "verified_at": {
+                "isValid": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "token": {
                     "type": "string",
-                    "example": "2024-01-01T12:00:00Z"
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 }
             }
         },
@@ -1337,6 +1382,23 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/handlers.StatsData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-handlers_UploadImageData": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/handlers.UploadImageData"
                 },
                 "message": {
                     "type": "string"
