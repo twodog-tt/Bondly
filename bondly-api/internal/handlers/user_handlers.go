@@ -145,7 +145,7 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 
 // UpdateUser 更新用户接口
 // @Summary 更新用户信息
-// @Description 更新指定用户的个人信息
+// @Description 更新指定用户的个人信息（部分更新）
 // @Tags 用户管理
 // @Accept json
 // @Produce json
@@ -153,7 +153,7 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 // @Param request body dto.UpdateUserRequest true "更新用户请求体"
 // @Success 200 {object} response.Response[dto.UserResponse] "用户更新成功"
 // @Failure 200 {object} response.Response[any] "用户不存在或更新失败"
-// @Router /api/v1/users/{id} [put]
+// @Router /api/v1/users/{id} [post]
 func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	idStr := c.Param("id")
 	id, err := strconv.ParseInt(idStr, 10, 64)

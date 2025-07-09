@@ -963,10 +963,10 @@ paths:
       summary: 根据ID获取用户信息
       tags:
       - 用户管理
-    put:
+    post:
       consumes:
       - application/json
-      description: 更新指定用户的个人信息
+      description: 更新指定用户的个人信息（部分更新）
       parameters:
       - description: 用户ID
         in: path

@@ -757,8 +757,8 @@ const docTemplate = `{
                     }
                 }
             },
-            "put": {
-                "description": "更新指定用户的个人信息",
+            "post": {
+                "description": "更新指定用户的个人信息（部分更新）",
                 "consumes": [
                     "application/json"
                 ],
