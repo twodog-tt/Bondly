@@ -78,31 +78,31 @@ definitions:
         example: Proposal created successfully
         type: string
     type: object
-  handlers.CreateUserData:
-    properties:
-      id:
-        example: "1"
-        type: string
-      message:
-        example: User created successfully
-        type: string
-    type: object
   handlers.CreateUserRequest:
     properties:
-      address:
-        example: 0x1234567890abcdef1234567890abcdef12345678
-        type: string
-      avatar:
+      avatar_url:
         example: https://example.com/avatar.jpg
         type: string
       bio:
-        example: Blockchain enthusiast
+        example: Hello, I'm a blockchain enthusiast
         type: string
-      username:
-        example: john_doe
+      email:
+        example: user@example.com
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 0
+        type: integer
+      role:
+        example: user
+        type: string
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
     required:
-    - address
+    - nickname
     type: object
   handlers.HealthData:
     properties:
@@ -176,6 +176,24 @@ definitions:
         example: "1250000.50"
         type: string
     type: object
+  handlers.UpdateUserRequest:
+    properties:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Hello, I'm a blockchain enthusiast
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 100
+        type: integer
+      role:
+        example: user
+        type: string
+    type: object
   handlers.UploadImageData:
     properties:
       url:
@@ -203,14 +221,41 @@ definitions:
         example: User information
         type: string
     type: object
-  handlers.UserReputationData:
+  handlers.UserResponse:
     properties:
-      address:
+      avatar_url:
+        example: https://example.com/avatar.jpg
+        type: string
+      bio:
+        example: Hello, I'm a blockchain enthusiast
+        type: string
+      created_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      email:
+        example: user@example.com
+        type: string
+      id:
+        example: 1
+        type: integer
+      last_login_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      reputation_score:
+        example: 100
+        type: integer
+      role:
+        example: user
+        type: string
+      updated_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      wallet_address:
         example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
-      reputation:
-        example: 85
-        type: integer
     type: object
   handlers.VerifyCodeData:
     properties:
@@ -250,6 +295,19 @@ definitions:
       code:
         type: integer
       data: {}
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-array_handlers_UserResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/handlers.UserResponse'
+        type: array
       message:
         type: string
       success:
@@ -327,17 +385,6 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/handlers.CreateProposalData'
-      message:
-        type: string
-      success:
-        type: boolean
-    type: object
-  response.Response-handlers_CreateUserData:
-    properties:
-      code:
-        type: integer
-      data:
-        $ref: '#/definitions/handlers.CreateUserData'
       message:
         type: string
       success:
@@ -442,12 +489,12 @@ definitions:
       success:
         type: boolean
     type: object
-  response.Response-handlers_UserReputationData:
+  response.Response-handlers_UserResponse:
     properties:
       code:
         type: integer
       data:
-        $ref: '#/definitions/handlers.UserReputationData'
+        $ref: '#/definitions/handlers.UserResponse'
       message:
         type: string
       success:
@@ -849,12 +896,37 @@ paths:
       tags:
       - 文件上传
   /api/v1/users:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取用户列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取用户列表成功
+          schema:
+            $ref: '#/definitions/response.Response-array_handlers_UserResponse'
+      summary: 获取用户列表
+      tags:
+      - 用户管理
     post:
       consumes:
       - application/json
-      description: 创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。
+      description: 创建新的用户账户，支持Web2邮箱和Web3钱包地址
       parameters:
-      - description: 用户信息
+      - description: 创建用户请求体
         in: body
         name: request
         required: true
@@ -870,65 +942,123 @@ paths:
       summary: 创建新用户
       tags:
       - 用户管理
-  /api/v1/users/{address}:
-    get:
+  /api/v1/users/{id}:
+    delete:
       consumes:
       - application/json
-      description: 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。
+      description: 删除指定的用户账户
       parameters:
-      - description: 用户钱包地址
-        example: 0x1234567890abcdef1234567890abcdef12345678
+      - description: 用户ID
         in: path
-        maxLength: 42
-        minLength: 42
-        name: address
+        name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: 地址参数缺失或用户不存在
+          description: 用户不存在或删除失败
           schema:
             $ref: '#/definitions/response.Response-any'
-      summary: 获取用户详细信息
+      summary: 删除用户
       tags:
       - 用户管理
-  /api/v1/users/{address}/balance:
     get:
       consumes:
       - application/json
-      description: 获取指定用户的各种代币余额信息，包括ETH余额、BONDLY代币余额等，以及对应的USD价值。
+      description: 根据用户ID获取详细的用户信息
       parameters:
-      - description: 用户钱包地址
-        example: 0x1234567890abcdef1234567890abcdef12345678
+      - description: 用户ID
         in: path
-        maxLength: 42
-        minLength: 42
-        name: address
+        name: id
         required: true
-        type: string
+        type: integer
       produces:
       - application/json
       responses:
         "200":
-          description: 地址参数缺失或格式错误
+          description: 用户不存在
           schema:
             $ref: '#/definitions/response.Response-any'
-      summary: 获取用户代币余额
+      summary: 根据ID获取用户信息
       tags:
       - 用户管理
-  /api/v1/users/{address}/reputation:
+    put:
+      consumes:
+      - application/json
+      description: 更新指定用户的个人信息
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新用户请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在或更新失败
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 更新用户信息
+      tags:
+      - 用户管理
+  /api/v1/users/email/{email}:
     get:
       consumes:
       - application/json
-      description: 获取用户在平台上的声誉分数、排名以及相关统计信息。声誉值反映用户的贡献和活跃度。
+      description: 根据邮箱地址获取用户信息，用于Web2登录
       parameters:
-      - description: 用户钱包地址
-        example: 0x1234567890abcdef1234567890abcdef12345678
+      - description: 邮箱地址
         in: path
-        maxLength: 42
-        minLength: 42
+        name: email
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 根据邮箱获取用户信息
+      tags:
+      - 用户管理
+  /api/v1/users/top:
+    get:
+      consumes:
+      - application/json
+      description: 获取声誉积分最高的用户列表
+      parameters:
+      - default: 10
+        description: 返回数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 获取排行榜成功
+          schema:
+            $ref: '#/definitions/response.Response-array_handlers_UserResponse'
+      summary: 获取声誉积分排行榜
+      tags:
+      - 用户管理
+  /api/v1/users/wallet/{address}:
+    get:
+      consumes:
+      - application/json
+      description: 根据钱包地址获取用户信息，用于Web3登录
+      parameters:
+      - description: 钱包地址
+        in: path
         name: address
         required: true
         type: string
@@ -936,10 +1066,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: 地址参数缺失或用户不存在
+          description: 用户不存在
           schema:
             $ref: '#/definitions/response.Response-any'
-      summary: 获取用户声誉值
+      summary: 根据钱包地址获取用户信息
       tags:
       - 用户管理
   /health:

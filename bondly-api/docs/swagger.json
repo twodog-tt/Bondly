@@ -557,8 +557,45 @@
             }
         },
         "/api/v1/users": {
+            "get": {
+                "description": "分页获取用户列表",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户列表",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "页码",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "每页数量",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取用户列表成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-array_handlers_UserResponse"
+                        }
+                    }
+                }
+            },
             "post": {
-                "description": "创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。",
+                "description": "创建新的用户账户，支持Web2邮箱和Web3钱包地址",
                 "consumes": [
                     "application/json"
                 ],
@@ -571,7 +608,7 @@
                 "summary": "创建新用户",
                 "parameters": [
                     {
-                        "description": "用户信息",
+                        "description": "创建用户请求体",
                         "name": "request",
                         "in": "body",
                         "required": true,
@@ -590,9 +627,9 @@
                 }
             }
         },
-        "/api/v1/users/{address}": {
+        "/api/v1/users/email/{email}": {
             "get": {
-                "description": "根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。",
+                "description": "根据邮箱地址获取用户信息，用于Web2登录",
                 "consumes": [
                     "application/json"
                 ],
@@ -602,22 +639,19 @@
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取用户详细信息",
+                "summary": "根据邮箱获取用户信息",
                 "parameters": [
                     {
-                        "maxLength": 42,
-                        "minLength": 42,
                         "type": "string",
-                        "example": "0x1234567890abcdef1234567890abcdef12345678",
-                        "description": "用户钱包地址",
-                        "name": "address",
+                        "description": "邮箱地址",
+                        "name": "email",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "地址参数缺失或用户不存在",
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -625,9 +659,9 @@
                 }
             }
         },
-        "/api/v1/users/{address}/balance": {
+        "/api/v1/users/top": {
             "get": {
-                "description": "获取指定用户的各种代币余额信息，包括ETH余额、BONDLY代币余额等，以及对应的USD价值。",
+                "description": "获取声誉积分最高的用户列表",
                 "consumes": [
                     "application/json"
                 ],
@@ -637,14 +671,43 @@
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取用户代币余额",
+                "summary": "获取声誉积分排行榜",
                 "parameters": [
                     {
-                        "maxLength": 42,
-                        "minLength": 42,
+                        "type": "integer",
+                        "default": 10,
+                        "description": "返回数量",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "获取排行榜成功",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-array_handlers_UserResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/users/wallet/{address}": {
+            "get": {
+                "description": "根据钱包地址获取用户信息，用于Web3登录",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "根据钱包地址获取用户信息",
+                "parameters": [
+                    {
                         "type": "string",
-                        "example": "0x1234567890abcdef1234567890abcdef12345678",
-                        "description": "用户钱包地址",
+                        "description": "钱包地址",
                         "name": "address",
                         "in": "path",
                         "required": true
@@ -652,7 +715,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "地址参数缺失或格式错误",
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -660,9 +723,9 @@
                 }
             }
         },
-        "/api/v1/users/{address}/reputation": {
+        "/api/v1/users/{id}": {
             "get": {
-                "description": "获取用户在平台上的声誉分数、排名以及相关统计信息。声誉值反映用户的贡献和活跃度。",
+                "description": "根据用户ID获取详细的用户信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -672,22 +735,88 @@
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取用户声誉值",
+                "summary": "根据ID获取用户信息",
                 "parameters": [
                     {
-                        "maxLength": 42,
-                        "minLength": 42,
-                        "type": "string",
-                        "example": "0x1234567890abcdef1234567890abcdef12345678",
-                        "description": "用户钱包地址",
-                        "name": "address",
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
                         "in": "path",
                         "required": true
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "地址参数缺失或用户不存在",
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "description": "更新指定用户的个人信息",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "更新用户信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "更新用户请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在或更新失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "description": "删除指定的用户账户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "删除用户",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在或删除失败",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -897,40 +1026,39 @@
                 }
             }
         },
-        "handlers.CreateUserData": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string",
-                    "example": "1"
-                },
-                "message": {
-                    "type": "string",
-                    "example": "User created successfully"
-                }
-            }
-        },
         "handlers.CreateUserRequest": {
             "type": "object",
             "required": [
-                "address"
+                "nickname"
             ],
             "properties": {
-                "address": {
-                    "type": "string",
-                    "example": "0x1234567890abcdef1234567890abcdef12345678"
-                },
-                "avatar": {
+                "avatar_url": {
                     "type": "string",
                     "example": "https://example.com/avatar.jpg"
                 },
                 "bio": {
                     "type": "string",
-                    "example": "Blockchain enthusiast"
+                    "example": "Hello, I'm a blockchain enthusiast"
                 },
-                "username": {
+                "email": {
                     "type": "string",
-                    "example": "john_doe"
+                    "example": "user@example.com"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 0
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
                 }
             }
         },
@@ -1037,6 +1165,31 @@
                 }
             }
         },
+        "handlers.UpdateUserRequest": {
+            "type": "object",
+            "properties": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Hello, I'm a blockchain enthusiast"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                }
+            }
+        },
         "handlers.UploadImageData": {
             "type": "object",
             "properties": {
@@ -1076,16 +1229,52 @@
                 }
             }
         },
-        "handlers.UserReputationData": {
+        "handlers.UserResponse": {
             "type": "object",
             "properties": {
-                "address": {
+                "avatar_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
+                "bio": {
+                    "type": "string",
+                    "example": "Hello, I'm a blockchain enthusiast"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "last_login_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "reputation_score": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "wallet_address": {
                     "type": "string",
                     "example": "0x1234567890abcdef1234567890abcdef12345678"
-                },
-                "reputation": {
-                    "type": "integer",
-                    "example": 85
                 }
             }
         },
@@ -1142,6 +1331,26 @@
                     "type": "integer"
                 },
                 "data": {},
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-array_handlers_UserResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.UserResponse"
+                    }
+                },
                 "message": {
                     "type": "string"
                 },
@@ -1260,23 +1469,6 @@
                 },
                 "data": {
                     "$ref": "#/definitions/handlers.CreateProposalData"
-                },
-                "message": {
-                    "type": "string"
-                },
-                "success": {
-                    "type": "boolean"
-                }
-            }
-        },
-        "response.Response-handlers_CreateUserData": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer"
-                },
-                "data": {
-                    "$ref": "#/definitions/handlers.CreateUserData"
                 },
                 "message": {
                     "type": "string"
@@ -1439,14 +1631,14 @@
                 }
             }
         },
-        "response.Response-handlers_UserReputationData": {
+        "response.Response-handlers_UserResponse": {
             "type": "object",
             "properties": {
                 "code": {
                     "type": "integer"
                 },
                 "data": {
-                    "$ref": "#/definitions/handlers.UserReputationData"
+                    "$ref": "#/definitions/handlers.UserResponse"
                 },
                 "message": {
                     "type": "string"

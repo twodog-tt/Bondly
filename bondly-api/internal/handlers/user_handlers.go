@@ -4,7 +4,7 @@ import (
 	"bondly-api/internal/models"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
-	"errors"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -19,162 +19,333 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 	}
 }
 
-// handleUserError 统一处理用户相关错误
-func (h *UserHandlers) handleUserError(c *gin.Context, err error) {
-	var authErr *services.AuthError
-	if errors.As(err, &authErr) {
-		// 根据错误码返回不同的业务状态码
-		switch authErr.Code {
-		case services.ErrorCodeUserAddressEmpty, services.ErrorCodeUserIDEmpty:
-			response.Fail(c, response.CodeInvalidParams, authErr.Error())
-		case services.ErrorCodeUserAlreadyExists:
-			response.Fail(c, response.CodeInvalidParams, authErr.Error())
-		case services.ErrorCodeUserNotFound:
-			response.Fail(c, response.CodeNotFound, authErr.Error())
-		case services.ErrorCodeUserUpdateFailed, services.ErrorCodeUserCreateFailed, services.ErrorCodeCacheFailed:
-			response.Fail(c, response.CodeInternalError, "服务器内部错误")
-		default:
-			response.Fail(c, response.CodeInternalError, "未知错误")
-		}
-		return
-	}
-
-	// 处理非AuthError类型的错误
-	response.Fail(c, response.CodeInternalError, "服务器内部错误")
-}
-
-// CreateUserRequest 创建用户请求
+// CreateUserRequest 创建用户请求结构
 type CreateUserRequest struct {
-	Address  string `json:"address" binding:"required" example:"0x1234567890abcdef1234567890abcdef12345678"`
-	Username string `json:"username" example:"john_doe"`
-	Avatar   string `json:"avatar" example:"https://example.com/avatar.jpg"`
-	Bio      string `json:"bio" example:"Blockchain enthusiast"`
+	WalletAddress   *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Email           *string `json:"email" example:"user@example.com"`
+	Nickname        string  `json:"nickname" binding:"required" example:"John Doe"`
+	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
+	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
+	Role            string  `json:"role" example:"user"`
+	ReputationScore int     `json:"reputation_score" example:"0"`
 }
 
-// GetUserInfo 获取用户信息
-// @Summary 获取用户详细信息
-// @Description 根据用户钱包地址获取用户的详细信息，包括用户名、头像、简介、声誉值、注册时间等。
-// @Tags 用户管理
-// @Accept json
-// @Produce json
-// @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} response.Response[UserInfoData] "用户详细信息"
-// @Failure 200 {object} response.Response[any] "地址参数缺失或用户不存在"
-// @Router /api/v1/users/{address} [get]
-func (h *UserHandlers) GetUserInfo(c *gin.Context) {
-	address := c.Param("address")
-	if address == "" {
-		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
-		return
-	}
-
-	user, err := h.userService.GetUserByAddress(address)
-	if err != nil {
-		h.handleUserError(c, err)
-		return
-	}
-
-	data := UserInfoData{
-		Address: user.Address,
-		Message: "User information",
-	}
-	response.OK(c, data, "获取用户信息成功")
+// UpdateUserRequest 更新用户请求结构
+type UpdateUserRequest struct {
+	Nickname        *string `json:"nickname" example:"John Doe"`
+	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
+	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
+	Role            *string `json:"role" example:"user"`
+	ReputationScore *int    `json:"reputation_score" example:"100"`
 }
 
-// GetUserBalance 获取用户余额
-// @Summary 获取用户代币余额
-// @Description 获取指定用户的各种代币余额信息，包括ETH余额、BONDLY代币余额等，以及对应的USD价值。
-// @Tags 用户管理
-// @Accept json
-// @Produce json
-// @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} response.Response[UserBalanceData] "用户余额信息"
-// @Failure 200 {object} response.Response[any] "地址参数缺失或格式错误"
-// @Router /api/v1/users/{address}/balance [get]
-func (h *UserHandlers) GetUserBalance(c *gin.Context) {
-	address := c.Param("address")
-	if address == "" {
-		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
-		return
-	}
-
-	balance, err := h.userService.GetUserBalance(address)
-	if err != nil {
-		h.handleUserError(c, err)
-		return
-	}
-
-	data := UserBalanceData{
-		Address: address,
-		Balance: balance,
-		Message: "User balance",
-	}
-	response.OK(c, data, "获取用户余额成功")
+// UserResponse 用户响应结构
+type UserResponse struct {
+	ID              uint    `json:"id" example:"1"`
+	WalletAddress   *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
+	Email           *string `json:"email" example:"user@example.com"`
+	Nickname        string  `json:"nickname" example:"John Doe"`
+	AvatarURL       *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
+	Bio             *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`
+	Role            string  `json:"role" example:"user"`
+	ReputationScore int     `json:"reputation_score" example:"100"`
+	LastLoginAt     *string `json:"last_login_at" example:"2023-12-01T10:00:00Z"`
+	CreatedAt       string  `json:"created_at" example:"2023-12-01T10:00:00Z"`
+	UpdatedAt       string  `json:"updated_at" example:"2023-12-01T10:00:00Z"`
 }
 
-// GetUserReputation 获取用户声誉
-// @Summary 获取用户声誉值
-// @Description 获取用户在平台上的声誉分数、排名以及相关统计信息。声誉值反映用户的贡献和活跃度。
-// @Tags 用户管理
-// @Accept json
-// @Produce json
-// @Param address path string true "用户钱包地址" example(0x1234567890abcdef1234567890abcdef12345678) minLength(42) maxLength(42)
-// @Success 200 {object} response.Response[UserReputationData] "用户声誉信息"
-// @Failure 200 {object} response.Response[any] "地址参数缺失或用户不存在"
-// @Router /api/v1/users/{address}/reputation [get]
-func (h *UserHandlers) GetUserReputation(c *gin.Context) {
-	address := c.Param("address")
-	if address == "" {
-		response.Fail(c, response.CodeInvalidParams, "address parameter is required")
-		return
-	}
-
-	reputation, err := h.userService.GetUserReputation(address)
-	if err != nil {
-		h.handleUserError(c, err)
-		return
-	}
-
-	data := UserReputationData{
-		Address:    address,
-		Reputation: int(reputation), // 转换int64到int
-	}
-	response.OK(c, data, "获取用户声誉成功")
-}
-
-// CreateUser 创建用户
+// CreateUser 创建用户接口
 // @Summary 创建新用户
-// @Description 创建新的用户账户，需要提供钱包地址和基本信息。钱包地址必须是有效的以太坊地址且未被注册。
+// @Description 创建新的用户账户，支持Web2邮箱和Web3钱包地址
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param request body CreateUserRequest true "用户信息"
-// @Success 200 {object} response.Response[CreateUserData] "用户创建成功"
+// @Param request body CreateUserRequest true "创建用户请求体"
+// @Success 200 {object} response.Response[UserResponse] "用户创建成功"
 // @Failure 200 {object} response.Response[any] "请求参数错误或用户已存在"
 // @Router /api/v1/users [post]
 func (h *UserHandlers) CreateUser(c *gin.Context) {
-	var userReq CreateUserRequest
+	var req CreateUserRequest
 
-	if err := c.ShouldBindJSON(&userReq); err != nil {
+	// 绑定请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
 		return
 	}
 
-	newUser := &models.User{
-		Address:  userReq.Address,
-		Username: userReq.Username,
-		Avatar:   userReq.Avatar,
-		Bio:      userReq.Bio,
+	// 构建用户模型
+	user := &models.User{
+		WalletAddress:   req.WalletAddress,
+		Email:           req.Email,
+		Nickname:        req.Nickname,
+		AvatarURL:       req.AvatarURL,
+		Bio:             req.Bio,
+		Role:            req.Role,
+		ReputationScore: req.ReputationScore,
 	}
 
-	if err := h.userService.CreateUser(newUser); err != nil {
-		h.handleUserError(c, err)
+	// 创建用户
+	if err := h.userService.CreateUser(user); err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}
 
-	data := CreateUserData{
-		ID:      "1",
-		Message: "User created successfully",
+	// 构建响应数据
+	data := h.buildUserResponse(user)
+	response.OK(c, data, "用户创建成功")
+}
+
+// GetUserByID 根据ID获取用户接口
+// @Summary 根据ID获取用户信息
+// @Description 根据用户ID获取详细的用户信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Failure 200 {object} response.Response[any] "用户不存在"
+// @Router /api/v1/users/{id} [get]
+func (h *UserHandlers) GetUserByID(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
+		return
 	}
-	response.OK(c, data, "创建用户成功")
+
+	user, err := h.userService.GetUserByID(uint(id))
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	data := h.buildUserResponse(user)
+	response.OK(c, data, "获取用户成功")
+}
+
+// GetUserByWalletAddress 根据钱包地址获取用户接口
+// @Summary 根据钱包地址获取用户信息
+// @Description 根据钱包地址获取用户信息，用于Web3登录
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param address path string true "钱包地址"
+// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Failure 200 {object} response.Response[any] "用户不存在"
+// @Router /api/v1/users/wallet/{address} [get]
+func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
+	address := c.Param("address")
+	if address == "" {
+		response.Fail(c, response.CodeInvalidParams, "钱包地址不能为空")
+		return
+	}
+
+	user, err := h.userService.GetUserByWalletAddress(address)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	data := h.buildUserResponse(user)
+	response.OK(c, data, "获取用户成功")
+}
+
+// GetUserByEmail 根据邮箱获取用户接口
+// @Summary 根据邮箱获取用户信息
+// @Description 根据邮箱地址获取用户信息，用于Web2登录
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param email path string true "邮箱地址"
+// @Success 200 {object} response.Response[UserResponse] "获取用户成功"
+// @Failure 200 {object} response.Response[any] "用户不存在"
+// @Router /api/v1/users/email/{email} [get]
+func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
+	email := c.Param("email")
+	if email == "" {
+		response.Fail(c, response.CodeInvalidParams, "邮箱地址不能为空")
+		return
+	}
+
+	user, err := h.userService.GetUserByEmail(email)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	data := h.buildUserResponse(user)
+	response.OK(c, data, "获取用户成功")
+}
+
+// UpdateUser 更新用户接口
+// @Summary 更新用户信息
+// @Description 更新指定用户的个人信息
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Param request body UpdateUserRequest true "更新用户请求体"
+// @Success 200 {object} response.Response[UserResponse] "用户更新成功"
+// @Failure 200 {object} response.Response[any] "用户不存在或更新失败"
+// @Router /api/v1/users/{id} [put]
+func (h *UserHandlers) UpdateUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, response.CodeInvalidParams, "请求参数格式错误")
+		return
+	}
+
+	// 获取现有用户
+	user, err := h.userService.GetUserByID(uint(id))
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	// 更新字段
+	if req.Nickname != nil {
+		user.Nickname = *req.Nickname
+	}
+	if req.AvatarURL != nil {
+		user.AvatarURL = req.AvatarURL
+	}
+	if req.Bio != nil {
+		user.Bio = req.Bio
+	}
+	if req.Role != nil {
+		user.Role = *req.Role
+	}
+	if req.ReputationScore != nil {
+		user.ReputationScore = *req.ReputationScore
+	}
+
+	// 更新用户
+	if err := h.userService.UpdateUser(user); err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	data := h.buildUserResponse(user)
+	response.OK(c, data, "用户更新成功")
+}
+
+// DeleteUser 删除用户接口
+// @Summary 删除用户
+// @Description 删除指定的用户账户
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response[any] "用户删除成功"
+// @Failure 200 {object} response.Response[any] "用户不存在或删除失败"
+// @Router /api/v1/users/{id} [delete]
+func (h *UserHandlers) DeleteUser(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseUint(idStr, 10, 32)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, "用户ID格式错误")
+		return
+	}
+
+	if err := h.userService.DeleteUser(uint(id)); err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	response.OK(c, gin.H{}, "用户删除成功")
+}
+
+// ListUsers 获取用户列表接口
+// @Summary 获取用户列表
+// @Description 分页获取用户列表
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param page query int false "页码" default(1)
+// @Param limit query int false "每页数量" default(10)
+// @Success 200 {object} response.Response[[]UserResponse] "获取用户列表成功"
+// @Router /api/v1/users [get]
+func (h *UserHandlers) ListUsers(c *gin.Context) {
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+
+	if page < 1 {
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		limit = 10
+	}
+
+	offset := (page - 1) * limit
+	users, err := h.userService.ListUsers(offset, limit)
+	if err != nil {
+		response.Fail(c, response.CodeInternalError, "获取用户列表失败")
+		return
+	}
+
+	var data []UserResponse
+	for _, user := range users {
+		data = append(data, *h.buildUserResponse(&user))
+	}
+
+	response.OK(c, data, "获取用户列表成功")
+}
+
+// GetTopUsersByReputation 获取声誉积分最高的用户接口
+// @Summary 获取声誉积分排行榜
+// @Description 获取声誉积分最高的用户列表
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param limit query int false "返回数量" default(10)
+// @Success 200 {object} response.Response[[]UserResponse] "获取排行榜成功"
+// @Router /api/v1/users/top [get]
+func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
+	if limit < 1 || limit > 100 {
+		limit = 10
+	}
+
+	users, err := h.userService.GetTopUsersByReputation(limit)
+	if err != nil {
+		response.Fail(c, response.CodeInternalError, "获取排行榜失败")
+		return
+	}
+
+	var data []UserResponse
+	for _, user := range users {
+		data = append(data, *h.buildUserResponse(&user))
+	}
+
+	response.OK(c, data, "获取排行榜成功")
+}
+
+// buildUserResponse 构建用户响应数据
+func (h *UserHandlers) buildUserResponse(user *models.User) *UserResponse {
+	response := &UserResponse{
+		ID:              user.ID,
+		WalletAddress:   user.WalletAddress,
+		Email:           user.Email,
+		Nickname:        user.Nickname,
+		AvatarURL:       user.AvatarURL,
+		Bio:             user.Bio,
+		Role:            user.Role,
+		ReputationScore: user.ReputationScore,
+		CreatedAt:       user.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:       user.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+	}
+
+	if user.LastLoginAt != nil {
+		lastLoginStr := user.LastLoginAt.Format("2006-01-02T15:04:05Z")
+		response.LastLoginAt = &lastLoginStr
+	}
+
+	return response
 }

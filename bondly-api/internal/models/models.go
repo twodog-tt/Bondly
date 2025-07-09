@@ -8,15 +8,18 @@ import (
 
 // User 用户模型
 type User struct {
-	ID         uint           `json:"id" gorm:"primaryKey"`
-	Address    string         `json:"address" gorm:"uniqueIndex;not null"`
-	Username   string         `json:"username"`
-	Avatar     string         `json:"avatar"`
-	Bio        string         `json:"bio"`
-	Reputation int64          `json:"reputation" gorm:"default:0"`
-	CreatedAt  time.Time      `json:"created_at"`
-	UpdatedAt  time.Time      `json:"updated_at"`
-	DeletedAt  gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
+	ID              uint           `json:"id" gorm:"primaryKey;autoIncrement" comment:"主键，自增用户 ID（全系统唯一标识，内部使用）"`
+	WalletAddress   *string        `json:"wallet_address" gorm:"uniqueIndex:idx_users_wallet_address;size:42" comment:"用户绑定的钱包地址（如：0xabc...），用于 Web3 登录，允许为空"`
+	Email           *string        `json:"email" gorm:"uniqueIndex:idx_users_email;size:255" comment:"用户邮箱，用于 Web2 登录（验证码登录），允许为空"`
+	Nickname        string         `json:"nickname" gorm:"size:64;default:Anonymous;not null" comment:"昵称，默认值为 Anonymous，可在个人中心自定义"`
+	AvatarURL       *string        `json:"avatar_url" gorm:"type:text" comment:"用户头像链接（支持外链、IPFS、本地等），可为空"`
+	Bio             *string        `json:"bio" gorm:"type:text" comment:"用户个人简介（如：自我介绍、个性签名），可为空"`
+	Role            string         `json:"role" gorm:"size:32;default:user;not null" comment:"用户角色，默认 user，可扩展为 admin、moderator 等"`
+	ReputationScore int            `json:"reputation_score" gorm:"default:0;not null" comment:"声誉积分，默认 0，用于表示用户活跃度、贡献度、治理投票权等"`
+	LastLoginAt     *time.Time     `json:"last_login_at" gorm:"comment:用户最后一次登录时间，用于后台管理和活跃度分析"`
+	CreatedAt       time.Time      `json:"created_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"注册时间，自动填充为当前时间"`
+	UpdatedAt       time.Time      `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"更新时间，建议配合触发器实现自动更新时间戳"`
+	DeletedAt       gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 }
 
 // Content 内容模型
