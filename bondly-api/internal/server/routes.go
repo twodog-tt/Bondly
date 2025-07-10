@@ -88,6 +88,7 @@ func (s *Server) setupRoutes() {
 			wallets.POST("/generate", s.walletHandlers.GenerateCustodyWallet)      // 生成托管钱包
 			wallets.GET("/:user_id", s.walletHandlers.GetWalletInfo)               // 获取钱包信息
 			wallets.POST("/batch-generate", s.walletHandlers.BatchGenerateWallets) // 批量生成钱包
+			wallets.POST("/bind", s.walletHandlers.BindUserWallet)                 // 绑定用户钱包
 		}
 
 		// 统计信息路由

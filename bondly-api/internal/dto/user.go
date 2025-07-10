@@ -15,6 +15,7 @@ type CreateUserRequest struct {
 
 // UpdateUserRequest 更新用户请求结构
 type UpdateUserRequest struct {
+	WalletAddress        *string `json:"wallet_address" example:"0x1234567890abcdef1234567890abcdef12345678"`
 	Nickname             *string `json:"nickname" example:"John Doe"`
 	AvatarURL            *string `json:"avatar_url" example:"https://example.com/avatar.jpg"`
 	Bio                  *string `json:"bio" example:"Hello, I'm a blockchain enthusiast"`

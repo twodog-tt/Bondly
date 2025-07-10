@@ -900,6 +900,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/wallets/bind": {
+            "post": {
+                "description": "为指定用户绑定外部钱包地址（如MetaMask等）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "钱包管理"
+                ],
+                "summary": "绑定用户钱包地址",
+                "parameters": [
+                    {
+                        "description": "绑定钱包请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.BindWalletRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在或钱包已绑定",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/wallets/generate": {
             "post": {
                 "description": "为指定用户生成托管钱包，包括钱包地址和加密私钥",
@@ -1057,6 +1091,44 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "dto.BindWalletRequest": {
+            "type": "object",
+            "required": [
+                "user_id",
+                "wallet_address"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                }
+            }
+        },
+        "dto.BindWalletResponse": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string",
+                    "example": "钱包绑定成功"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                }
+            }
+        },
         "dto.CodeStatusData": {
             "type": "object",
             "properties": {
@@ -1282,6 +1354,10 @@ const docTemplate = `{
                 "role": {
                     "type": "string",
                     "example": "user"
+                },
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
                 }
             }
         },
@@ -1657,6 +1733,23 @@ const docTemplate = `{
                     "items": {
                         "$ref": "#/definitions/dto.UserResponse"
                     }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_BindWalletResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.BindWalletResponse"
                 },
                 "message": {
                     "type": "string"

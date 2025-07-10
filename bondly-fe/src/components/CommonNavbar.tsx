@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import WalletConnect from './WalletConnect';
 import useAuth from '../hooks/useAuth';
+import WalletBindingModal from './WalletBindingModal';
+import { bindUserWallet } from '../api/user';
+import TokenManager from '../utils/token';
 
 interface CommonNavbarProps {
   isMobile: boolean;
@@ -32,6 +35,8 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  const [showWalletBindingModal, setShowWalletBindingModal] = useState(false);
+  const [bindingWalletAddress, setBindingWalletAddress] = useState("");
   
   // 使用认证Hook和钱包连接状态
   const { isLoggedIn, user, logout } = useAuth();
@@ -39,6 +44,32 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
 
   // 判断是否应该显示Login按钮：只有在未登录且钱包未连接时才显示
   const shouldShowLoginButton = !isLoggedIn && !isConnected && onLoginClick;
+
+  // 处理钱包连接成功
+  const handleWalletConnected = async (address: string) => {
+    if (!isLoggedIn || !user) {
+      console.log('用户未登录，跳过钱包绑定');
+      return;
+    }
+
+    try {
+      // 绑定用户钱包地址
+      await bindUserWallet(user.user_id, address);
+      
+      // 显示绑定成功弹窗
+      setBindingWalletAddress(address);
+      setShowWalletBindingModal(true);
+      
+      // 更新本地用户信息
+      const updatedUser = { ...user, wallet_address: address };
+      TokenManager.setUserInfo(updatedUser);
+      
+      console.log('钱包绑定成功:', address);
+    } catch (error) {
+      console.error('钱包绑定失败:', error);
+      // 可以添加错误提示
+    }
+  };
 
   const handleBondlyClick = () => {
     if (currentPage === "home") {
@@ -284,7 +315,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
           )}
           
           {/* 登录/登出按钮 */}
-          {isLoggedIn ? (
+          {isLoggedIn && !isConnected ? (
             <button 
               style={{
                 background: "#ef4444",
@@ -328,7 +359,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
           )}
           
           {/* 钱包连接按钮 */}
-          <WalletConnect isMobile={isMobile} />
+          <WalletConnect isMobile={isMobile} onWalletConnected={handleWalletConnected} />
         </div>
       </header>
 
@@ -557,6 +588,13 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
           </div>
         </div>
       )}
+
+      {/* 钱包绑定成功弹窗 */}
+      <WalletBindingModal
+        isOpen={showWalletBindingModal}
+        onClose={() => setShowWalletBindingModal(false)}
+        walletAddress={bindingWalletAddress}
+      />
     </>
   );
 };

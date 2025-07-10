@@ -1,5 +1,32 @@
 basePath: /
 definitions:
+  dto.BindWalletRequest:
+    properties:
+      user_id:
+        example: 1
+        type: integer
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    required:
+    - user_id
+    - wallet_address
+    type: object
+  dto.BindWalletResponse:
+    properties:
+      message:
+        example: 钱包绑定成功
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      user_id:
+        example: 1
+        type: integer
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+    type: object
   dto.CodeStatusData:
     properties:
       code_exists:
@@ -161,6 +188,9 @@ definitions:
         type: integer
       role:
         example: user
+        type: string
+      wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
         type: string
     type: object
   dto.UploadImageData:
@@ -425,6 +455,17 @@ definitions:
         items:
           $ref: '#/definitions/dto.UserResponse'
         type: array
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_BindWalletResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.BindWalletResponse'
       message:
         type: string
       success:
@@ -1299,6 +1340,28 @@ paths:
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 批量生成托管钱包
+      tags:
+      - 钱包管理
+  /api/v1/wallets/bind:
+    post:
+      consumes:
+      - application/json
+      description: 为指定用户绑定外部钱包地址（如MetaMask等）
+      parameters:
+      - description: 绑定钱包请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.BindWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在或钱包已绑定
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 绑定用户钱包地址
       tags:
       - 钱包管理
   /api/v1/wallets/generate:

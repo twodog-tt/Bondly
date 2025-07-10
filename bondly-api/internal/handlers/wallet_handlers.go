@@ -200,3 +200,62 @@ func (h *WalletHandlers) BatchGenerateWallets(c *gin.Context) {
 		response.OK(c, results, "批量生成成功")
 	}
 }
+
+// BindUserWallet 绑定用户钱包接口
+// @Summary 绑定用户钱包地址
+// @Description 为指定用户绑定外部钱包地址（如MetaMask等）
+// @Tags 钱包管理
+// @Accept json
+// @Produce json
+// @Param request body dto.BindWalletRequest true "绑定钱包请求体"
+// @Success 200 {object} response.Response[dto.BindWalletResponse] "钱包绑定成功"
+// @Failure 200 {object} response.Response[any] "用户不存在或钱包已绑定"
+// @Router /api/v1/wallets/bind [post]
+func (h *WalletHandlers) BindUserWallet(c *gin.Context) {
+	var req dto.BindWalletRequest
+
+	// 绑定请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Fail(c, response.CodeRequestFormatError, response.MsgRequestFormatError)
+		return
+	}
+
+	// 检查用户是否存在
+	user, err := h.userService.GetUserByID(req.UserID)
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	// 检查用户是否已绑定钱包
+	if user.WalletAddress != nil {
+		response.Fail(c, response.CodeUserAlreadyExists, "用户已绑定钱包地址")
+		return
+	}
+
+	// 检查钱包地址是否已被其他用户绑定
+	existingUser, err := h.userService.GetUserByWalletAddress(req.WalletAddress)
+	if err == nil && existingUser != nil {
+		response.Fail(c, response.CodeUserAlreadyExists, "该钱包地址已被其他用户绑定")
+		return
+	}
+
+	// 更新用户的钱包地址
+	user.WalletAddress = &req.WalletAddress
+
+	// 保存到数据库
+	if err := h.userService.UpdateUser(user); err != nil {
+		response.Fail(c, response.CodeInternalError, err.Error())
+		return
+	}
+
+	// 构建响应数据
+	data := &dto.BindWalletResponse{
+		UserID:        user.ID,
+		Nickname:      user.Nickname,
+		WalletAddress: req.WalletAddress,
+		Message:       "钱包绑定成功",
+	}
+
+	response.OK(c, data, "钱包绑定成功")
+}

@@ -5,9 +5,10 @@ import { useWalletConnect } from '../contexts/WalletConnectContext';
 
 interface WalletConnectProps {
   isMobile: boolean;
+  onWalletConnected?: (address: string) => void;
 }
 
-const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile }) => {
+const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnected }) => {
   const { address, isConnected } = useAccount();
   const { disconnect } = useDisconnect();
   const [showDropdown, setShowDropdown] = useState(false);
@@ -27,6 +28,13 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, []);
+
+  // 监听钱包连接状态变化
+  useEffect(() => {
+    if (isConnected && address && onWalletConnected) {
+      onWalletConnected(address);
+    }
+  }, [isConnected, address, onWalletConnected]);
 
   // 格式化钱包地址
   const formatAddress = (addr: string) => {

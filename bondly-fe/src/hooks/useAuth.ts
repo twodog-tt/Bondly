@@ -8,6 +8,7 @@ export interface UserInfo {
   nickname: string;
   role: string;
   is_new_user: boolean;
+  wallet_address?: string;
 }
 
 // 认证状态接口
