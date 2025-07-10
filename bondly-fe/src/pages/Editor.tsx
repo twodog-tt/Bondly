@@ -212,11 +212,9 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
         isMobile={isMobile} 
         onPageChange={onPageChange}
         showHomeButton={true}
-        showWriteButton={true}
         showExploreButton={true}
         showDaoButton={true}
         showProfileButton={true}
-        showDraftsButton={true}
         currentPage="editor"
       />
       

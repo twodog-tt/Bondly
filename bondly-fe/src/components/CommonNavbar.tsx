@@ -201,23 +201,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
                 Home
               </button>
             )}
-            {showWriteButton && (
-              <button 
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "white",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  transition: "opacity 0.2s ease"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-                onClick={() => onPageChange?.("editor")}
-              >
-                Write
-              </button>
-            )}
+
             {showExploreButton && (
               <button 
                 style={{
@@ -269,23 +253,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
                 Profile
               </button>
             )}
-            {showDraftsButton && (
-              <button 
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  color: "white",
-                  cursor: "pointer",
-                  fontSize: "14px",
-                  transition: "opacity 0.2s ease"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-                onClick={() => onPageChange?.("drafts")}
-              >
-                Drafts
-              </button>
-            )}
+
           </nav>
         )}
         
@@ -418,25 +386,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
               Home
             </button>
           )}
-          {showWriteButton && (
-            <button
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "white",
-                cursor: "pointer",
-                fontSize: "16px",
-                padding: "12px 0",
-                textAlign: "left",
-                transition: "opacity 0.2s ease"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-              onClick={() => handleMobileNavClick("editor")}
-            >
-              Write
-            </button>
-          )}
+
           {showExploreButton && (
             <button
               style={{
@@ -494,25 +444,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
               Profile
             </button>
           )}
-          {showDraftsButton && (
-            <button
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "white",
-                cursor: "pointer",
-                fontSize: "16px",
-                padding: "12px 0",
-                textAlign: "left",
-                transition: "opacity 0.2s ease"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
-              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-              onClick={() => handleMobileNavClick("drafts")}
-            >
-              Drafts
-            </button>
-          )}
+
         </div>
       )}
 

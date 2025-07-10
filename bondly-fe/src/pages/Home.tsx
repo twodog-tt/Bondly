@@ -417,11 +417,9 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         onLoginClick={handleLoginClick}
         onPageChange={onPageChange}
         showHomeButton={true}
-        showWriteButton={true}
         showExploreButton={true}
         showDaoButton={true}
         showProfileButton={true}
-        showDraftsButton={true}
         currentPage="home"
       />
       
