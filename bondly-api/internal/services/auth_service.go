@@ -201,6 +201,16 @@ func (s *AuthService) CheckFirstLogin(email string) (string, error) {
 			}).Error("生成JWT Token失败")
 			return "", errors.NewInternalError(err)
 		}
+
+		// 更新登陆时间
+		if err := s.userRepo.UpdateLastLogin(user.ID); err != nil {
+			s.logger.WithFields(map[string]interface{}{
+				"userID": user.ID,
+				"email":  email,
+				"error":  err.Error(),
+			}).Error("更新用户登录时间失败")
+			return token, errors.NewInternalError(err)
+		}
 		return token, nil
 	}
 	// 用户不存在，返回true
