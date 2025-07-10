@@ -421,16 +421,18 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       
       console.log('托管钱包生成成功:', result);
       
+
+      
       // 显示成功消息
       const successMessage = `Welcome ${loginData.username}!\nYour account has been successfully created.\nCustody wallet generated: ${result.custody_wallet_address}\nNow you can start creating and exploring content!`;
       setSuccessMessage(successMessage);
       setShowWalletChoiceModal(false);
       setShowSuccessModal(true);
       
-      // 延迟3秒后刷新页面
+      // 延迟2秒后刷新页面
       setTimeout(() => {
         window.location.reload();
-      }, 3000);
+      }, 2000);
     } catch (error: any) {
       console.error("Failed to generate custody wallet:", error);
       
