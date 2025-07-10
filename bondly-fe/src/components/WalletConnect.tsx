@@ -31,7 +31,9 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
 
   // 监听钱包连接状态变化
   useEffect(() => {
+    console.log('WalletConnect useEffect 触发:', { isConnected, address, hasCallback: !!onWalletConnected });
     if (isConnected && address && onWalletConnected) {
+      console.log('调用钱包连接回调:', address);
       onWalletConnected(address);
     }
   }, [isConnected, address, onWalletConnected]);

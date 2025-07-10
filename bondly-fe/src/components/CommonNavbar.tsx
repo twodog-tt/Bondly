@@ -40,22 +40,36 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   
   // 使用认证Hook和钱包连接状态
   const { isLoggedIn, user, logout } = useAuth();
-  const { isConnected } = useAccount();
+  const { isConnected, address } = useAccount();
 
   // 判断是否应该显示Login按钮：只有在未登录且钱包未连接时才显示
   const shouldShowLoginButton = !isLoggedIn && !isConnected && onLoginClick;
 
+  // 监听用户登录状态变化，如果用户已登录且钱包已连接，立即触发钱包绑定
+  React.useEffect(() => {
+    if (isLoggedIn && user && isConnected && address) {
+      console.log('检测到用户已登录且钱包已连接，触发钱包绑定:', address);
+      handleWalletConnected(address);
+    }
+  }, [isLoggedIn, user, isConnected, address]);
+
   // 处理钱包连接成功
   const handleWalletConnected = async (address: string) => {
+    console.log('钱包连接回调被触发:', address);
+    console.log('用户登录状态:', isLoggedIn);
+    console.log('用户信息:', user);
+    
     if (!isLoggedIn || !user) {
       console.log('用户未登录，跳过钱包绑定');
       return;
     }
 
     try {
+      console.log('开始绑定钱包地址:', address, '到用户:', user.user_id);
       // 绑定用户钱包地址
       await bindUserWallet(user.user_id, address);
       
+      console.log('后端绑定成功，显示弹窗');
       // 显示绑定成功弹窗
       setBindingWalletAddress(address);
       setShowWalletBindingModal(true);
