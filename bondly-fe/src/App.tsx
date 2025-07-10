@@ -4,6 +4,7 @@ import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import '@rainbow-me/rainbowkit/styles.css';
 import { config } from './config/wagmi';
+import { WalletConnectProvider } from './contexts/WalletConnectContext';
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
@@ -502,7 +503,9 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <AppContent />
+      <WalletConnectProvider>
+        <AppContent />
+      </WalletConnectProvider>
     </QueryClientProvider>
   );
 }

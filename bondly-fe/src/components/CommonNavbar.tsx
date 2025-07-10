@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useAccount } from 'wagmi';
 import WalletConnect from './WalletConnect';
 import useAuth from '../hooks/useAuth';
 
@@ -32,8 +33,12 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   
-  // 使用认证Hook
+  // 使用认证Hook和钱包连接状态
   const { isLoggedIn, user, logout } = useAuth();
+  const { isConnected } = useAccount();
+
+  // 判断是否应该显示Login按钮：只有在未登录且钱包未连接时才显示
+  const shouldShowLoginButton = !isLoggedIn && !isConnected && onLoginClick;
 
   const handleBondlyClick = () => {
     if (currentPage === "home") {
@@ -300,7 +305,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
             </button>
           ) : (
             /* Login 按钮 */
-            onLoginClick && (
+            shouldShowLoginButton && (
               <button 
                 style={{
                   background: "white",

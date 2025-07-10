@@ -5,7 +5,9 @@ import FeaturedArticles from '../components/FeaturedArticles';
 import StakeSection from '../components/StakeSection';
 import GovernanceSection from '../components/GovernanceSection';
 import Footer from '../components/Footer';
+import WalletChoiceModal from '../components/WalletChoiceModal';
 import useAuth from '../hooks/useAuth';
+import { useWalletConnect } from '../contexts/WalletConnectContext';
 
 interface HomeProps {
   isMobile: boolean;
@@ -59,8 +61,14 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(0);
   
-  // 使用认证Hook
+  // 钱包选择相关状态
+  const [showWalletChoiceModal, setShowWalletChoiceModal] = useState(false);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
+  const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
+  
+  // 使用认证Hook和钱包连接Hook
   const { login } = useAuth();
+  const { openConnectModal } = useWalletConnect();
 
   // 处理登录按钮点击
   const handleLoginClick = () => {
@@ -371,19 +379,23 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         is_new_user: loginResult.is_new_user
       });
       
-      const avatarText = avatarChoice === "upload" && loginData.avatar ? "and uploaded a profile picture" : "";
-      const welcomeMessage = loginResult.is_new_user 
-        ? `Welcome ${loginData.username}!\nYour account has been successfully created${avatarText}.\nNow you can start creating and exploring content!`
-        : `Welcome back ${loginData.username}!\nYou have successfully logged in.`;
-      
-      setSuccessMessage(welcomeMessage);
-      setShowSuccessModal(true);
-      setShowLoginModal(false);
-      
-      // 延迟2秒后刷新页面，让用户看到成功消息
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // 如果是新用户，显示钱包选择弹窗
+      if (loginResult.is_new_user) {
+        setCurrentUserId(loginResult.user_id);
+        setShowWalletChoiceModal(true);
+        setShowLoginModal(false);
+      } else {
+        // 老用户直接显示成功消息
+        const welcomeMessage = `Welcome back ${loginData.username}!\nYou have successfully logged in.`;
+        setSuccessMessage(welcomeMessage);
+        setShowSuccessModal(true);
+        setShowLoginModal(false);
+        
+        // 延迟2秒后刷新页面，让用户看到成功消息
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
+      }
     } catch (error: any) {
       console.error("Failed to login:", error);
       
@@ -395,6 +407,72 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     } finally {
       setIsVerifying(false);
     }
+  };
+
+  // 生成托管钱包
+  const handleGenerateCustodyWallet = async () => {
+    if (!currentUserId) return;
+    
+    try {
+      setIsGeneratingWallet(true);
+      
+      const { walletApi } = await import('../utils/api');
+      const result = await walletApi.generateCustodyWallet(currentUserId);
+      
+      console.log('托管钱包生成成功:', result);
+      
+      // 显示成功消息
+      const successMessage = `Welcome ${loginData.username}!\nYour account has been successfully created.\nCustody wallet generated: ${result.custody_wallet_address}\nNow you can start creating and exploring content!`;
+      setSuccessMessage(successMessage);
+      setShowWalletChoiceModal(false);
+      setShowSuccessModal(true);
+      
+      // 延迟3秒后刷新页面
+      setTimeout(() => {
+        window.location.reload();
+      }, 3000);
+    } catch (error: any) {
+      console.error("Failed to generate custody wallet:", error);
+      
+      if (error instanceof Error) {
+        alert(`生成托管钱包失败: ${error.message}`);
+      } else {
+        alert("生成托管钱包失败，请稍后重试");
+      }
+    } finally {
+      setIsGeneratingWallet(false);
+    }
+  };
+
+  // 连接钱包
+  const handleConnectWallet = () => {
+    setShowWalletChoiceModal(false);
+    
+    // 触发Connect Wallet功能
+    openConnectModal();
+    
+    // 显示成功消息
+    const successMessage = `Welcome ${loginData.username}!\nYour account has been successfully created.\nPlease connect your wallet in the popup.\nYou can refresh the page after connecting your wallet.`;
+    setSuccessMessage(successMessage);
+    setShowSuccessModal(true);
+    
+    // 不自动刷新页面，让用户完成钱包连接操作后再手动刷新
+  };
+
+  // 关闭钱包选择弹窗
+  const handleCloseWalletChoiceModal = () => {
+    setShowWalletChoiceModal(false);
+    setCurrentUserId(null);
+    
+    // 显示成功消息
+    const successMessage = `Welcome ${loginData.username}!\nYour account has been successfully created.\nYou can manage your wallet later.`;
+    setSuccessMessage(successMessage);
+    setShowSuccessModal(true);
+    
+    // 延迟2秒后刷新页面
+    setTimeout(() => {
+      window.location.reload();
+    }, 2000);
   };
 
   // 关闭成功模态框
@@ -951,6 +1029,15 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
           </div>
         </div>
       )}
+
+      {/* 钱包选择弹窗 */}
+      <WalletChoiceModal
+        isOpen={showWalletChoiceModal}
+        onClose={handleCloseWalletChoiceModal}
+        onGenerateCustodyWallet={handleGenerateCustodyWallet}
+        onConnectWallet={handleConnectWallet}
+        isMobile={isMobile}
+      />
 
       {/* 成功模态框 */}
       {showSuccessModal && (

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
+import { useWalletConnect } from '../contexts/WalletConnectContext';
 
 interface WalletConnectProps {
   isMobile: boolean;
@@ -11,6 +12,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile }) => {
   const { disconnect } = useDisconnect();
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { setOpenConnectModal } = useWalletConnect();
 
   // 点击外部关闭下拉菜单
   useEffect(() => {
@@ -36,33 +38,40 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile }) => {
   if (!isConnected) {
     return (
       <ConnectButton.Custom>
-        {({ openConnectModal }) => (
-          <button
-            onClick={openConnectModal}
-            style={{
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              color: "white",
-              border: "none",
-              padding: isMobile ? "8px 16px" : "10px 20px",
-              borderRadius: "8px",
-              fontSize: isMobile ? "14px" : "16px",
-              fontWeight: "600",
-              cursor: "pointer",
-              transition: "all 0.2s ease",
-              boxShadow: "0 2px 10px rgba(102, 126, 234, 0.3)"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-1px)";
-              e.currentTarget.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "0 2px 10px rgba(102, 126, 234, 0.3)";
-            }}
-          >
-            Connect Wallet
-          </button>
-        )}
+        {({ openConnectModal }) => {
+          // 将连接功能提供给上下文
+          React.useEffect(() => {
+            setOpenConnectModal(openConnectModal);
+          }, [openConnectModal, setOpenConnectModal]);
+
+          return (
+            <button
+              onClick={openConnectModal}
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                border: "none",
+                padding: isMobile ? "8px 16px" : "10px 20px",
+                borderRadius: "8px",
+                fontSize: isMobile ? "14px" : "16px",
+                fontWeight: "600",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+                boxShadow: "0 2px 10px rgba(102, 126, 234, 0.3)"
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = "translateY(-1px)";
+                e.currentTarget.style.boxShadow = "0 4px 15px rgba(102, 126, 234, 0.4)";
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = "translateY(0)";
+                e.currentTarget.style.boxShadow = "0 2px 10px rgba(102, 126, 234, 0.3)";
+              }}
+            >
+              Connect Wallet
+            </button>
+          );
+        }}
       </ConnectButton.Custom>
     );
   }

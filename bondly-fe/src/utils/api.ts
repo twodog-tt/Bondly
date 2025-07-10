@@ -58,6 +58,27 @@ export interface UploadImageData {
   url: string;
 }
 
+// 生成钱包请求数据
+export interface GenerateWalletRequest {
+  user_id: number;
+}
+
+// 生成钱包响应数据
+export interface GenerateWalletResponse {
+  user_id: number;
+  nickname: string;
+  custody_wallet_address: string;
+  message: string;
+}
+
+// 钱包信息响应数据
+export interface WalletInfoResponse {
+  user_id: number;
+  nickname: string;
+  custody_wallet_address?: string;
+  has_wallet: boolean;
+}
+
 // API错误类
 export class ApiError extends Error {
   constructor(
@@ -261,5 +282,23 @@ export const uploadApi = {
   },
 };
 
+// 钱包相关API
+export const walletApi = {
+  // 生成托管钱包
+  async generateCustodyWallet(userId: number): Promise<GenerateWalletResponse> {
+    return post<GenerateWalletResponse>('/api/v1/wallets/generate', { user_id: userId });
+  },
+
+  // 获取钱包信息
+  async getWalletInfo(userId: number): Promise<WalletInfoResponse> {
+    return get<WalletInfoResponse>(`/api/v1/wallets/${userId}`);
+  },
+
+  // 批量生成钱包
+  async batchGenerateWallets(userIds: number[]): Promise<GenerateWalletResponse[]> {
+    return post<GenerateWalletResponse[]>('/api/v1/wallets/batch-generate', userIds);
+  },
+};
+
 // 导出默认的请求函数
-export default { get, post, put, del, authApi, userApi, uploadApi, ApiError }; 
+export default { get, post, put, del, authApi, userApi, uploadApi, walletApi, ApiError }; 
