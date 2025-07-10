@@ -61,7 +61,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   // 处理登录按钮点击
   const handleLoginClick = () => {
     setShowLoginModal(true);
-    setLoginStep(1);
+    setLoginStep(1); // 第一步改为输入邮箱
     setLoginData({
       username: '',
       email: '',
@@ -70,6 +70,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     });
     setAvatarPreview("");
     setAvatarChoice(null);
+    setEmailError("");
+    setUsernameError("");
     setVerificationCodeError("");
     setIsCodeSent(false);
     setIsVerifying(false);
@@ -88,6 +90,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     });
     setAvatarPreview("");
     setAvatarChoice(null);
+    setEmailError("");
+    setUsernameError("");
     setVerificationCodeError("");
     setIsCodeSent(false);
     setIsVerifying(false);
@@ -98,10 +102,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     if (loginStep === 1) {
-      setLoginData(prev => ({ ...prev, username: value }));
-      const error = validateUsername(value);
-      setUsernameError(error);
-    } else if (loginStep === 2) {
+      // 第一步：输入邮箱
       setLoginData(prev => ({ ...prev, email: value }));
       const error = validateEmail(value);
       setEmailError(error);
@@ -111,6 +112,11 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         setIsCodeSent(false);
         setCountdown(0);
       }
+    } else if (loginStep === 2) {
+      // 第二步：输入用户名
+      setLoginData(prev => ({ ...prev, username: value }));
+      const error = validateUsername(value);
+      setUsernameError(error);
     }
   };
 
@@ -125,13 +131,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   // 下一步处理
   const handleNextStep = () => {
     if (loginStep === 1) {
-      const error = validateUsername(loginData.username);
-      if (error) {
-        setUsernameError(error);
-        return;
-      }
-      setLoginStep(2);
-    } else if (loginStep === 2) {
+      // 第一步：处理邮箱和验证码
       const error = validateEmail(loginData.email);
       if (error) {
         setEmailError(error);
@@ -146,6 +146,14 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         return;
       }
       handleVerifyCode();
+    } else if (loginStep === 2) {
+      // 第二步：处理用户名
+      const error = validateUsername(loginData.username);
+      if (error) {
+        setUsernameError(error);
+        return;
+      }
+      setLoginStep(3);
     } else if (loginStep === 3) {
       handleCreateUserSubmit();
     }
@@ -250,6 +258,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       
       // 调用真实的后端API
       const { authApi } = await import('../utils/api');
+      const { TokenManager } = await import('../utils/token');
       const result = await authApi.verifyCode(
         loginData.email, 
         loginData.verificationCode
@@ -258,8 +267,23 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       console.log('验证码验证成功:', result);
       
       if (result.isValid) {
-        // 验证成功，进入下一步
-        setLoginStep(3);
+        // 检查是否返回了token
+        if (result.token) {
+          // 如果有token，说明用户已经完成注册，直接完成登录
+          console.log('验证码验证返回token，直接完成登录');
+          
+          // 存储token和用户信息
+          TokenManager.setToken(result.token);
+          
+          // 显示登录成功消息
+          setSuccessMessage(`Welcome back!\nYou have successfully logged in with email: ${loginData.email}`);
+          setShowSuccessModal(true);
+          setShowLoginModal(false);
+        } else {
+          // 没有token，说明是新用户，需要继续注册流程
+          console.log('验证码验证成功，但需要继续注册流程');
+          setLoginStep(2);
+        }
       } else {
         setVerificationCodeError("验证码无效，请重新输入");
       }
@@ -315,16 +339,41 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const handleCreateUserSubmit = async () => {
     try {
       setIsVerifying(true);
-      // 模拟创建用户
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      
+      // 调用登录接口
+      const { authApi } = await import('../utils/api');
+      const { TokenManager } = await import('../utils/token');
+      
+      const loginResult = await authApi.login(loginData.email, loginData.username);
+      
+      console.log('登录成功:', loginResult);
+      
+      // 存储token和用户信息
+      TokenManager.setToken(loginResult.token);
+      TokenManager.setUserInfo({
+        user_id: loginResult.user_id,
+        email: loginResult.email,
+        nickname: loginResult.nickname,
+        role: loginResult.role,
+        is_new_user: loginResult.is_new_user
+      });
       
       const avatarText = avatarChoice === "upload" && loginData.avatar ? "and uploaded a profile picture" : "";
-      setSuccessMessage(`Welcome ${loginData.username}!\nYour account has been successfully created${avatarText}.\nNow you can start creating and exploring content!`);
+      const welcomeMessage = loginResult.is_new_user 
+        ? `Welcome ${loginData.username}!\nYour account has been successfully created${avatarText}.\nNow you can start creating and exploring content!`
+        : `Welcome back ${loginData.username}!\nYou have successfully logged in.`;
+      
+      setSuccessMessage(welcomeMessage);
       setShowSuccessModal(true);
       setShowLoginModal(false);
-    } catch (error) {
-      console.error("Failed to create user:", error);
-      alert("Failed to create user, please try again");
+    } catch (error: any) {
+      console.error("Failed to login:", error);
+      
+      if (error instanceof Error) {
+        alert(`登录失败: ${error.message}`);
+      } else {
+        alert("登录失败，请稍后重试");
+      }
     } finally {
       setIsVerifying(false);
     }
@@ -550,71 +599,6 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
                   marginBottom: "16px",
                   textAlign: "center"
                 }}>
-                  Create Username
-                </h3>
-                <p style={{
-                  fontSize: "14px",
-                  color: "#9ca3af",
-                  marginBottom: "24px",
-                  textAlign: "center"
-                }}>
-                  Choose a unique username to identify your identity
-                </p>
-                <input
-                  type="text"
-                  placeholder="Enter username"
-                  value={loginData.username}
-                  onChange={handleInputChange}
-                  style={{
-                    width: "100%",
-                    padding: "12px 16px",
-                    fontSize: "16px",
-                    border: usernameError ? "2px solid #ef4444" : "2px solid #374151",
-                    borderRadius: "12px",
-                    background: "#0f101f",
-                    color: "white",
-                    marginBottom: usernameError ? "8px" : "24px",
-                    transition: "border-color 0.3s ease"
-                  }}
-                />
-                {usernameError && (
-                  <p style={{
-                    color: "#ef4444",
-                    fontSize: "14px",
-                    marginBottom: "16px"
-                  }}>
-                    {usernameError}
-                  </p>
-                )}
-                <button
-                  onClick={handleNextStep}
-                  disabled={!loginData.username.trim() || !!usernameError}
-                  style={{
-                    width: "100%",
-                    padding: "12px 24px",
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    background: loginData.username.trim() && !usernameError ? "#3b82f6" : "#374151",
-                    color: "white",
-                    border: "none",
-                    borderRadius: "12px",
-                    cursor: loginData.username.trim() && !usernameError ? "pointer" : "not-allowed",
-                    transition: "background 0.3s ease"
-                  }}
-                >
-                  Next
-                </button>
-              </div>
-            )}
-
-            {loginStep === 2 && (
-              <div>
-                <h3 style={{
-                  fontSize: "24px",
-                  fontWeight: "bold",
-                  marginBottom: "16px",
-                  textAlign: "center"
-                }}>
                   {isCodeSent ? "Verify Email" : "Enter Email"}
                 </h3>
                 <p style={{
@@ -747,6 +731,71 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
               </div>
             )}
 
+            {loginStep === 2 && (
+              <div>
+                <h3 style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  marginBottom: "16px",
+                  textAlign: "center"
+                }}>
+                  Complete Registration
+                </h3>
+                <p style={{
+                  fontSize: "14px",
+                  color: "#9ca3af",
+                  marginBottom: "24px",
+                  textAlign: "center"
+                }}>
+                  Choose a unique username to complete your account setup
+                </p>
+                <input
+                  type="text"
+                  placeholder="Enter username"
+                  value={loginData.username}
+                  onChange={handleInputChange}
+                  style={{
+                    width: "100%",
+                    padding: "12px 16px",
+                    fontSize: "16px",
+                    border: usernameError ? "2px solid #ef4444" : "2px solid #374151",
+                    borderRadius: "12px",
+                    background: "#0f101f",
+                    color: "white",
+                    marginBottom: usernameError ? "8px" : "24px",
+                    transition: "border-color 0.3s ease"
+                  }}
+                />
+                {usernameError && (
+                  <p style={{
+                    color: "#ef4444",
+                    fontSize: "14px",
+                    marginBottom: "16px"
+                  }}>
+                    {usernameError}
+                  </p>
+                )}
+                <button
+                  onClick={handleNextStep}
+                  disabled={!loginData.username.trim() || !!usernameError}
+                  style={{
+                    width: "100%",
+                    padding: "12px 24px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    background: loginData.username.trim() && !usernameError ? "#3b82f6" : "#374151",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "12px",
+                    cursor: loginData.username.trim() && !usernameError ? "pointer" : "not-allowed",
+                    transition: "background 0.3s ease"
+                  }}
+                >
+                  Continue to Profile Setup
+                </button>
+              </div>
+            )}
+
             {loginStep === 3 && (
               <div>
                 <h3 style={{
@@ -755,7 +804,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
                   marginBottom: "16px",
                   textAlign: "center"
                 }}>
-                  Upload Profile Picture
+                  Profile Picture (Optional)
                 </h3>
                 <p style={{
                   fontSize: "14px",
@@ -763,7 +812,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
                   marginBottom: "24px",
                   textAlign: "center"
                 }}>
-                  Choose a profile picture or upload later
+                  Add a profile picture to personalize your account (you can skip this step)
                 </p>
                 
                 <div style={{

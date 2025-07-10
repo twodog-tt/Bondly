@@ -32,6 +32,23 @@ export interface VerifyCodeData {
   token?: string;
 }
 
+// 登录请求数据
+export interface LoginRequest {
+  email: string;
+  nickname: string;
+}
+
+// 登录响应数据
+export interface LoginResponse {
+  token: string;
+  user_id: number;
+  email: string;
+  nickname: string;
+  role: string;
+  is_new_user: boolean;
+  expires_in: string;
+}
+
 // 图片上传响应数据
 export interface UploadImageData {
   url: string;
@@ -56,10 +73,23 @@ async function request<T>(
 ): Promise<T> {
   const url = `${config.apiUrl}${endpoint}`;
   
-  const defaultHeaders = {
+  // 获取token
+  const { TokenManager } = await import('./token');
+  const token = TokenManager.getToken();
+  
+  const defaultHeaders: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...options.headers,
   };
+
+  // 合并自定义headers
+  if (options.headers) {
+    Object.assign(defaultHeaders, options.headers);
+  }
+
+  // 如果有token，添加到请求头
+  if (token) {
+    defaultHeaders['Authorization'] = `Bearer ${token}`;
+  }
 
   try {
     const response = await fetch(url, {
@@ -198,6 +228,11 @@ export const authApi = {
   // 获取验证码状态
   async getCodeStatus(email: string): Promise<any> {
     return get<any>(`/api/v1/auth/code-status?email=${encodeURIComponent(email)}`);
+  },
+
+  // 用户登录
+  async login(email: string, nickname: string): Promise<LoginResponse> {
+    return post<LoginResponse>('/api/v1/auth/login', { email, nickname });
   },
 };
 

@@ -184,6 +184,9 @@ func (s *AuthService) CheckFirstLogin(email string) (string, error) {
 		}).Error("查询用户信息失败")
 		return "", err
 	}
+	if user == nil {
+		return "", nil
+	}
 	if user.ID != 0 {
 		s.logger.WithFields(map[string]interface{}{
 			"email": email,
