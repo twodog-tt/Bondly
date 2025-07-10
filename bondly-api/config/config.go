@@ -17,6 +17,7 @@ type Config struct {
 	Logging  LoggingConfig
 	CORS     CORSConfig
 	JWT      JWTConfig
+	Wallet   WalletConfig
 }
 
 type ServerConfig struct {
@@ -70,6 +71,10 @@ type JWTConfig struct {
 	Secret string
 }
 
+type WalletConfig struct {
+	SecretKey string
+}
+
 func Load() (*Config, error) {
 	// 加载 .env 文件
 	if err := godotenv.Load(); err != nil {
@@ -119,6 +124,9 @@ func Load() (*Config, error) {
 		},
 		JWT: JWTConfig{
 			Secret: getEnv("JWT_SECRET", "your-secret-key"),
+		},
+		Wallet: WalletConfig{
+			SecretKey: getEnv("WALLET_SECRET_KEY", ""),
 		},
 	}, nil
 }

@@ -60,7 +60,7 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 
 	// 初始化依赖
 	userRepo := repositories.NewUserRepository(db)
-	walletService := services.NewWalletService()
+	walletService := services.NewWalletService(cfg)
 	userService := services.NewUserService(userRepo, cacheService, walletService)
 	userHandlers := handlers.NewUserHandlers(userService)
 	walletHandlers := handlers.NewWalletHandlers(walletService, userService)

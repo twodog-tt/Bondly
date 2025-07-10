@@ -1,27 +1,29 @@
 package services
 
 import (
+	"bondly-api/config"
 	"bondly-api/internal/logger"
 	"bondly-api/internal/pkg/errors"
 	"bondly-api/internal/utils"
 	"fmt"
-	"os"
 )
 
 type WalletService struct {
 	logger *logger.Logger
+	config *config.Config
 }
 
-func NewWalletService() *WalletService {
+func NewWalletService(cfg *config.Config) *WalletService {
 	return &WalletService{
 		logger: logger.NewLogger(),
+		config: cfg,
 	}
 }
 
 // GenerateCustodyWallet 为用户生成托管钱包
 func (s *WalletService) GenerateCustodyWallet() (*utils.WalletInfo, error) {
-	// 获取环境变量中的钱包密钥
-	secretKey := os.Getenv("WALLET_SECRET_KEY")
+	// 获取配置中的钱包密钥
+	secretKey := s.config.Wallet.SecretKey
 	if secretKey == "" {
 		return nil, errors.NewInternalError(fmt.Errorf("WALLET_SECRET_KEY environment variable not set"))
 	}
@@ -50,8 +52,8 @@ func (s *WalletService) GenerateCustodyWallet() (*utils.WalletInfo, error) {
 
 // DecryptPrivateKey 解密私钥（用于需要私钥的操作）
 func (s *WalletService) DecryptPrivateKey(encryptedPrivateKey string) (string, error) {
-	// 获取环境变量中的钱包密钥
-	secretKey := os.Getenv("WALLET_SECRET_KEY")
+	// 获取配置中的钱包密钥
+	secretKey := s.config.Wallet.SecretKey
 	if secretKey == "" {
 		return "", errors.NewInternalError(fmt.Errorf("WALLET_SECRET_KEY environment variable not set"))
 	}
