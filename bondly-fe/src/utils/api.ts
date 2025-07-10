@@ -30,6 +30,10 @@ export interface VerifyCodeData {
   email: string;
   isValid: boolean;
   token?: string;
+  user_id?: number;
+  nickname?: string;
+  role?: string;
+  is_new_user?: boolean;
 }
 
 // 登录请求数据

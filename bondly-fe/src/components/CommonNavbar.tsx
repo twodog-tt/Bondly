@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import WalletConnect from './WalletConnect';
+import useAuth from '../hooks/useAuth';
 
 interface CommonNavbarProps {
   isMobile: boolean;
@@ -29,6 +30,10 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
+  
+  // 使用认证Hook
+  const { isLoggedIn, user, logout } = useAuth();
 
   const handleBondlyClick = () => {
     if (currentPage === "home") {
@@ -62,6 +67,36 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchQuery(e.target.value);
   };
+
+  // 处理登出确认
+  const handleLogoutClick = () => {
+    setShowLogoutConfirm(true);
+  };
+
+  // 确认登出
+  const handleConfirmLogout = () => {
+    setShowLogoutConfirm(false);
+    logout();
+  };
+
+  // 取消登出
+  const handleCancelLogout = () => {
+    setShowLogoutConfirm(false);
+  };
+
+  // 处理键盘事件
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && showLogoutConfirm) {
+        handleCancelLogout();
+      }
+    };
+
+    if (showLogoutConfirm) {
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }
+  }, [showLogoutConfirm]);
 
   return (
     <>
@@ -275,12 +310,12 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
             </button>
           )}
           
-          {/* Login 按钮 */}
-          {onLoginClick && (
+          {/* 登录/登出按钮 */}
+          {isLoggedIn ? (
             <button 
               style={{
-                background: "white",
-                color: "black",
+                background: "#ef4444",
+                color: "white",
                 padding: "8px 16px",
                 borderRadius: "12px",
                 fontSize: "14px",
@@ -291,10 +326,32 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
               }}
               onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
               onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-              onClick={onLoginClick}
+              onClick={handleLogoutClick}
             >
-              Login
+              Logout
             </button>
+          ) : (
+            /* Login 按钮 */
+            onLoginClick && (
+              <button 
+                style={{
+                  background: "white",
+                  color: "black",
+                  padding: "8px 16px",
+                  borderRadius: "12px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  border: "none",
+                  cursor: "pointer",
+                  transition: "opacity 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                onClick={onLoginClick}
+              >
+                Login
+              </button>
+            )
           )}
           
           {/* 钱包连接按钮 */}
@@ -456,6 +513,111 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
               Drafts
             </button>
           )}
+        </div>
+      )}
+
+      {/* 登出确认对话框 */}
+      {showLogoutConfirm && (
+        <div 
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            background: "rgba(0, 0, 0, 0.8)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 1001,
+            padding: "20px"
+          }}
+          onClick={handleCancelLogout}
+        >
+          <div 
+            style={{
+              background: "#151728",
+              borderRadius: "20px",
+              padding: "32px",
+              maxWidth: "400px",
+              width: "90%",
+              border: "1px solid #374151",
+              textAlign: "center"
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{
+              fontSize: "48px",
+              marginBottom: "16px"
+            }}>
+              🚪
+            </div>
+            <h3 style={{
+              fontSize: "24px",
+              fontWeight: "bold",
+              marginBottom: "12px",
+              color: "white"
+            }}>
+              Confirm Logout
+            </h3>
+            <p style={{
+              fontSize: "16px",
+              color: "#9ca3af",
+              lineHeight: "1.6",
+              marginBottom: "24px"
+            }}>
+              Are you sure you want to logout? You will need to login again to access your account.
+            </p>
+            <div style={{
+              display: "flex",
+              gap: "12px",
+              justifyContent: "center"
+            }}>
+              <button
+                onClick={handleCancelLogout}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background: "transparent",
+                  color: "#9ca3af",
+                  border: "1px solid #374151",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#374151";
+                  e.currentTarget.style.color = "white";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "transparent";
+                  e.currentTarget.style.color = "#9ca3af";
+                }}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleConfirmLogout}
+                style={{
+                  padding: "10px 20px",
+                  fontSize: "14px",
+                  fontWeight: "600",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  cursor: "pointer",
+                  transition: "background 0.2s ease"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = "#dc2626"}
+                onMouseLeave={(e) => e.currentTarget.style.background = "#ef4444"}
+              >
+                Confirm Logout
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </>

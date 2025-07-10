@@ -5,6 +5,7 @@ import FeaturedArticles from '../components/FeaturedArticles';
 import StakeSection from '../components/StakeSection';
 import GovernanceSection from '../components/GovernanceSection';
 import Footer from '../components/Footer';
+import useAuth from '../hooks/useAuth';
 
 interface HomeProps {
   isMobile: boolean;
@@ -57,6 +58,9 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const [isCodeSent, setIsCodeSent] = useState(false);
   const [isVerifying, setIsVerifying] = useState(false);
   const [countdown, setCountdown] = useState(0);
+  
+  // 使用认证Hook
+  const { login } = useAuth();
 
   // 处理登录按钮点击
   const handleLoginClick = () => {
@@ -272,13 +276,24 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
           // 如果有token，说明用户已经完成注册，直接完成登录
           console.log('验证码验证返回token，直接完成登录');
           
-          // 存储token和用户信息
-          TokenManager.setToken(result.token);
+          // 使用认证Hook的login函数
+          login(result.token, {
+            user_id: result.user_id || 0,
+            email: loginData.email,
+            nickname: result.nickname || loginData.email.split('@')[0],
+            role: result.role || 'user',
+            is_new_user: result.is_new_user || false
+          });
           
           // 显示登录成功消息
           setSuccessMessage(`Welcome back!\nYou have successfully logged in with email: ${loginData.email}`);
           setShowSuccessModal(true);
           setShowLoginModal(false);
+          
+          // 延迟2秒后刷新页面，让用户看到成功消息
+          setTimeout(() => {
+            window.location.reload();
+          }, 2000);
         } else {
           // 没有token，说明是新用户，需要继续注册流程
           console.log('验证码验证成功，但需要继续注册流程');
@@ -342,15 +357,13 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       
       // 调用登录接口
       const { authApi } = await import('../utils/api');
-      const { TokenManager } = await import('../utils/token');
       
       const loginResult = await authApi.login(loginData.email, loginData.username);
       
       console.log('登录成功:', loginResult);
       
-      // 存储token和用户信息
-      TokenManager.setToken(loginResult.token);
-      TokenManager.setUserInfo({
+      // 使用认证Hook的login函数
+      login(loginResult.token, {
         user_id: loginResult.user_id,
         email: loginResult.email,
         nickname: loginResult.nickname,
@@ -366,6 +379,11 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       setSuccessMessage(welcomeMessage);
       setShowSuccessModal(true);
       setShowLoginModal(false);
+      
+      // 延迟2秒后刷新页面，让用户看到成功消息
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
     } catch (error: any) {
       console.error("Failed to login:", error);
       
@@ -383,6 +401,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const handleCloseSuccessModal = () => {
     setShowSuccessModal(false);
   };
+
+
 
   return (
     <div style={{
