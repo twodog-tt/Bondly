@@ -1,65 +1,53 @@
 package logger
 
 import (
-	"os"
-
 	"github.com/sirupsen/logrus"
 )
 
-type Logger struct {
-	*logrus.Logger
-}
+var Log *logrus.Logger
 
-func NewLogger() *Logger {
-	logger := logrus.New()
-
-	// 设置输出
-	logger.SetOutput(os.Stdout)
-
-	// 设置日志级别
-	logger.SetLevel(logrus.InfoLevel)
+func Init(level, format string) {
+	Log = logrus.New()
 
 	// 设置格式
-	logger.SetFormatter(&logrus.JSONFormatter{
-		TimestampFormat: "2006-01-02 15:04:05",
-	})
+	SetFormat(format)
 
-	return &Logger{logger}
+	// 设置级别
+	SetLevel(level)
+
+	// 初始化文件分级 Hook
+	AddFileHook(Log)
+
+	Log.Info("Logger initialized")
 }
 
-func (l *Logger) SetLevel(level string) {
-	switch level {
-	case "debug":
-		l.Logger.SetLevel(logrus.DebugLevel)
-	case "info":
-		l.Logger.SetLevel(logrus.InfoLevel)
-	case "warn":
-		l.Logger.SetLevel(logrus.WarnLevel)
-	case "error":
-		l.Logger.SetLevel(logrus.ErrorLevel)
-	case "fatal":
-		l.Logger.SetLevel(logrus.FatalLevel)
-	case "panic":
-		l.Logger.SetLevel(logrus.PanicLevel)
-	default:
-		l.Logger.SetLevel(logrus.InfoLevel)
-	}
-}
-
-func (l *Logger) SetFormat(format string) {
+func SetFormat(format string) {
 	switch format {
 	case "json":
-		l.Logger.SetFormatter(&logrus.JSONFormatter{
+		Log.SetFormatter(&logrus.JSONFormatter{
 			TimestampFormat: "2006-01-02 15:04:05",
 		})
 	case "text":
-		l.Logger.SetFormatter(&logrus.TextFormatter{
-			TimestampFormat: "2006-01-02 15:04:05",
+		Log.SetFormatter(&logrus.TextFormatter{
 			FullTimestamp:   true,
+			TimestampFormat: "2006-01-02 15:04:05",
 		})
 	default:
-		l.Logger.SetFormatter(&logrus.JSONFormatter{
-			TimestampFormat: "2006-01-02 15:04:05",
-		})
+		Log.SetFormatter(&logrus.JSONFormatter{})
+	}
+}
+
+func SetLevel(level string) {
+	switch level {
+	case "debug":
+		Log.SetLevel(logrus.DebugLevel)
+	case "info":
+		Log.SetLevel(logrus.InfoLevel)
+	case "warn":
+		Log.SetLevel(logrus.WarnLevel)
+	case "error":
+		Log.SetLevel(logrus.ErrorLevel)
+	default:
+		Log.SetLevel(logrus.InfoLevel)
 	}
 }

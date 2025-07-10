@@ -2,12 +2,14 @@ package handlers
 
 import (
 	"bondly-api/internal/dto"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
 	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/sirupsen/logrus"
 )
 
 type WalletHandlers struct {
@@ -23,14 +25,14 @@ func NewWalletHandlers(walletService *services.WalletService, userService *servi
 }
 
 // GenerateCustodyWallet 生成托管钱包接口
-// @Summary 为用户生成托管钱包
-// @Description 为指定用户生成托管钱包，包括钱包地址和加密私钥
+// @Summary 生成托管钱包
+// @Description 为指定用户生成托管钱包
 // @Tags 钱包管理
 // @Accept json
 // @Produce json
 // @Param request body dto.GenerateWalletRequest true "生成钱包请求体"
 // @Success 200 {object} response.Response[dto.GenerateWalletResponse] "托管钱包生成成功"
-// @Failure 200 {object} response.Response[any] "用户不存在或钱包已存在"
+// @Failure 200 {object} response.Response[any] "用户不存在或已存在托管钱包"
 // @Router /api/v1/wallets/generate [post]
 func (h *WalletHandlers) GenerateCustodyWallet(c *gin.Context) {
 	var req dto.GenerateWalletRequest
@@ -42,7 +44,7 @@ func (h *WalletHandlers) GenerateCustodyWallet(c *gin.Context) {
 	}
 
 	// 检查用户是否存在
-	user, err := h.userService.GetUserByID(req.UserID)
+	user, err := h.userService.GetUserByID(c.Request.Context(), req.UserID)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -55,7 +57,7 @@ func (h *WalletHandlers) GenerateCustodyWallet(c *gin.Context) {
 	}
 
 	// 生成托管钱包
-	walletInfo, err := h.walletService.GenerateCustodyWallet()
+	walletInfo, err := h.walletService.GenerateCustodyWallet(c.Request.Context())
 	if err != nil {
 		response.Fail(c, response.CodeInternalError, err.Error())
 		return
@@ -66,7 +68,7 @@ func (h *WalletHandlers) GenerateCustodyWallet(c *gin.Context) {
 	user.EncryptedPrivateKey = &walletInfo.EncryptedKey
 
 	// 保存到数据库
-	if err := h.userService.UpdateUser(user); err != nil {
+	if err := h.userService.UpdateUser(c.Request.Context(), user); err != nil {
 		response.Fail(c, response.CodeInternalError, err.Error())
 		return
 	}
@@ -101,7 +103,7 @@ func (h *WalletHandlers) GetWalletInfo(c *gin.Context) {
 	}
 
 	// 获取用户信息
-	user, err := h.userService.GetUserByID(userID)
+	user, err := h.userService.GetUserByID(c.Request.Context(), userID)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -153,7 +155,7 @@ func (h *WalletHandlers) BatchGenerateWallets(c *gin.Context) {
 	// 为每个用户生成钱包
 	for _, userID := range userIDs {
 		// 检查用户是否存在
-		user, err := h.userService.GetUserByID(userID)
+		user, err := h.userService.GetUserByID(c.Request.Context(), userID)
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("用户ID %d: %s", userID, err.Error()))
 			continue
@@ -166,7 +168,7 @@ func (h *WalletHandlers) BatchGenerateWallets(c *gin.Context) {
 		}
 
 		// 生成托管钱包
-		walletInfo, err := h.walletService.GenerateCustodyWallet()
+		walletInfo, err := h.walletService.GenerateCustodyWallet(c.Request.Context())
 		if err != nil {
 			errors = append(errors, fmt.Sprintf("用户ID %d: %s", userID, err.Error()))
 			continue
@@ -177,7 +179,7 @@ func (h *WalletHandlers) BatchGenerateWallets(c *gin.Context) {
 		user.EncryptedPrivateKey = &walletInfo.EncryptedKey
 
 		// 保存到数据库
-		if err := h.userService.UpdateUser(user); err != nil {
+		if err := h.userService.UpdateUser(c.Request.Context(), user); err != nil {
 			errors = append(errors, fmt.Sprintf("用户ID %d: %s", userID, err.Error()))
 			continue
 		}
@@ -216,38 +218,41 @@ func (h *WalletHandlers) BindUserWallet(c *gin.Context) {
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
+		loggerpkg.FromContext(c.Request.Context()).WithField("error", err.Error()).Error("钱包绑定 - 请求参数解析失败")
 		response.Fail(c, response.CodeRequestFormatError, response.MsgRequestFormatError)
 		return
 	}
 
+	loggerpkg.FromContext(c.Request.Context()).WithFields(logrus.Fields{
+		"用户ID": req.UserID,
+		"钱包地址": req.WalletAddress,
+	}).Info("钱包绑定 - 开始处理")
+
 	// 检查用户是否存在
-	user, err := h.userService.GetUserByID(req.UserID)
+	user, err := h.userService.GetUserByID(c.Request.Context(), req.UserID)
 	if err != nil {
+		loggerpkg.FromContext(c.Request.Context()).WithFields(logrus.Fields{
+			"用户ID": req.UserID,
+			"错误":   err.Error(),
+		}).Error("钱包绑定 - 用户不存在")
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}
 
-	// 检查用户是否已绑定钱包
-	if user.WalletAddress != nil {
-		response.Fail(c, response.CodeUserAlreadyExists, "用户已绑定钱包地址")
-		return
-	}
-
-	// 检查钱包地址是否已被其他用户绑定
-	existingUser, err := h.userService.GetUserByWalletAddress(req.WalletAddress)
-	if err == nil && existingUser != nil {
-		response.Fail(c, response.CodeUserAlreadyExists, "该钱包地址已被其他用户绑定")
-		return
-	}
-
 	// 更新用户的钱包地址
-	user.WalletAddress = &req.WalletAddress
-
-	// 保存到数据库
-	if err := h.userService.UpdateUser(user); err != nil {
+	if err := h.userService.UpdateWalletAddress(c.Request.Context(), req.UserID, req.WalletAddress); err != nil {
+		loggerpkg.FromContext(c.Request.Context()).WithFields(logrus.Fields{
+			"用户ID": req.UserID,
+			"错误":   err.Error(),
+		}).Error("钱包绑定 - 更新钱包地址失败")
 		response.Fail(c, response.CodeInternalError, err.Error())
 		return
 	}
+
+	loggerpkg.FromContext(c.Request.Context()).WithFields(logrus.Fields{
+		"用户ID": req.UserID,
+		"钱包地址": req.WalletAddress,
+	}).Info("钱包绑定 - 绑定成功")
 
 	// 构建响应数据
 	data := &dto.BindWalletResponse{

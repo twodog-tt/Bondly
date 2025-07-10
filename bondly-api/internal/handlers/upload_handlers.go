@@ -53,7 +53,7 @@ func (h *UploadHandlers) UploadImage(c *gin.Context) {
 	}
 
 	// 上传文件
-	result, err := h.uploadService.UploadImage(file, baseURL)
+	result, err := h.uploadService.UploadImage(c.Request.Context(), file, baseURL)
 	if err != nil {
 		response.Fail(c, response.CodeFileUploadFailed, response.MsgFileUploadFailed)
 		return

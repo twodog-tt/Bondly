@@ -69,6 +69,11 @@ services:
     container_name: bondly-api
     ports:
       - "8080:8080"
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
     environment:
       # 数据库配置
       - DB_HOST=postgres
@@ -101,6 +106,7 @@ services:
       # 日志配置
       - LOG_LEVEL=debug
       - LOG_FORMAT=json
+      - DOCKER_ENV=true
       # CORS 配置
       - CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
     depends_on:

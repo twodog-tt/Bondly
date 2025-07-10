@@ -35,8 +35,9 @@ type CodeStatusData struct {
 
 // LoginRequest 登录请求结构
 type LoginRequest struct {
-	Email    string `json:"email" binding:"required" example:"user@example.com"`
-	Nickname string `json:"nickname" binding:"required" example:"John Doe"`
+	Email    string  `json:"email" binding:"required" example:"user@example.com"`
+	Nickname string  `json:"nickname" binding:"required" example:"John Doe"`
+	ImageURL *string `json:"image_url,omitempty" example:"https://example.com/avatar.jpg"`
 }
 
 // LoginResponse 登录响应结构

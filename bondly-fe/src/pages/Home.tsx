@@ -366,7 +366,9 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       // 调用登录接口
       const { authApi } = await import('../utils/api');
       
-      const loginResult = await authApi.login(loginData.email, loginData.username);
+      // 如果有头像预览URL，则传递给登录接口
+      const imageUrl = avatarPreview || undefined;
+      const loginResult = await authApi.login(loginData.email, loginData.username, imageUrl);
       
       console.log('登录成功:', loginResult);
       

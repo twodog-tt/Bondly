@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { useAccount } from 'wagmi';
 import WalletConnect from './WalletConnect';
 import useAuth from '../hooks/useAuth';
-import WalletBindingModal from './WalletBindingModal';
 import { bindUserWallet } from '../api/user';
 import TokenManager from '../utils/token';
 
@@ -35,8 +34,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const [searchQuery, setSearchQuery] = useState("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
-  const [showWalletBindingModal, setShowWalletBindingModal] = useState(false);
-  const [bindingWalletAddress, setBindingWalletAddress] = useState("");
+  const [isBindingWallet, setIsBindingWallet] = useState(false);
   
   // 使用认证Hook和钱包连接状态
   const { isLoggedIn, user, logout } = useAuth();
@@ -45,15 +43,59 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   // 判断是否应该显示Login按钮：只有在未登录且钱包未连接时才显示
   const shouldShowLoginButton = !isLoggedIn && !isConnected && onLoginClick;
 
-  // 监听用户登录状态变化，如果用户已登录且钱包已连接，立即触发钱包绑定
+  // 监听用户登录状态变化，如果用户已登录且钱包已连接，静默绑定钱包（不显示弹窗）
   React.useEffect(() => {
     if (isLoggedIn && user && isConnected && address) {
-      console.log('检测到用户已登录且钱包已连接，触发钱包绑定:', address);
-      handleWalletConnected(address);
+      // 检查用户是否已经绑定了该钱包地址
+      if (user.wallet_address === address) {
+        console.log('用户已绑定该钱包地址，跳过绑定:', address);
+        return;
+      }
+      console.log('检测到用户已登录且钱包已连接，静默绑定钱包:', address);
+      handleWalletConnectedSilently(address);
     }
   }, [isLoggedIn, user, isConnected, address]);
 
-  // 处理钱包连接成功
+  // 静默绑定钱包（不显示弹窗）
+  const handleWalletConnectedSilently = async (address: string) => {
+    console.log('静默绑定钱包:', address);
+    
+    if (!isLoggedIn || !user) {
+      console.log('用户未登录，跳过钱包绑定');
+      return;
+    }
+
+    // 防止重复绑定
+    if (isBindingWallet) {
+      console.log('正在绑定中，跳过重复请求');
+      return;
+    }
+
+    // 检查是否已经绑定了该钱包地址
+    if (user.wallet_address === address) {
+      console.log('用户已绑定该钱包地址，跳过绑定:', address);
+      return;
+    }
+
+    try {
+      setIsBindingWallet(true);
+      console.log('开始静默绑定钱包地址:', address, '到用户:', user.user_id);
+      // 绑定用户钱包地址
+      await bindUserWallet(user.user_id, address);
+      
+      // 更新本地用户信息（不显示弹窗）
+      const updatedUser = { ...user, wallet_address: address };
+      TokenManager.setUserInfo(updatedUser);
+      
+      console.log('钱包静默绑定成功:', address);
+    } catch (error) {
+      console.error('钱包绑定失败:', error);
+    } finally {
+      setIsBindingWallet(false);
+    }
+  };
+
+  // 处理钱包连接成功（带弹窗）
   const handleWalletConnected = async (address: string) => {
     console.log('钱包连接回调被触发:', address);
     console.log('用户登录状态:', isLoggedIn);
@@ -64,16 +106,25 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       return;
     }
 
+    // 防止重复绑定
+    if (isBindingWallet) {
+      console.log('正在绑定中，跳过重复请求');
+      return;
+    }
+
+    // 检查是否已经绑定了该钱包地址
+    if (user.wallet_address === address) {
+      console.log('用户已绑定该钱包地址，跳过绑定:', address);
+      return;
+    }
+
     try {
+      setIsBindingWallet(true);
       console.log('开始绑定钱包地址:', address, '到用户:', user.user_id);
       // 绑定用户钱包地址
       await bindUserWallet(user.user_id, address);
       
-      console.log('后端绑定成功，显示弹窗');
-      // 显示绑定成功弹窗
-      setBindingWalletAddress(address);
-      setShowWalletBindingModal(true);
-      
+      console.log('后端绑定成功');
       // 更新本地用户信息
       const updatedUser = { ...user, wallet_address: address };
       TokenManager.setUserInfo(updatedUser);
@@ -82,6 +133,8 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
     } catch (error) {
       console.error('钱包绑定失败:', error);
       // 可以添加错误提示
+    } finally {
+      setIsBindingWallet(false);
     }
   };
 
@@ -603,12 +656,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
         </div>
       )}
 
-      {/* 钱包绑定成功弹窗 */}
-      <WalletBindingModal
-        isOpen={showWalletBindingModal}
-        onClose={() => setShowWalletBindingModal(false)}
-        walletAddress={bindingWalletAddress}
-      />
+
     </>
   );
 };

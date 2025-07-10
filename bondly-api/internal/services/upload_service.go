@@ -1,8 +1,9 @@
 package services
 
 import (
-	"bondly-api/internal/logger"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/pkg/response"
+	"context"
 	stderrors "errors"
 	"fmt"
 	"mime/multipart"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -56,7 +58,7 @@ func NewUploadError(err error, code int) *UploadError {
 const (
 	ErrorCodeFileTooLarge    = response.CodeFileTooLarge
 	ErrorCodeInvalidFileType = response.CodeInvalidFileType
-	ErrorCodeNoFileUploaded  = response.CodeNoFileUploaded
+	ErrorCodeNoFileUploaded  = response.CodeNoFileSelected
 	ErrorCodeCreateDirectory = response.CodeCreateDirectory
 	ErrorCodeSaveFile        = response.CodeSaveFile
 )
@@ -72,19 +74,18 @@ type UploadResult struct {
 
 // UploadService 上传服务
 type UploadService struct {
-	logger *logger.Logger
 }
 
 // NewUploadService 创建上传服务
 func NewUploadService() *UploadService {
-	return &UploadService{
-		logger: logger.NewLogger(),
-	}
+	return &UploadService{}
 }
 
 // UploadImage 上传图片
-func (s *UploadService) UploadImage(file *multipart.FileHeader, baseURL string) (*UploadResult, error) {
-	s.logger.WithFields(map[string]interface{}{
+func (s *UploadService) UploadImage(ctx context.Context, file *multipart.FileHeader, baseURL string) (*UploadResult, error) {
+	log := loggerpkg.FromContext(ctx)
+
+	log.WithFields(logrus.Fields{
 		"fileName": file.Filename,
 		"fileSize": file.Size,
 		"action":   "upload_image",
@@ -92,26 +93,26 @@ func (s *UploadService) UploadImage(file *multipart.FileHeader, baseURL string) 
 
 	// 1. 验证文件
 	if err := s.validateImageFile(file); err != nil {
-		s.logger.WithFields(map[string]interface{}{
+		log.WithFields(logrus.Fields{
 			"fileName": file.Filename,
 			"error":    err.Error(),
 		}).Warn("图片文件验证失败")
 		return nil, err
 	}
 
-	s.logger.WithField("fileName", file.Filename).Debug("图片文件验证通过")
+	log.WithField("fileName", file.Filename).Debug("图片文件验证通过")
 
 	// 2. 创建上传目录
 	uploadPath, err := s.createUploadPath()
 	if err != nil {
-		s.logger.WithFields(map[string]interface{}{
+		log.WithFields(logrus.Fields{
 			"fileName": file.Filename,
 			"error":    err.Error(),
 		}).Error("创建上传目录失败")
 		return nil, err
 	}
 
-	s.logger.WithFields(map[string]interface{}{
+	log.WithFields(logrus.Fields{
 		"fileName":   file.Filename,
 		"uploadPath": uploadPath,
 	}).Debug("上传目录创建成功")
@@ -120,14 +121,14 @@ func (s *UploadService) UploadImage(file *multipart.FileHeader, baseURL string) 
 	fileName := s.generateFileName(file.Filename)
 	filePath := filepath.Join(uploadPath, fileName)
 
-	s.logger.WithFields(map[string]interface{}{
+	log.WithFields(logrus.Fields{
 		"fileName": fileName,
 		"filePath": filePath,
 	}).Debug("生成文件名成功")
 
 	// 4. 保存文件
 	if err := s.saveFile(file, filePath); err != nil {
-		s.logger.WithFields(map[string]interface{}{
+		log.WithFields(logrus.Fields{
 			"fileName": file.Filename,
 			"filePath": filePath,
 			"error":    err.Error(),
@@ -135,7 +136,7 @@ func (s *UploadService) UploadImage(file *multipart.FileHeader, baseURL string) 
 		return nil, err
 	}
 
-	s.logger.WithFields(map[string]interface{}{
+	log.WithFields(logrus.Fields{
 		"fileName": file.Filename,
 		"filePath": filePath,
 	}).Debug("文件保存成功")
@@ -143,7 +144,7 @@ func (s *UploadService) UploadImage(file *multipart.FileHeader, baseURL string) 
 	// 5. 构建访问URL
 	accessURL := s.buildAccessURL(baseURL, fileName)
 
-	s.logger.WithFields(map[string]interface{}{
+	log.WithFields(logrus.Fields{
 		"fileName":  file.Filename,
 		"accessURL": accessURL,
 	}).Info("图片上传成功")

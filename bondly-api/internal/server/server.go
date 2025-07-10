@@ -4,7 +4,7 @@ import (
 	"bondly-api/config"
 	"bondly-api/internal/cache"
 	"bondly-api/internal/handlers"
-	"bondly-api/internal/logger"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/middleware"
 	"bondly-api/internal/redis"
 	"bondly-api/internal/repositories"
@@ -22,7 +22,6 @@ type Server struct {
 	db           *gorm.DB
 	redisClient  *redis.RedisClient
 	cacheService cache.CacheService
-	logger       *logger.Logger
 	router       *gin.Engine
 	server       *http.Server
 
@@ -33,7 +32,7 @@ type Server struct {
 	walletHandlers *handlers.WalletHandlers
 }
 
-func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
+func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	// 设置 Gin 模式
 	if cfg.Logging.Level == "debug" {
 		gin.SetMode(gin.DebugMode)
@@ -45,15 +44,16 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 
 	// 使用中间件
 	router.Use(gin.Recovery())
-	router.Use(middleware.Logger(logger))
+	router.Use(middleware.TraceIDMiddleware()) // 添加TraceID中间件
+	router.Use(middleware.Logger(loggerpkg.Log))
 	router.Use(middleware.CORS(cfg.CORS))
 
 	// 初始化 Redis 客户端
 	redisClient, err := redis.NewRedisClient(cfg.Redis)
 	if err != nil {
-		logger.Fatalf("Failed to connect to Redis: %v", err)
+		loggerpkg.Log.Fatalf("Failed to connect to Redis: %v", err)
 	}
-	logger.Info("Redis connected successfully")
+	loggerpkg.Log.Info("Redis connected successfully")
 
 	// 初始化缓存服务
 	cacheService := cache.NewRedisCacheService(redisClient)
@@ -78,7 +78,6 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 		db:             db,
 		redisClient:    redisClient,
 		cacheService:   cacheService,
-		logger:         logger,
 		router:         router,
 		userHandlers:   userHandlers,
 		authHandlers:   authHandlers,
@@ -99,19 +98,19 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 }
 
 func (s *Server) Start() error {
-	s.logger.Infof("Server starting on %s:%s", s.config.Server.Host, s.config.Server.Port)
+	loggerpkg.Log.Infof("Server starting on %s:%s", s.config.Server.Host, s.config.Server.Port)
 	return s.server.ListenAndServe()
 }
 
 func (s *Server) Shutdown(ctx context.Context) error {
-	s.logger.Info("Server shutting down...")
+	loggerpkg.Log.Info("Server shutting down...")
 
 	// 关闭 Redis 连接
 	if s.redisClient != nil {
 		if err := s.redisClient.Close(); err != nil {
-			s.logger.Errorf("Failed to close Redis connection: %v", err)
+			loggerpkg.Log.Errorf("Failed to close Redis connection: %v", err)
 		} else {
-			s.logger.Info("Redis connection closed successfully")
+			loggerpkg.Log.Info("Redis connection closed successfully")
 		}
 	}
 

@@ -40,6 +40,7 @@ export interface VerifyCodeData {
 export interface LoginRequest {
   email: string;
   nickname: string;
+  image_url?: string;
 }
 
 // 登录响应数据
@@ -256,8 +257,8 @@ export const authApi = {
   },
 
   // 用户登录
-  async login(email: string, nickname: string): Promise<LoginResponse> {
-    return post<LoginResponse>('/api/v1/auth/login', { email, nickname });
+  async login(email: string, nickname: string, image_url?: string): Promise<LoginResponse> {
+    return post<LoginResponse>('/api/v1/auth/login', { email, nickname, image_url });
   },
 };
 

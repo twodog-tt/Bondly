@@ -3,7 +3,7 @@ package server
 import (
 	"bondly-api/config"
 	"bondly-api/internal/handlers"
-	"bondly-api/internal/logger"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/middleware"
 	"context"
 	"fmt"
@@ -14,12 +14,11 @@ import (
 
 type ServerSimple struct {
 	config *config.Config
-	logger *logger.Logger
 	router *gin.Engine
 	server *http.Server
 }
 
-func NewServerSimple(cfg *config.Config, logger *logger.Logger) *ServerSimple {
+func NewServerSimple(cfg *config.Config) *ServerSimple {
 	// 设置 Gin 模式
 	if cfg.Logging.Level == "debug" {
 		gin.SetMode(gin.DebugMode)
@@ -31,12 +30,12 @@ func NewServerSimple(cfg *config.Config, logger *logger.Logger) *ServerSimple {
 
 	// 使用中间件
 	router.Use(gin.Recovery())
-	router.Use(middleware.Logger(logger))
+	router.Use(middleware.TraceIDMiddleware())
+	router.Use(middleware.Logger(loggerpkg.Log))
 	router.Use(middleware.CORS(cfg.CORS))
 
 	server := &ServerSimple{
 		config: cfg,
-		logger: logger,
 		router: router,
 	}
 
@@ -90,12 +89,12 @@ func (s *ServerSimple) setupRoutes() {
 }
 
 func (s *ServerSimple) Start() error {
-	s.logger.Infof("Server starting on %s:%s", s.config.Server.Host, s.config.Server.Port)
+	loggerpkg.Log.Infof("Server starting on %s:%s", s.config.Server.Host, s.config.Server.Port)
 	return s.server.ListenAndServe()
 }
 
 func (s *ServerSimple) Shutdown(ctx context.Context) error {
-	s.logger.Info("Server shutting down...")
+	loggerpkg.Log.Info("Server shutting down...")
 	return s.server.Shutdown(ctx)
 }
 

@@ -43,7 +43,7 @@ export const apiRequest = async <T>(
 
   const result: ApiResponse<T> = await response.json();
   
-  if (result.code !== 200) {
+  if (result.code !== 1000) {
     throw new Error(result.message || 'API request failed');
   }
 

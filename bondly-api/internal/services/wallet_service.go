@@ -2,26 +2,27 @@ package services
 
 import (
 	"bondly-api/config"
-	"bondly-api/internal/logger"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/pkg/errors"
 	"bondly-api/internal/utils"
+	"context"
 	"fmt"
 )
 
 type WalletService struct {
-	logger *logger.Logger
 	config *config.Config
 }
 
 func NewWalletService(cfg *config.Config) *WalletService {
 	return &WalletService{
-		logger: logger.NewLogger(),
 		config: cfg,
 	}
 }
 
 // GenerateCustodyWallet 为用户生成托管钱包
-func (s *WalletService) GenerateCustodyWallet() (*utils.WalletInfo, error) {
+func (s *WalletService) GenerateCustodyWallet(ctx context.Context) (*utils.WalletInfo, error) {
+	log := loggerpkg.FromContext(ctx)
+
 	// 获取配置中的钱包密钥
 	secretKey := s.config.Wallet.SecretKey
 	if secretKey == "" {
@@ -31,27 +32,29 @@ func (s *WalletService) GenerateCustodyWallet() (*utils.WalletInfo, error) {
 	// 生成钱包
 	walletInfo, err := utils.GenerateWallet()
 	if err != nil {
-		s.logger.Error("Failed to generate wallet", "error", err)
+		log.WithField("error", err).Error("Failed to generate wallet")
 		return nil, errors.NewInternalError(fmt.Errorf("failed to generate wallet: %w", err))
 	}
 
 	// 加密私钥
 	encryptedPrivateKey, err := utils.EncryptPrivateKey(walletInfo.PrivateKey, secretKey)
 	if err != nil {
-		s.logger.Error("Failed to encrypt private key", "error", err)
+		log.WithField("error", err).Error("Failed to encrypt private key")
 		return nil, errors.NewInternalError(fmt.Errorf("failed to encrypt private key: %w", err))
 	}
 
 	// 设置加密后的私钥
 	walletInfo.EncryptedKey = encryptedPrivateKey
 
-	s.logger.Info("Generated custody wallet successfully", "address", walletInfo.Address)
+	log.WithField("address", walletInfo.Address).Info("Generated custody wallet successfully")
 
 	return walletInfo, nil
 }
 
 // DecryptPrivateKey 解密私钥（用于需要私钥的操作）
-func (s *WalletService) DecryptPrivateKey(encryptedPrivateKey string) (string, error) {
+func (s *WalletService) DecryptPrivateKey(ctx context.Context, encryptedPrivateKey string) (string, error) {
+	log := loggerpkg.FromContext(ctx)
+
 	// 获取配置中的钱包密钥
 	secretKey := s.config.Wallet.SecretKey
 	if secretKey == "" {
@@ -61,7 +64,7 @@ func (s *WalletService) DecryptPrivateKey(encryptedPrivateKey string) (string, e
 	// 解密私钥
 	privateKey, err := utils.DecryptPrivateKey(encryptedPrivateKey, secretKey)
 	if err != nil {
-		s.logger.Error("Failed to decrypt private key", "error", err)
+		log.WithField("error", err).Error("Failed to decrypt private key")
 		return "", errors.NewInternalError(fmt.Errorf("failed to decrypt private key: %w", err))
 	}
 
@@ -69,7 +72,7 @@ func (s *WalletService) DecryptPrivateKey(encryptedPrivateKey string) (string, e
 }
 
 // ValidateCustodyWalletAddress 验证托管钱包地址
-func (s *WalletService) ValidateCustodyWalletAddress(address string) error {
+func (s *WalletService) ValidateCustodyWalletAddress(ctx context.Context, address string) error {
 	if address == "" {
 		return errors.NewCustodyWalletEmptyError()
 	}
@@ -82,13 +85,13 @@ func (s *WalletService) ValidateCustodyWalletAddress(address string) error {
 }
 
 // ValidateEncryptedPrivateKey 验证加密私钥
-func (s *WalletService) ValidateEncryptedPrivateKey(encryptedPrivateKey string) error {
+func (s *WalletService) ValidateEncryptedPrivateKey(ctx context.Context, encryptedPrivateKey string) error {
 	if encryptedPrivateKey == "" {
 		return errors.NewPrivateKeyEmptyError()
 	}
 
 	// 尝试解密以验证格式
-	_, err := s.DecryptPrivateKey(encryptedPrivateKey)
+	_, err := s.DecryptPrivateKey(ctx, encryptedPrivateKey)
 	if err != nil {
 		return errors.NewPrivateKeyInvalidError(err)
 	}

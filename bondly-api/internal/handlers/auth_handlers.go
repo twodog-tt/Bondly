@@ -58,7 +58,7 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 	req.Email = strings.TrimSpace(req.Email)
 
 	// 调用服务层发送验证码
-	if err := h.authService.SendVerificationCode(req.Email); err != nil {
+	if err := h.authService.SendVerificationCode(c.Request.Context(), req.Email); err != nil {
 		h.handleAuthError(c, err)
 		return
 	}
@@ -95,13 +95,13 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 	req.Code = strings.TrimSpace(req.Code)
 
 	// 验证验证码
-	if err := h.authService.VerifyCode(req.Email, req.Code); err != nil {
+	if err := h.authService.VerifyCode(c.Request.Context(), req.Email, req.Code); err != nil {
 		h.handleAuthError(c, err)
 		return
 	}
 
 	// 判断用户是否是第一次登陆
-	token, err := h.authService.CheckFirstLogin(req.Email)
+	token, err := h.authService.CheckFirstLogin(c.Request.Context(), req.Email)
 	if err != nil {
 		h.handleAuthError(c, err)
 		return
@@ -136,14 +136,14 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	email = strings.TrimSpace(email)
 
 	// 获取验证码剩余时间
-	codeTTL, err := h.authService.GetCodeTTL(email)
+	codeTTL, err := h.authService.GetCodeTTL(c.Request.Context(), email)
 	if err != nil {
 		h.handleAuthError(c, err)
 		return
 	}
 
 	// 获取限流剩余时间
-	lockTTL, err := h.authService.GetLockTTL(email)
+	lockTTL, err := h.authService.GetLockTTL(c.Request.Context(), email)
 	if err != nil {
 		h.handleAuthError(c, err)
 		return
@@ -183,7 +183,7 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	req.Nickname = strings.TrimSpace(req.Nickname)
 
 	// 调用服务层登录
-	loginData, err := h.authService.LoginIn(req.Email, req.Nickname)
+	loginData, err := h.authService.LoginIn(c.Request.Context(), req.Email, req.Nickname, req.ImageURL)
 	if err != nil {
 		h.handleAuthError(c, err)
 		return

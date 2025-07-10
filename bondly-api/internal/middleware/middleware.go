@@ -2,17 +2,46 @@ package middleware
 
 import (
 	"bondly-api/config"
-	"bondly-api/internal/logger"
+	loggerpkg "bondly-api/internal/logger"
 	"time"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/sirupsen/logrus"
 )
 
+const (
+	TraceIDHeader = "X-Trace-ID"
+	TraceIDKey    = "trace_id"
+)
+
+// TraceIDMiddleware 自动从Header中注入trace-id到context
+func TraceIDMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 从Header中获取trace-id
+		traceID := c.GetHeader(TraceIDHeader)
+
+		// 如果没有trace-id，生成一个新的
+		if traceID == "" {
+			traceID = uuid.New().String()
+		}
+
+		// 将trace-id注入到context中
+		ctx := loggerpkg.WithTraceID(c.Request.Context(), traceID)
+		c.Request = c.Request.WithContext(ctx)
+
+		// 在响应Header中也设置trace-id
+		c.Header(TraceIDHeader, traceID)
+
+		c.Next()
+	}
+}
+
 // Logger 日志中间件
-func Logger(log *logger.Logger) gin.HandlerFunc {
+func Logger(log *logrus.Logger) gin.HandlerFunc {
 	return gin.LoggerWithFormatter(func(param gin.LogFormatterParams) string {
-		log.WithFields(map[string]interface{}{
+		loggerpkg.FromContext(param.Request.Context()).WithFields(logrus.Fields{
 			"status":     param.StatusCode,
 			"latency":    param.Latency,
 			"client_ip":  param.ClientIP,

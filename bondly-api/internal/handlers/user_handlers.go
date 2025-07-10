@@ -22,18 +22,17 @@ func NewUserHandlers(userService *services.UserService) *UserHandlers {
 
 // CreateUser 创建用户接口
 // @Summary 创建新用户
-// @Description 创建新的用户账户，支持Web2邮箱和Web3钱包地址
+// @Description 创建新用户，支持Web2和Web3用户信息
 // @Tags 用户管理
 // @Accept json
 // @Produce json
 // @Param request body dto.CreateUserRequest true "创建用户请求体"
 // @Success 200 {object} response.Response[dto.UserResponse] "用户创建成功"
-// @Failure 200 {object} response.Response[any] "请求参数错误或用户已存在"
+// @Failure 200 {object} response.Response[any] "创建失败"
 // @Router /api/v1/users [post]
 func (h *UserHandlers) CreateUser(c *gin.Context) {
 	var req dto.CreateUserRequest
 
-	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
 		response.Fail(c, response.CodeRequestFormatError, response.MsgRequestFormatError)
 		return
@@ -53,7 +52,7 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 	}
 
 	// 创建用户
-	if err := h.userService.CreateUser(user); err != nil {
+	if err := h.userService.CreateUser(c.Request.Context(), user); err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}
@@ -81,7 +80,7 @@ func (h *UserHandlers) GetUserByID(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByID(int64(id))
+	user, err := h.userService.GetUserByID(c.Request.Context(), int64(id))
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -108,7 +107,7 @@ func (h *UserHandlers) GetUserByWalletAddress(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByWalletAddress(address)
+	user, err := h.userService.GetUserByWalletAddress(c.Request.Context(), address)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -135,7 +134,7 @@ func (h *UserHandlers) GetUserByEmail(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByEmail(email)
+	user, err := h.userService.GetUserByEmail(c.Request.Context(), email)
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -171,7 +170,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	}
 
 	// 获取现有用户
-	user, err := h.userService.GetUserByID(int64(id))
+	user, err := h.userService.GetUserByID(c.Request.Context(), int64(id))
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -201,7 +200,7 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	}
 
 	// 更新用户
-	if err := h.userService.UpdateUser(user); err != nil {
+	if err := h.userService.UpdateUser(c.Request.Context(), user); err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
 	}
@@ -232,28 +231,29 @@ func (h *UserHandlers) ListUsers(c *gin.Context) {
 	}
 
 	offset := (page - 1) * limit
-	users, err := h.userService.ListUsers(offset, limit)
+	users, err := h.userService.ListUsers(c.Request.Context(), offset, limit)
 	if err != nil {
 		response.Fail(c, response.CodeGetUserListFailed, response.MsgGetUserListFailed)
 		return
 	}
 
-	var data []dto.UserResponse
+	// 构建响应数据
+	var data []*dto.UserResponse
 	for _, user := range users {
-		data = append(data, *h.buildUserResponse(&user))
+		data = append(data, h.buildUserResponse(&user))
 	}
 
 	response.OK(c, data, response.MsgUserListRetrieved)
 }
 
 // GetTopUsersByReputation 获取声誉积分最高的用户接口
-// @Summary 获取声誉积分排行榜
+// @Summary 获取声誉积分最高的用户
 // @Description 获取声誉积分最高的用户列表
 // @Tags 用户管理
 // @Accept json
 // @Produce json
-// @Param limit query int false "返回数量" default(10)
-// @Success 200 {object} response.Response[[]dto.UserResponse] "获取排行榜成功"
+// @Param limit query int false "获取数量" default(10)
+// @Success 200 {object} response.Response[[]dto.UserResponse] "获取成功"
 // @Router /api/v1/users/top [get]
 func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
@@ -261,29 +261,30 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 		limit = 10
 	}
 
-	users, err := h.userService.GetTopUsersByReputation(limit)
+	users, err := h.userService.GetTopUsersByReputation(c.Request.Context(), limit)
 	if err != nil {
-		response.Fail(c, response.CodeGetRankingFailed, response.MsgGetRankingFailed)
+		response.Fail(c, response.CodeGetUserListFailed, response.MsgGetUserListFailed)
 		return
 	}
 
-	var data []dto.UserResponse
+	// 构建响应数据
+	var data []*dto.UserResponse
 	for _, user := range users {
-		data = append(data, *h.buildUserResponse(&user))
+		data = append(data, h.buildUserResponse(&user))
 	}
 
-	response.OK(c, data, response.MsgRankingRetrieved)
+	response.OK(c, data, response.MsgUserListRetrieved)
 }
 
-// GetUserCustodyWallet 获取用户托管钱包信息接口
+// GetUserCustodyWallet 获取用户托管钱包接口
 // @Summary 获取用户托管钱包信息
-// @Description 获取指定用户的托管钱包地址（不返回私钥）
+// @Description 获取指定用户的托管钱包地址和加密私钥
 // @Tags 用户管理
 // @Accept json
 // @Produce json
 // @Param id path int true "用户ID"
-// @Success 200 {object} response.Response[dto.CustodyWalletResponse] "获取托管钱包信息成功"
-// @Failure 200 {object} response.Response[any] "用户不存在或钱包未生成"
+// @Success 200 {object} response.Response[dto.CustodyWalletResponse] "获取成功"
+// @Failure 200 {object} response.Response[any] "用户不存在"
 // @Router /api/v1/users/{id}/custody-wallet [get]
 func (h *UserHandlers) GetUserCustodyWallet(c *gin.Context) {
 	idStr := c.Param("id")
@@ -293,15 +294,9 @@ func (h *UserHandlers) GetUserCustodyWallet(c *gin.Context) {
 		return
 	}
 
-	user, err := h.userService.GetUserByID(int64(id))
+	user, err := h.userService.GetUserByID(c.Request.Context(), int64(id))
 	if err != nil {
 		response.Fail(c, response.CodeInvalidParams, err.Error())
-		return
-	}
-
-	// 检查是否有托管钱包
-	if user.CustodyWalletAddress == nil {
-		response.Fail(c, response.CodeCustodyWalletEmpty, response.MsgCustodyWalletEmpty)
 		return
 	}
 
@@ -326,7 +321,6 @@ func (h *UserHandlers) buildUserResponse(user *models.User) *dto.UserResponse {
 		Role:                 user.Role,
 		ReputationScore:      user.ReputationScore,
 		CustodyWalletAddress: user.CustodyWalletAddress,
-		EncryptedPrivateKey:  user.EncryptedPrivateKey,
 		CreatedAt:            user.CreatedAt.Format("2006-01-02T15:04:05Z"),
 		UpdatedAt:            user.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
