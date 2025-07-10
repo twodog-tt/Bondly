@@ -18,6 +18,7 @@ type Config struct {
 	CORS     CORSConfig
 	JWT      JWTConfig
 	Wallet   WalletConfig
+	Email    EmailConfig
 }
 
 type ServerConfig struct {
@@ -75,6 +76,12 @@ type WalletConfig struct {
 	SecretKey string
 }
 
+type EmailConfig struct {
+	Provider  string
+	ResendKey string
+	FromEmail string
+}
+
 func Load() (*Config, error) {
 	// 加载 .env 文件
 	if err := godotenv.Load(); err != nil {
@@ -127,6 +134,11 @@ func Load() (*Config, error) {
 		},
 		Wallet: WalletConfig{
 			SecretKey: getEnv("WALLET_SECRET_KEY", ""),
+		},
+		Email: EmailConfig{
+			Provider:  getEnv("EMAIL_PROVIDER", "mock"),
+			ResendKey: getEnv("RESEND_API_KEY", ""),
+			FromEmail: getEnv("EMAIL_FROM", ""),
 		},
 	}, nil
 }

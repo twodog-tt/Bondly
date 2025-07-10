@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import WalletConnect from './WalletConnect';
 import useAuth from '../hooks/useAuth';
@@ -35,6 +35,9 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
   const [isBindingWallet, setIsBindingWallet] = useState(false);
+  const [hasAttemptedBinding, setHasAttemptedBinding] = useState(false);
+  const [lastAttemptedAddress, setLastAttemptedAddress] = useState<string | null>(null);
+  const bindingRef = useRef<boolean>(false);
   
   // 使用认证Hook和钱包连接状态
   const { isLoggedIn, user, logout } = useAuth();
@@ -43,18 +46,15 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
   // 判断是否应该显示Login按钮：只有在未登录且钱包未连接时才显示
   const shouldShowLoginButton = !isLoggedIn && !isConnected && onLoginClick;
 
-  // 监听用户登录状态变化，如果用户已登录且钱包已连接，静默绑定钱包（不显示弹窗）
+  // 暂时禁用自动钱包绑定功能，避免无限循环问题
   React.useEffect(() => {
-    if (isLoggedIn && user && isConnected && address) {
-      // 检查用户是否已经绑定了该钱包地址
-      if (user.wallet_address === address) {
-        console.log('用户已绑定该钱包地址，跳过绑定:', address);
-        return;
-      }
-      console.log('检测到用户已登录且钱包已连接，静默绑定钱包:', address);
-      handleWalletConnectedSilently(address);
+    if (!isConnected) {
+      setHasAttemptedBinding(false);
+      setLastAttemptedAddress(null);
+      bindingRef.current = false;
+      console.log('钱包断开连接，重置绑定状态');
     }
-  }, [isLoggedIn, user, isConnected, address]);
+  }, [isConnected]);
 
   // 静默绑定钱包（不显示弹窗）
   const handleWalletConnectedSilently = async (address: string) => {
@@ -74,6 +74,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
     // 检查是否已经绑定了该钱包地址
     if (user.wallet_address === address) {
       console.log('用户已绑定该钱包地址，跳过绑定:', address);
+      setHasAttemptedBinding(true);
       return;
     }
 
@@ -88,15 +89,23 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       TokenManager.setUserInfo(updatedUser);
       
       console.log('钱包静默绑定成功:', address);
+      setHasAttemptedBinding(true); // 标记已尝试绑定
     } catch (error) {
       console.error('钱包绑定失败:', error);
+      // 任何绑定失败都停止重试，避免无限循环
+      setHasAttemptedBinding(true);
+      
+      // 记录具体的错误信息
+      if (error instanceof Error) {
+        console.log('绑定失败原因:', error.message);
+      }
     } finally {
       setIsBindingWallet(false);
     }
   };
 
   // 处理钱包连接成功（带弹窗）
-  const handleWalletConnected = async (address: string) => {
+  const handleWalletConnected = React.useCallback(async (address: string) => {
     console.log('钱包连接回调被触发:', address);
     console.log('用户登录状态:', isLoggedIn);
     console.log('用户信息:', user);
@@ -136,7 +145,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
     } finally {
       setIsBindingWallet(false);
     }
-  };
+  }, [isLoggedIn, user]); // 移除 isBindingWallet 依赖，避免函数引用变化
 
   const handleBondlyClick = () => {
     if (currentPage === "home") {

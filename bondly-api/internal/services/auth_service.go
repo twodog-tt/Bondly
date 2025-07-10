@@ -60,16 +60,18 @@ func NewAuthError(err error, code int) *AuthError {
 // 注意：错误码和错误消息已统一在 response/error_code.go 中管理
 
 type AuthService struct {
-	redisClient *redis.RedisClient
-	userRepo    *repositories.UserRepository
-	jwtUtil     *utils.JWTUtil
+	redisClient  *redis.RedisClient
+	userRepo     *repositories.UserRepository
+	jwtUtil      *utils.JWTUtil
+	emailService *EmailService
 }
 
-func NewAuthService(redisClient *redis.RedisClient, userRepo *repositories.UserRepository, jwtSecret string) *AuthService {
+func NewAuthService(redisClient *redis.RedisClient, userRepo *repositories.UserRepository, jwtSecret string, emailService *EmailService) *AuthService {
 	return &AuthService{
-		redisClient: redisClient,
-		userRepo:    userRepo,
-		jwtUtil:     utils.NewJWTUtil(jwtSecret, 24*time.Hour), // JWT token有效期24小时
+		redisClient:  redisClient,
+		userRepo:     userRepo,
+		jwtUtil:      utils.NewJWTUtil(jwtSecret, 24*time.Hour), // JWT token有效期24小时
+		emailService: emailService,
 	}
 }
 
@@ -155,8 +157,20 @@ func (s *AuthService) SendVerificationCode(ctx context.Context, email string) er
 		"lockDuration": "60秒",
 	}).Debug("限流键设置成功")
 
-	// 6. 发送验证码到邮箱（模拟）
-	s.sendEmailMock(email, code)
+	// 6. 发送验证码到邮箱
+	if s.emailService != nil {
+		if err := s.emailService.SendVerificationCode(ctx, email, code); err != nil {
+			log.WithFields(logrus.Fields{
+				"email": email,
+				"error": err.Error(),
+			}).Error("邮件发送失败，回退到模拟发送")
+			// 如果邮件发送失败，回退到模拟发送
+			s.sendEmailMock(email, code)
+		}
+	} else {
+		// 如果没有配置邮件服务，使用模拟发送
+		s.sendEmailMock(email, code)
+	}
 
 	log.WithFields(logrus.Fields{
 		"email": email,

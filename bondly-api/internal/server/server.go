@@ -3,6 +3,7 @@ package server
 import (
 	"bondly-api/config"
 	"bondly-api/internal/cache"
+	"bondly-api/internal/email"
 	"bondly-api/internal/handlers"
 	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/middleware"
@@ -58,6 +59,20 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	// 初始化缓存服务
 	cacheService := cache.NewRedisCacheService(redisClient)
 
+	// 初始化邮件服务
+	emailConfig := email.EmailConfig{
+		Provider:  cfg.Email.Provider,
+		ResendKey: cfg.Email.ResendKey,
+		FromEmail: cfg.Email.FromEmail,
+	}
+	emailSender, err := email.NewEmailSender(emailConfig)
+	if err != nil {
+		loggerpkg.Log.Warnf("Failed to initialize email sender: %v, using mock sender", err)
+		emailSender = email.NewMockEmailSender()
+	}
+	emailService := services.NewEmailService(emailSender)
+	loggerpkg.Log.Info("Email service initialized successfully")
+
 	// 初始化依赖
 	userRepo := repositories.NewUserRepository(db)
 	walletService := services.NewWalletService(cfg)
@@ -66,7 +81,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	walletHandlers := handlers.NewWalletHandlers(walletService, userService)
 
 	// 初始化认证服务
-	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret)
+	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret, emailService)
 	authHandlers := handlers.NewAuthHandlers(authService)
 
 	// 初始化上传服务
