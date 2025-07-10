@@ -1,6 +1,6 @@
 package response
 
-// 成功码
+// CodeSuccess 成功码
 const (
 	CodeSuccess = 1000
 )
@@ -68,7 +68,7 @@ const (
 	CodeNoFileSelected   = 2006
 )
 
-// 错误码到HTTP状态码的映射
+// ErrorCodeToHTTPStatus 错误码到HTTP状态码的映射
 var ErrorCodeToHTTPStatus = map[int]int{
 	// 通用错误码
 	CodeInvalidParams: 400, // Bad Request
@@ -122,7 +122,7 @@ var ErrorCodeToHTTPStatus = map[int]int{
 	CodeNoFileSelected:   400, // Bad Request
 }
 
-// 错误码到业务错误码的映射（用于统一错误处理）
+// ErrorCodeToBusinessCode 错误码到业务错误码的映射（用于统一错误处理）
 var ErrorCodeToBusinessCode = map[int]int{
 	// 验证码相关错误码 -> 统一映射到业务错误码
 	CodeEmailInvalid: CodeInvalidParams,     // 邮箱格式错误 -> 参数错误

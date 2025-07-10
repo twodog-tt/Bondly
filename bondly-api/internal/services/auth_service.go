@@ -167,6 +167,46 @@ func (s *AuthService) SendVerificationCode(email string) error {
 	return nil
 }
 
+// CheckFirstLogin 判断用户是否是第一次登陆
+// @return string Jwt Token
+func (s *AuthService) CheckFirstLogin(email string) (string, error) {
+	s.logger.WithFields(map[string]interface{}{
+		"email":  email,
+		"action": "check-login",
+	}).Info("判断用户是否是第一次登陆")
+
+	// 检查用户是否存在
+	user, err := s.userRepo.GetByEmail(email)
+	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+		s.logger.WithFields(map[string]interface{}{
+			"email": email,
+			"error": err.Error(),
+		}).Error("查询用户信息失败")
+		return "", err
+	}
+	if user.ID != 0 {
+		s.logger.WithFields(map[string]interface{}{
+			"email": email,
+		}).Info("用户已存在，返回Jwt-Token")
+		// 生成JWT Token
+		token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role)
+		if err != nil {
+			s.logger.WithFields(map[string]interface{}{
+				"userID": user.ID,
+				"email":  email,
+				"error":  err.Error(),
+			}).Error("生成JWT Token失败")
+			return "", errors.NewInternalError(err)
+		}
+		return token, nil
+	}
+	// 用户不存在，返回true
+	s.logger.WithFields(map[string]interface{}{
+		"email": email,
+	}).Info("用户不存在，返回空串")
+	return "", nil
+}
+
 // LoginIn 登录 - 使用统一的错误码管理
 func (s *AuthService) LoginIn(email, nickname string) (*dto.LoginResponse, error) {
 	s.logger.WithFields(map[string]interface{}{

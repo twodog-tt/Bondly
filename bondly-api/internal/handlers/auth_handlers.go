@@ -100,11 +100,18 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 		return
 	}
 
+	// 判断用户是否是第一次登陆
+	token, err := h.authService.CheckFirstLogin(req.Email)
+	if err != nil {
+		h.handleAuthError(c, err)
+		return
+	}
+
 	// 验证成功
 	data := dto.VerifyCodeData{
 		Email:   req.Email,
 		IsValid: true,
-		Token:   "", // 暂时为空，后续可以添加JWT token生成逻辑
+		Token:   token,
 	}
 	response.OK(c, data, response.MsgVerificationCodeValid)
 }
