@@ -26,8 +26,14 @@ definitions:
       bio:
         example: Hello, I'm a blockchain enthusiast
         type: string
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
       email:
         example: user@example.com
+        type: string
+      encrypted_private_key:
+        example: encrypted_private_key_data
         type: string
       nickname:
         example: John Doe
@@ -43,6 +49,41 @@ definitions:
         type: string
     required:
     - nickname
+    type: object
+  dto.CustodyWalletResponse:
+    properties:
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dto.GenerateWalletRequest:
+    properties:
+      user_id:
+        example: 1
+        type: integer
+    required:
+    - user_id
+    type: object
+  dto.GenerateWalletResponse:
+    properties:
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      message:
+        example: 托管钱包生成成功
+        type: string
+      nickname:
+        example: John Doe
+        type: string
+      user_id:
+        example: 1
+        type: integer
     type: object
   dto.LoginRequest:
     properties:
@@ -106,6 +147,12 @@ definitions:
       bio:
         example: Hello, I'm a blockchain enthusiast
         type: string
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      encrypted_private_key:
+        example: encrypted_private_key_data
+        type: string
       nickname:
         example: John Doe
         type: string
@@ -133,8 +180,14 @@ definitions:
       created_at:
         example: "2023-12-01T10:00:00Z"
         type: string
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
       email:
         example: user@example.com
+        type: string
+      encrypted_private_key:
+        example: encrypted_private_key_data
         type: string
       id:
         example: 1
@@ -181,13 +234,24 @@ definitions:
         example: user@example.com
         format: email
         type: string
-      nickname:
-        example: twodog
-        type: string
     required:
     - code
     - email
-    - nickname
+    type: object
+  dto.WalletInfoResponse:
+    properties:
+      custody_wallet_address:
+        example: 0x1234567890abcdef1234567890abcdef12345678
+        type: string
+      has_wallet:
+        example: true
+        type: boolean
+      nickname:
+        example: John Doe
+        type: string
+      user_id:
+        example: 1
+        type: integer
     type: object
   handlers.BlockchainStatusData:
     properties:
@@ -340,6 +404,19 @@ definitions:
       success:
         type: boolean
     type: object
+  response.Response-array_dto_GenerateWalletResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        items:
+          $ref: '#/definitions/dto.GenerateWalletResponse'
+        type: array
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
   response.Response-array_dto_UserResponse:
     properties:
       code:
@@ -359,6 +436,28 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/dto.CodeStatusData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_CustodyWalletResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.CustodyWalletResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_GenerateWalletResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.GenerateWalletResponse'
       message:
         type: string
       success:
@@ -414,6 +513,17 @@ definitions:
         type: integer
       data:
         $ref: '#/definitions/dto.VerifyCodeData'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
+  response.Response-dto_WalletInfoResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.WalletInfoResponse'
       message:
         type: string
       success:
@@ -1062,6 +1172,27 @@ paths:
       summary: 更新用户信息
       tags:
       - 用户管理
+  /api/v1/users/{id}/custody-wallet:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的托管钱包地址（不返回私钥）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在或钱包未生成
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 获取用户托管钱包信息
+      tags:
+      - 用户管理
   /api/v1/users/email/{email}:
     get:
       consumes:
@@ -1125,6 +1256,73 @@ paths:
       summary: 根据钱包地址获取用户信息
       tags:
       - 用户管理
+  /api/v1/wallets/{user_id}:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定用户的托管钱包信息（不返回私钥）
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 获取用户钱包信息
+      tags:
+      - 钱包管理
+  /api/v1/wallets/batch-generate:
+    post:
+      consumes:
+      - application/json
+      description: 为多个用户批量生成托管钱包
+      parameters:
+      - description: 用户ID列表
+        in: body
+        name: user_ids
+        required: true
+        schema:
+          items:
+            type: integer
+          type: array
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 部分用户生成失败
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 批量生成托管钱包
+      tags:
+      - 钱包管理
+  /api/v1/wallets/generate:
+    post:
+      consumes:
+      - application/json
+      description: 为指定用户生成托管钱包，包括钱包地址和加密私钥
+      parameters:
+      - description: 生成钱包请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.GenerateWalletRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 用户不存在或钱包已存在
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 为用户生成托管钱包
+      tags:
+      - 钱包管理
   /health:
     get:
       consumes:

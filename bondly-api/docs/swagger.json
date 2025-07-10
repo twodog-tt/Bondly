@@ -828,6 +828,141 @@
                 }
             }
         },
+        "/api/v1/users/{id}/custody-wallet": {
+            "get": {
+                "description": "获取指定用户的托管钱包地址（不返回私钥）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "用户管理"
+                ],
+                "summary": "获取用户托管钱包信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在或钱包未生成",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallets/batch-generate": {
+            "post": {
+                "description": "为多个用户批量生成托管钱包",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "钱包管理"
+                ],
+                "summary": "批量生成托管钱包",
+                "parameters": [
+                    {
+                        "description": "用户ID列表",
+                        "name": "user_ids",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "部分用户生成失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallets/generate": {
+            "post": {
+                "description": "为指定用户生成托管钱包，包括钱包地址和加密私钥",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "钱包管理"
+                ],
+                "summary": "为用户生成托管钱包",
+                "parameters": [
+                    {
+                        "description": "生成钱包请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.GenerateWalletRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在或钱包已存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/wallets/{user_id}": {
+            "get": {
+                "description": "获取指定用户的托管钱包信息（不返回私钥）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "钱包管理"
+                ],
+                "summary": "获取用户钱包信息",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "用户ID",
+                        "name": "user_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "用户不存在",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/health": {
             "get": {
                 "description": "检查API服务是否正常运行，返回服务状态、版本信息和运行时长。用于负载均衡器和监控系统的健康检查。",
@@ -958,9 +1093,17 @@
                     "type": "string",
                     "example": "Hello, I'm a blockchain enthusiast"
                 },
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
+                },
+                "encrypted_private_key": {
+                    "type": "string",
+                    "example": "encrypted_private_key_data"
                 },
                 "nickname": {
                     "type": "string",
@@ -977,6 +1120,56 @@
                 "wallet_address": {
                     "type": "string",
                     "example": "0x1234567890abcdef1234567890abcdef12345678"
+                }
+            }
+        },
+        "dto.CustodyWalletResponse": {
+            "type": "object",
+            "properties": {
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.GenerateWalletRequest": {
+            "type": "object",
+            "required": [
+                "user_id"
+            ],
+            "properties": {
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.GenerateWalletResponse": {
+            "type": "object",
+            "properties": {
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "message": {
+                    "type": "string",
+                    "example": "托管钱包生成成功"
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -1067,6 +1260,14 @@
                     "type": "string",
                     "example": "Hello, I'm a blockchain enthusiast"
                 },
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "encrypted_private_key": {
+                    "type": "string",
+                    "example": "encrypted_private_key_data"
+                },
                 "nickname": {
                     "type": "string",
                     "example": "John Doe"
@@ -1105,9 +1306,17 @@
                     "type": "string",
                     "example": "2023-12-01T10:00:00Z"
                 },
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
                 "email": {
                     "type": "string",
                     "example": "user@example.com"
+                },
+                "encrypted_private_key": {
+                    "type": "string",
+                    "example": "encrypted_private_key_data"
                 },
                 "id": {
                     "type": "integer",
@@ -1160,8 +1369,7 @@
             "type": "object",
             "required": [
                 "code",
-                "email",
-                "nickname"
+                "email"
             ],
             "properties": {
                 "code": {
@@ -1174,10 +1382,27 @@
                     "type": "string",
                     "format": "email",
                     "example": "user@example.com"
+                }
+            }
+        },
+        "dto.WalletInfoResponse": {
+            "type": "object",
+            "properties": {
+                "custody_wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890abcdef1234567890abcdef12345678"
+                },
+                "has_wallet": {
+                    "type": "boolean",
+                    "example": true
                 },
                 "nickname": {
                     "type": "string",
-                    "example": "twodog"
+                    "example": "John Doe"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
                 }
             }
         },
@@ -1398,6 +1623,26 @@
                 }
             }
         },
+        "response.Response-array_dto_GenerateWalletResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.GenerateWalletResponse"
+                    }
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "response.Response-array_dto_UserResponse": {
             "type": "object",
             "properties": {
@@ -1426,6 +1671,40 @@
                 },
                 "data": {
                     "$ref": "#/definitions/dto.CodeStatusData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_CustodyWalletResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.CustodyWalletResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_GenerateWalletResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.GenerateWalletResponse"
                 },
                 "message": {
                     "type": "string"
@@ -1511,6 +1790,23 @@
                 },
                 "data": {
                     "$ref": "#/definitions/dto.VerifyCodeData"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_WalletInfoResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.WalletInfoResponse"
                 },
                 "message": {
                     "type": "string"

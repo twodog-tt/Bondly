@@ -16,16 +16,18 @@ import (
 )
 
 type UserService struct {
-	userRepo     *repositories.UserRepository
-	cacheService cache.CacheService
-	logger       *logger.Logger
+	userRepo      *repositories.UserRepository
+	cacheService  cache.CacheService
+	walletService *WalletService
+	logger        *logger.Logger
 }
 
-func NewUserService(userRepo *repositories.UserRepository, cacheService cache.CacheService) *UserService {
+func NewUserService(userRepo *repositories.UserRepository, cacheService cache.CacheService, walletService *WalletService) *UserService {
 	return &UserService{
-		userRepo:     userRepo,
-		cacheService: cacheService,
-		logger:       logger.NewLogger(),
+		userRepo:      userRepo,
+		cacheService:  cacheService,
+		walletService: walletService,
+		logger:        logger.NewLogger(),
 	}
 }
 

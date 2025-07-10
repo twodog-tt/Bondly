@@ -30,6 +30,7 @@ type Server struct {
 	userHandlers   *handlers.UserHandlers
 	authHandlers   *handlers.AuthHandlers
 	uploadHandlers *handlers.UploadHandlers
+	walletHandlers *handlers.WalletHandlers
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
@@ -59,8 +60,10 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 
 	// 初始化依赖
 	userRepo := repositories.NewUserRepository(db)
-	userService := services.NewUserService(userRepo, cacheService)
+	walletService := services.NewWalletService()
+	userService := services.NewUserService(userRepo, cacheService, walletService)
 	userHandlers := handlers.NewUserHandlers(userService)
+	walletHandlers := handlers.NewWalletHandlers(walletService, userService)
 
 	// 初始化认证服务
 	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret)
@@ -80,6 +83,7 @@ func NewServer(cfg *config.Config, db *gorm.DB, logger *logger.Logger) *Server {
 		userHandlers:   userHandlers,
 		authHandlers:   authHandlers,
 		uploadHandlers: uploadHandlers,
+		walletHandlers: walletHandlers,
 	}
 
 	// 设置路由

@@ -83,3 +83,20 @@ func NewUserAlreadyExistsError() *AuthError {
 func NewCacheFailedError(err error) *AuthError {
 	return NewAuthError(err, response.CodeCacheFailed)
 }
+
+// 托管钱包相关错误函数
+func NewCustodyWalletEmptyError() *AuthError {
+	return NewAuthError(nil, response.CodeCustodyWalletEmpty)
+}
+
+func NewCustodyWalletInvalidError(err error) *AuthError {
+	return NewAuthError(err, response.CodeCustodyWalletInvalid)
+}
+
+func NewPrivateKeyEmptyError() *AuthError {
+	return NewAuthError(nil, response.CodePrivateKeyEmpty)
+}
+
+func NewPrivateKeyInvalidError(err error) *AuthError {
+	return NewAuthError(err, response.CodePrivateKeyInvalid)
+}

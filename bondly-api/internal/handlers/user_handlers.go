@@ -41,13 +41,15 @@ func (h *UserHandlers) CreateUser(c *gin.Context) {
 
 	// 构建用户模型
 	user := &models.User{
-		WalletAddress:   req.WalletAddress,
-		Email:           req.Email,
-		Nickname:        req.Nickname,
-		AvatarURL:       req.AvatarURL,
-		Bio:             req.Bio,
-		Role:            req.Role,
-		ReputationScore: req.ReputationScore,
+		WalletAddress:        req.WalletAddress,
+		Email:                req.Email,
+		Nickname:             req.Nickname,
+		AvatarURL:            req.AvatarURL,
+		Bio:                  req.Bio,
+		Role:                 req.Role,
+		ReputationScore:      req.ReputationScore,
+		CustodyWalletAddress: req.CustodyWalletAddress,
+		EncryptedPrivateKey:  req.EncryptedPrivateKey,
 	}
 
 	// 创建用户
@@ -191,6 +193,12 @@ func (h *UserHandlers) UpdateUser(c *gin.Context) {
 	if req.ReputationScore != nil {
 		user.ReputationScore = *req.ReputationScore
 	}
+	if req.CustodyWalletAddress != nil {
+		user.CustodyWalletAddress = req.CustodyWalletAddress
+	}
+	if req.EncryptedPrivateKey != nil {
+		user.EncryptedPrivateKey = req.EncryptedPrivateKey
+	}
 
 	// 更新用户
 	if err := h.userService.UpdateUser(user); err != nil {
@@ -267,19 +275,60 @@ func (h *UserHandlers) GetTopUsersByReputation(c *gin.Context) {
 	response.OK(c, data, response.MsgRankingRetrieved)
 }
 
+// GetUserCustodyWallet 获取用户托管钱包信息接口
+// @Summary 获取用户托管钱包信息
+// @Description 获取指定用户的托管钱包地址（不返回私钥）
+// @Tags 用户管理
+// @Accept json
+// @Produce json
+// @Param id path int true "用户ID"
+// @Success 200 {object} response.Response[dto.CustodyWalletResponse] "获取托管钱包信息成功"
+// @Failure 200 {object} response.Response[any] "用户不存在或钱包未生成"
+// @Router /api/v1/users/{id}/custody-wallet [get]
+func (h *UserHandlers) GetUserCustodyWallet(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.ParseInt(idStr, 10, 64)
+	if err != nil {
+		response.Fail(c, response.CodeUserIDInvalid, response.MsgUserIDInvalid)
+		return
+	}
+
+	user, err := h.userService.GetUserByID(int64(id))
+	if err != nil {
+		response.Fail(c, response.CodeInvalidParams, err.Error())
+		return
+	}
+
+	// 检查是否有托管钱包
+	if user.CustodyWalletAddress == nil {
+		response.Fail(c, response.CodeCustodyWalletEmpty, response.MsgCustodyWalletEmpty)
+		return
+	}
+
+	data := &dto.CustodyWalletResponse{
+		UserID:               user.ID,
+		Nickname:             user.Nickname,
+		CustodyWalletAddress: user.CustodyWalletAddress,
+	}
+
+	response.OK(c, data, "获取托管钱包信息成功")
+}
+
 // buildUserResponse 构建用户响应数据
 func (h *UserHandlers) buildUserResponse(user *models.User) *dto.UserResponse {
 	response := &dto.UserResponse{
-		ID:              user.ID,
-		WalletAddress:   user.WalletAddress,
-		Email:           user.Email,
-		Nickname:        user.Nickname,
-		AvatarURL:       user.AvatarURL,
-		Bio:             user.Bio,
-		Role:            user.Role,
-		ReputationScore: user.ReputationScore,
-		CreatedAt:       user.CreatedAt.Format("2006-01-02T15:04:05Z"),
-		UpdatedAt:       user.UpdatedAt.Format("2006-01-02T15:04:05Z"),
+		ID:                   user.ID,
+		WalletAddress:        user.WalletAddress,
+		Email:                user.Email,
+		Nickname:             user.Nickname,
+		AvatarURL:            user.AvatarURL,
+		Bio:                  user.Bio,
+		Role:                 user.Role,
+		ReputationScore:      user.ReputationScore,
+		CustodyWalletAddress: user.CustodyWalletAddress,
+		EncryptedPrivateKey:  user.EncryptedPrivateKey,
+		CreatedAt:            user.CreatedAt.Format("2006-01-02T15:04:05Z"),
+		UpdatedAt:            user.UpdatedAt.Format("2006-01-02T15:04:05Z"),
 	}
 
 	if user.LastLoginAt != nil {

@@ -49,13 +49,14 @@ func (s *Server) setupRoutes() {
 		// 用户相关路由
 		users := v1.Group("/users")
 		{
-			users.POST("/", s.userHandlers.CreateUser)                           // 创建用户
-			users.GET("/", s.userHandlers.ListUsers)                             // 获取用户列表
-			users.GET("/top", s.userHandlers.GetTopUsersByReputation)            // 获取声誉排行榜
-			users.GET("/:id", s.userHandlers.GetUserByID)                        // 根据ID获取用户
-			users.POST("/:id", s.userHandlers.UpdateUser)                        // 更新用户
-			users.GET("/wallet/:address", s.userHandlers.GetUserByWalletAddress) // 根据钱包地址获取用户
-			users.GET("/email/:email", s.userHandlers.GetUserByEmail)            // 根据邮箱获取用户
+			users.POST("/", s.userHandlers.CreateUser)                            // 创建用户
+			users.GET("/", s.userHandlers.ListUsers)                              // 获取用户列表
+			users.GET("/top", s.userHandlers.GetTopUsersByReputation)             // 获取声誉排行榜
+			users.GET("/:id", s.userHandlers.GetUserByID)                         // 根据ID获取用户
+			users.POST("/:id", s.userHandlers.UpdateUser)                         // 更新用户
+			users.GET("/wallet/:address", s.userHandlers.GetUserByWalletAddress)  // 根据钱包地址获取用户
+			users.GET("/email/:email", s.userHandlers.GetUserByEmail)             // 根据邮箱获取用户
+			users.GET("/:id/custody-wallet", s.userHandlers.GetUserCustodyWallet) // 获取用户托管钱包信息
 		}
 
 		// 内容相关路由
@@ -79,6 +80,14 @@ func (s *Server) setupRoutes() {
 		upload := v1.Group("/upload")
 		{
 			upload.POST("/image", s.uploadHandlers.UploadImage)
+		}
+
+		// 钱包管理路由
+		wallets := v1.Group("/wallets")
+		{
+			wallets.POST("/generate", s.walletHandlers.GenerateCustodyWallet)      // 生成托管钱包
+			wallets.GET("/:user_id", s.walletHandlers.GetWalletInfo)               // 获取钱包信息
+			wallets.POST("/batch-generate", s.walletHandlers.BatchGenerateWallets) // 批量生成钱包
 		}
 
 		// 统计信息路由

@@ -25,18 +25,22 @@ const (
 
 // 用户相关错误码 (1700-1799)
 const (
-	CodeUserAddressEmpty   = 1700
-	CodeUserIDEmpty        = 1701
-	CodeUserAlreadyExists  = 1702
-	CodeUserNotFound       = 1703
-	CodeUserUpdateFailed   = 1704
-	CodeUserCreateFailed   = 1705
-	CodeCacheFailed        = 1706
-	CodeUserIDInvalid      = 1707
-	CodeWalletAddressEmpty = 1708
-	CodeEmailAddressEmpty  = 1709
-	CodeGetUserListFailed  = 1710
-	CodeGetRankingFailed   = 1711
+	CodeUserAddressEmpty     = 1700
+	CodeUserIDEmpty          = 1701
+	CodeUserAlreadyExists    = 1702
+	CodeUserNotFound         = 1703
+	CodeUserUpdateFailed     = 1704
+	CodeUserCreateFailed     = 1705
+	CodeCacheFailed          = 1706
+	CodeUserIDInvalid        = 1707
+	CodeWalletAddressEmpty   = 1708
+	CodeEmailAddressEmpty    = 1709
+	CodeGetUserListFailed    = 1710
+	CodeGetRankingFailed     = 1711
+	CodeCustodyWalletEmpty   = 1712
+	CodeCustodyWalletInvalid = 1713
+	CodePrivateKeyEmpty      = 1714
+	CodePrivateKeyInvalid    = 1715
 )
 
 // 验证码相关错误码 (1800-1899)
@@ -85,18 +89,22 @@ var ErrorCodeToHTTPStatus = map[int]int{
 	CodeEmailParamEmpty:    400, // Bad Request
 
 	// 用户相关错误码
-	CodeUserAddressEmpty:   400, // Bad Request
-	CodeUserIDEmpty:        400, // Bad Request
-	CodeUserAlreadyExists:  409, // Conflict
-	CodeUserNotFound:       404, // Not Found
-	CodeUserUpdateFailed:   500, // Internal Server Error
-	CodeUserCreateFailed:   500, // Internal Server Error
-	CodeCacheFailed:        500, // Internal Server Error
-	CodeUserIDInvalid:      400, // Bad Request
-	CodeWalletAddressEmpty: 400, // Bad Request
-	CodeEmailAddressEmpty:  400, // Bad Request
-	CodeGetUserListFailed:  500, // Internal Server Error
-	CodeGetRankingFailed:   500, // Internal Server Error
+	CodeUserAddressEmpty:     400, // Bad Request
+	CodeUserIDEmpty:          400, // Bad Request
+	CodeUserAlreadyExists:    409, // Conflict
+	CodeUserNotFound:         404, // Not Found
+	CodeUserUpdateFailed:     500, // Internal Server Error
+	CodeUserCreateFailed:     500, // Internal Server Error
+	CodeCacheFailed:          500, // Internal Server Error
+	CodeUserIDInvalid:        400, // Bad Request
+	CodeWalletAddressEmpty:   400, // Bad Request
+	CodeEmailAddressEmpty:    400, // Bad Request
+	CodeGetUserListFailed:    500, // Internal Server Error
+	CodeGetRankingFailed:     500, // Internal Server Error
+	CodeCustodyWalletEmpty:   400, // Bad Request
+	CodeCustodyWalletInvalid: 400, // Bad Request
+	CodePrivateKeyEmpty:      400, // Bad Request
+	CodePrivateKeyInvalid:    400, // Bad Request
 
 	// 验证码相关错误码
 	CodeEmailInvalid: 400, // Bad Request
@@ -139,13 +147,17 @@ var ErrorCodeToBusinessCode = map[int]int{
 	CodeLockTTLFailed:   CodeInternalError,
 
 	// 用户相关错误码 -> 保持原样
-	CodeUserCreateFailed:   CodeUserCreateFailed,
-	CodeUserNotFound:       CodeUserNotFound,
-	CodeUserIDInvalid:      CodeInvalidParams,
-	CodeWalletAddressEmpty: CodeInvalidParams,
-	CodeEmailAddressEmpty:  CodeInvalidParams,
-	CodeGetUserListFailed:  CodeInternalError,
-	CodeGetRankingFailed:   CodeInternalError,
+	CodeUserCreateFailed:     CodeUserCreateFailed,
+	CodeUserNotFound:         CodeUserNotFound,
+	CodeUserIDInvalid:        CodeInvalidParams,
+	CodeWalletAddressEmpty:   CodeInvalidParams,
+	CodeEmailAddressEmpty:    CodeInvalidParams,
+	CodeGetUserListFailed:    CodeInternalError,
+	CodeGetRankingFailed:     CodeInternalError,
+	CodeCustodyWalletEmpty:   CodeInvalidParams,
+	CodeCustodyWalletInvalid: CodeInvalidParams,
+	CodePrivateKeyEmpty:      CodeInvalidParams,
+	CodePrivateKeyInvalid:    CodeInvalidParams,
 
 	// 文件上传相关错误码 -> 统一映射
 	CodeFileTooLarge:     CodeInvalidParams,
@@ -173,18 +185,22 @@ const (
 	MsgEmailParamEmpty    = "邮箱参数不能为空"
 
 	// 用户相关错误消息
-	MsgUserAddressEmpty   = "用户地址不能为空"
-	MsgUserIDEmpty        = "用户ID不能为空"
-	MsgUserAlreadyExists  = "用户已存在"
-	MsgUserNotFound       = "用户不存在"
-	MsgUserUpdateFailed   = "用户更新失败"
-	MsgUserCreateFailed   = "创建用户失败"
-	MsgCacheFailed        = "缓存操作失败"
-	MsgUserIDInvalid      = "用户ID格式错误"
-	MsgWalletAddressEmpty = "钱包地址不能为空"
-	MsgEmailAddressEmpty  = "邮箱地址不能为空"
-	MsgGetUserListFailed  = "获取用户列表失败"
-	MsgGetRankingFailed   = "获取排行榜失败"
+	MsgUserAddressEmpty     = "用户地址不能为空"
+	MsgUserIDEmpty          = "用户ID不能为空"
+	MsgUserAlreadyExists    = "用户已存在"
+	MsgUserNotFound         = "用户不存在"
+	MsgUserUpdateFailed     = "用户更新失败"
+	MsgUserCreateFailed     = "创建用户失败"
+	MsgCacheFailed          = "缓存操作失败"
+	MsgUserIDInvalid        = "用户ID格式错误"
+	MsgWalletAddressEmpty   = "钱包地址不能为空"
+	MsgEmailAddressEmpty    = "邮箱地址不能为空"
+	MsgGetUserListFailed    = "获取用户列表失败"
+	MsgGetRankingFailed     = "获取排行榜失败"
+	MsgCustodyWalletEmpty   = "托管钱包地址不能为空"
+	MsgCustodyWalletInvalid = "托管钱包地址格式错误"
+	MsgPrivateKeyEmpty      = "私钥不能为空"
+	MsgPrivateKeyInvalid    = "私钥格式错误"
 
 	// 验证码相关错误消息
 	MsgEmailInvalid = "邮箱格式不正确"
@@ -287,6 +303,14 @@ func GetMessage(code int) string {
 		return MsgGetUserListFailed
 	case CodeGetRankingFailed:
 		return MsgGetRankingFailed
+	case CodeCustodyWalletEmpty:
+		return MsgCustodyWalletEmpty
+	case CodeCustodyWalletInvalid:
+		return MsgCustodyWalletInvalid
+	case CodePrivateKeyEmpty:
+		return MsgPrivateKeyEmpty
+	case CodePrivateKeyInvalid:
+		return MsgPrivateKeyInvalid
 
 	// 验证码相关错误码
 	case CodeEmailInvalid:
