@@ -55,6 +55,17 @@ export interface LoginResponse {
   wallet_address?: string;
 }
 
+// 钱包登录响应数据
+export interface WalletLoginResponse {
+  token: string;
+  user_id: number;
+  email: string;
+  nickname: string;
+  role: string;
+  is_new_user: boolean;
+  expires_in: string;
+}
+
 // 图片上传响应数据
 export interface UploadImageData {
   url: string;
@@ -260,6 +271,11 @@ export const authApi = {
   // 用户登录
   async login(email: string, nickname: string, image_url?: string): Promise<LoginResponse> {
     return post<LoginResponse>('/api/v1/auth/login', { email, nickname, image_url });
+  },
+
+  // 钱包登录
+  async walletLogin(walletAddress: string): Promise<WalletLoginResponse> {
+    return post<WalletLoginResponse>('/api/v1/auth/wallet-login', { wallet_address: walletAddress });
   },
 };
 

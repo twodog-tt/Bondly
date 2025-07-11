@@ -161,6 +161,40 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/wallet-login": {
+            "post": {
+                "description": "用户仅通过钱包登陆，如果用户不存在则自动创建新用户",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "认证管理"
+                ],
+                "summary": "用户仅通过钱包登陆",
+                "parameters": [
+                    {
+                        "description": "钱包登录请求体",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.WalletLoginRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "钱包地址格式错误或登录失败",
+                        "schema": {
+                            "$ref": "#/definitions/response.Response-any"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/blockchain/contract/{address}": {
             "get": {
                 "description": "根据合约地址获取智能合约的详细信息，包括合约名称、符号、精度、总供应量等基本信息",
@@ -632,7 +666,7 @@ const docTemplate = `{
                 }
             },
             "post": {
-                "description": "创建新的用户账户，支持Web2邮箱和Web3钱包地址",
+                "description": "创建新用户，支持Web2和Web3用户信息",
                 "consumes": [
                     "application/json"
                 ],
@@ -656,7 +690,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "请求参数错误或用户已存在",
+                        "description": "创建失败",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -708,19 +742,19 @@ const docTemplate = `{
                 "tags": [
                     "用户管理"
                 ],
-                "summary": "获取声誉积分排行榜",
+                "summary": "获取声誉积分最高的用户",
                 "parameters": [
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "返回数量",
+                        "description": "获取数量",
                         "name": "limit",
                         "in": "query"
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "获取排行榜成功",
+                        "description": "获取成功",
                         "schema": {
                             "$ref": "#/definitions/response.Response-array_dto_UserResponse"
                         }
@@ -833,7 +867,7 @@ const docTemplate = `{
         },
         "/api/v1/users/{id}/custody-wallet": {
             "get": {
-                "description": "获取指定用户的托管钱包地址（不返回私钥）",
+                "description": "获取指定用户的托管钱包地址和加密私钥",
                 "consumes": [
                     "application/json"
                 ],
@@ -855,7 +889,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户不存在或钱包未生成",
+                        "description": "用户不存在",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -936,7 +970,7 @@ const docTemplate = `{
         },
         "/api/v1/wallets/generate": {
             "post": {
-                "description": "为指定用户生成托管钱包，包括钱包地址和加密私钥",
+                "description": "为指定用户生成托管钱包",
                 "consumes": [
                     "application/json"
                 ],
@@ -946,7 +980,7 @@ const docTemplate = `{
                 "tags": [
                     "钱包管理"
                 ],
-                "summary": "为用户生成托管钱包",
+                "summary": "生成托管钱包",
                 "parameters": [
                     {
                         "description": "生成钱包请求体",
@@ -960,7 +994,7 @@ const docTemplate = `{
                 ],
                 "responses": {
                     "200": {
-                        "description": "用户不存在或钱包已存在",
+                        "description": "用户不存在或已存在托管钱包",
                         "schema": {
                             "$ref": "#/definitions/response.Response-any"
                         }
@@ -1259,6 +1293,10 @@ const docTemplate = `{
                     "type": "string",
                     "example": "user@example.com"
                 },
+                "image_url": {
+                    "type": "string",
+                    "example": "https://example.com/avatar.jpg"
+                },
                 "nickname": {
                     "type": "string",
                     "example": "John Doe"
@@ -1478,6 +1516,51 @@ const docTemplate = `{
                 "nickname": {
                     "type": "string",
                     "example": "John Doe"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.WalletLoginRequest": {
+            "type": "object",
+            "required": [
+                "wallet_address"
+            ],
+            "properties": {
+                "wallet_address": {
+                    "type": "string",
+                    "example": "0x1234567890123456789012345678901234567890"
+                }
+            }
+        },
+        "dto.WalletLoginResponse": {
+            "type": "object",
+            "properties": {
+                "email": {
+                    "type": "string",
+                    "example": "user@example.com"
+                },
+                "expires_in": {
+                    "type": "string",
+                    "example": "24小时"
+                },
+                "is_new_user": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "nickname": {
+                    "type": "string",
+                    "example": "John Doe"
+                },
+                "role": {
+                    "type": "string",
+                    "example": "user"
+                },
+                "token": {
+                    "type": "string",
+                    "example": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
                 },
                 "user_id": {
                     "type": "integer",
@@ -1903,6 +1986,23 @@ const docTemplate = `{
                 },
                 "data": {
                     "$ref": "#/definitions/dto.WalletInfoResponse"
+                },
+                "message": {
+                    "type": "string"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
+        "response.Response-dto_WalletLoginResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "type": "integer"
+                },
+                "data": {
+                    "$ref": "#/definitions/dto.WalletLoginResponse"
                 },
                 "message": {
                     "type": "string"

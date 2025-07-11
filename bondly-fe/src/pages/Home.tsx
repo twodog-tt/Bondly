@@ -41,7 +41,7 @@ const honorTopUsers = [
 
 const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const [showLoginModal, setShowLoginModal] = useState(false);
-  const [loginStep, setLoginStep] = useState(1);
+  const [loginStep, setLoginStep] = useState(0); // 0: 选择登录方式, 1: 输入邮箱, 2: 输入用户名, 3: 头像选择
   const [loginData, setLoginData] = useState({
     username: '',
     email: '',
@@ -73,7 +73,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   // 处理登录按钮点击
   const handleLoginClick = () => {
     setShowLoginModal(true);
-    setLoginStep(1); // 第一步改为输入邮箱
+    setLoginStep(0); // 新增：第0步为选择登录方式
     setLoginData({
       username: '',
       email: '',
@@ -93,7 +93,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   // 关闭登录模态框
   const handleCloseLoginModal = () => {
     setShowLoginModal(false);
-    setLoginStep(1);
+    setLoginStep(0); // 重置为第0步
     setLoginData({
       username: '',
       email: '',
@@ -108,6 +108,83 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     setIsCodeSent(false);
     setIsVerifying(false);
     setCountdown(0);
+  };
+
+  // 选择登录方式
+  const handleLoginMethodSelect = (method: 'email' | 'wallet') => {
+    if (method === 'wallet') {
+      // 直接进行钱包登录
+      handleWalletLogin();
+    } else {
+      // 进入邮箱登录流程
+      setLoginStep(1);
+    }
+  };
+
+  // 钱包登录处理
+  const handleWalletLogin = async () => {
+    try {
+      // 检查钱包是否已连接
+      if (!window.ethereum) {
+        alert('请先安装 MetaMask 钱包');
+        return;
+      }
+
+      // 请求连接钱包
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
+
+      if (accounts.length === 0) {
+        alert('请连接钱包');
+        return;
+      }
+
+      const walletAddress = accounts[0];
+      console.log('钱包地址:', walletAddress);
+
+      // 调用钱包登录接口
+      const { authApi } = await import('../utils/api');
+      const loginResult = await authApi.walletLogin(walletAddress);
+
+      console.log('钱包登录成功:', loginResult);
+
+      // 使用认证Hook的login函数
+      const userInfo = {
+        user_id: loginResult.user_id,
+        email: loginResult.email,
+        nickname: loginResult.nickname,
+        role: loginResult.role,
+        is_new_user: loginResult.is_new_user,
+        wallet_address: walletAddress // 存储钱包地址
+      };
+
+      login(loginResult.token, userInfo);
+
+      // 如果是新用户，显示欢迎消息
+      if (loginResult.is_new_user) {
+        setSuccessMessage(`Welcome to Bondly!\nYour wallet account has been created successfully.\nWallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
+      } else {
+        setSuccessMessage(`Welcome back!\nYou have successfully logged in with your wallet.\nWallet: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}`);
+      }
+
+      setShowSuccessModal(true);
+      setShowLoginModal(false);
+
+      // 延迟2秒后刷新页面
+      setTimeout(() => {
+        window.location.reload();
+      }, 2000);
+
+    } catch (error: any) {
+      console.error('钱包登录失败:', error);
+      
+      if (error instanceof Error) {
+        alert(`钱包登录失败: ${error.message}`);
+      } else {
+        alert('钱包登录失败，请稍后重试');
+      }
+    }
   };
 
   // 输入框变化处理
@@ -698,7 +775,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
               marginBottom: "30px",
               gap: "8px"
             }}>
-              {[1, 2, 3].map((step) => (
+              {[0, 1, 2, 3].map((step) => (
                 <div
                   key={step}
                   style={{
@@ -713,6 +790,68 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
             </div>
 
             {/* 步骤内容 */}
+            {loginStep === 0 && (
+              <div>
+                <h3 style={{
+                  fontSize: "24px",
+                  fontWeight: "bold",
+                  marginBottom: "16px",
+                  textAlign: "center"
+                }}>
+                  Choose Login Method
+                </h3>
+                <p style={{
+                  fontSize: "14px",
+                  color: "#9ca3af",
+                  marginBottom: "24px",
+                  textAlign: "center"
+                }}>
+                  Select how you would like to log in to your account.
+                </p>
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: "16px",
+                  marginBottom: "24px"
+                }}>
+                  <button
+                    onClick={() => handleLoginMethodSelect('email')}
+                    style={{
+                      width: "100%",
+                      padding: "12px 24px",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      background: "#3b82f6",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      transition: "background 0.3s ease"
+                    }}
+                  >
+                    Email Login
+                  </button>
+                  <button
+                    onClick={() => handleLoginMethodSelect('wallet')}
+                    style={{
+                      width: "100%",
+                      padding: "12px 24px",
+                      fontSize: "16px",
+                      fontWeight: "600",
+                      background: "#3b82f6",
+                      color: "white",
+                      border: "none",
+                      borderRadius: "12px",
+                      cursor: "pointer",
+                      transition: "background 0.3s ease"
+                    }}
+                  >
+                    Wallet Login (MetaMask)
+                  </button>
+                </div>
+              </div>
+            )}
+
             {loginStep === 1 && (
               <div>
                 <h3 style={{

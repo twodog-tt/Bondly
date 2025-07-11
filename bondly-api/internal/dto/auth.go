@@ -55,3 +55,14 @@ type LoginResponse struct {
 type WalletLoginRequest struct {
 	WalletAddress string `json:"wallet_address" binding:"required" example:"0x1234567890123456789012345678901234567890"`
 }
+
+// WalletLoginResponse 钱包登录响应结构
+type WalletLoginResponse struct {
+	Token     string `json:"token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
+	UserID    int64  `json:"user_id" example:"1"`
+	Email     string `json:"email" example:"user@example.com"`
+	Nickname  string `json:"nickname" example:"John Doe"`
+	Role      string `json:"role" example:"user"`
+	IsNewUser bool   `json:"is_new_user" example:"false"`
+	ExpiresIn string `json:"expires_in" example:"24小时"`
+}

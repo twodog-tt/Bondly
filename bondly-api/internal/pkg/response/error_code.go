@@ -34,13 +34,14 @@ const (
 	CodeCacheFailed          = 1706
 	CodeUserIDInvalid        = 1707
 	CodeWalletAddressEmpty   = 1708
-	CodeEmailAddressEmpty    = 1709
-	CodeGetUserListFailed    = 1710
-	CodeGetRankingFailed     = 1711
-	CodeCustodyWalletEmpty   = 1712
-	CodeCustodyWalletInvalid = 1713
-	CodePrivateKeyEmpty      = 1714
-	CodePrivateKeyInvalid    = 1715
+	CodeWalletAddressInvalid = 1709
+	CodeEmailAddressEmpty    = 1710
+	CodeGetUserListFailed    = 1711
+	CodeGetRankingFailed     = 1712
+	CodeCustodyWalletEmpty   = 1713
+	CodeCustodyWalletInvalid = 1714
+	CodePrivateKeyEmpty      = 1715
+	CodePrivateKeyInvalid    = 1716
 )
 
 // 验证码相关错误码 (1800-1899)
@@ -98,6 +99,7 @@ var ErrorCodeToHTTPStatus = map[int]int{
 	CodeCacheFailed:          500, // Internal Server Error
 	CodeUserIDInvalid:        400, // Bad Request
 	CodeWalletAddressEmpty:   400, // Bad Request
+	CodeWalletAddressInvalid: 400, // Bad Request
 	CodeEmailAddressEmpty:    400, // Bad Request
 	CodeGetUserListFailed:    500, // Internal Server Error
 	CodeGetRankingFailed:     500, // Internal Server Error
@@ -194,6 +196,7 @@ const (
 	MsgCacheFailed          = "缓存操作失败"
 	MsgUserIDInvalid        = "用户ID格式错误"
 	MsgWalletAddressEmpty   = "钱包地址不能为空"
+	MsgWalletAddressInvalid = "钱包地址格式错误"
 	MsgEmailAddressEmpty    = "邮箱地址不能为空"
 	MsgGetUserListFailed    = "获取用户列表失败"
 	MsgGetRankingFailed     = "获取排行榜失败"
@@ -297,6 +300,8 @@ func GetMessage(code int) string {
 		return MsgUserIDInvalid
 	case CodeWalletAddressEmpty:
 		return MsgWalletAddressEmpty
+	case CodeWalletAddressInvalid:
+		return MsgWalletAddressInvalid
 	case CodeEmailAddressEmpty:
 		return MsgEmailAddressEmpty
 	case CodeGetUserListFailed:

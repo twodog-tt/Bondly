@@ -117,6 +117,9 @@ definitions:
       email:
         example: user@example.com
         type: string
+      image_url:
+        example: https://example.com/avatar.jpg
+        type: string
       nickname:
         example: John Doe
         type: string
@@ -278,6 +281,38 @@ definitions:
         type: boolean
       nickname:
         example: John Doe
+        type: string
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dto.WalletLoginRequest:
+    properties:
+      wallet_address:
+        example: 0x1234567890123456789012345678901234567890
+        type: string
+    required:
+    - wallet_address
+    type: object
+  dto.WalletLoginResponse:
+    properties:
+      email:
+        example: user@example.com
+        type: string
+      expires_in:
+        example: 24小时
+        type: string
+      is_new_user:
+        example: false
+        type: boolean
+      nickname:
+        example: John Doe
+        type: string
+      role:
+        example: user
+        type: string
+      token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
         type: string
       user_id:
         example: 1
@@ -570,6 +605,17 @@ definitions:
       success:
         type: boolean
     type: object
+  response.Response-dto_WalletLoginResponse:
+    properties:
+      code:
+        type: integer
+      data:
+        $ref: '#/definitions/dto.WalletLoginResponse'
+      message:
+        type: string
+      success:
+        type: boolean
+    type: object
   response.Response-handlers_BlockchainStatusData:
     properties:
       code:
@@ -825,6 +871,28 @@ paths:
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 验证邮箱验证码
+      tags:
+      - 认证管理
+  /api/v1/auth/wallet-login:
+    post:
+      consumes:
+      - application/json
+      description: 用户仅通过钱包登陆，如果用户不存在则自动创建新用户
+      parameters:
+      - description: 钱包登录请求体
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.WalletLoginRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 钱包地址格式错误或登录失败
+          schema:
+            $ref: '#/definitions/response.Response-any'
+      summary: 用户仅通过钱包登陆
       tags:
       - 认证管理
   /api/v1/blockchain/contract/{address}:
@@ -1148,7 +1216,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 创建新的用户账户，支持Web2邮箱和Web3钱包地址
+      description: 创建新用户，支持Web2和Web3用户信息
       parameters:
       - description: 创建用户请求体
         in: body
@@ -1160,7 +1228,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 请求参数错误或用户已存在
+          description: 创建失败
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 创建新用户
@@ -1217,7 +1285,7 @@ paths:
     get:
       consumes:
       - application/json
-      description: 获取指定用户的托管钱包地址（不返回私钥）
+      description: 获取指定用户的托管钱包地址和加密私钥
       parameters:
       - description: 用户ID
         in: path
@@ -1228,7 +1296,7 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户不存在或钱包未生成
+          description: 用户不存在
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 获取用户托管钱包信息
@@ -1262,7 +1330,7 @@ paths:
       description: 获取声誉积分最高的用户列表
       parameters:
       - default: 10
-        description: 返回数量
+        description: 获取数量
         in: query
         name: limit
         type: integer
@@ -1270,10 +1338,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: 获取排行榜成功
+          description: 获取成功
           schema:
             $ref: '#/definitions/response.Response-array_dto_UserResponse'
-      summary: 获取声誉积分排行榜
+      summary: 获取声誉积分最高的用户
       tags:
       - 用户管理
   /api/v1/users/wallet/{address}:
@@ -1368,7 +1436,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: 为指定用户生成托管钱包，包括钱包地址和加密私钥
+      description: 为指定用户生成托管钱包
       parameters:
       - description: 生成钱包请求体
         in: body
@@ -1380,10 +1448,10 @@ paths:
       - application/json
       responses:
         "200":
-          description: 用户不存在或钱包已存在
+          description: 用户不存在或已存在托管钱包
           schema:
             $ref: '#/definitions/response.Response-any'
-      summary: 为用户生成托管钱包
+      summary: 生成托管钱包
       tags:
       - 钱包管理
   /health:

@@ -8,6 +8,8 @@ import (
 	"errors"
 	"strings"
 
+	"bondly-api/internal/utils"
+
 	"github.com/gin-gonic/gin"
 )
 
@@ -248,7 +250,7 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 // @Produce json
 // @Param request body dto.WalletLoginRequest true "钱包登录请求体"
 // @Success 200 {object} response.Response[dto.WalletLoginResponse] "钱包登录成功"
-// @Failure 200 {object} response.Response[any] "钱包登录失败"
+// @Failure 200 {object} response.Response[any] "钱包地址格式错误或登录失败"
 // @Router /api/v1/auth/wallet-login [post]
 func (h *AuthHandlers) WalletLogin(c *gin.Context) {
 	// 创建业务日志工具
@@ -269,13 +271,27 @@ func (h *AuthHandlers) WalletLogin(c *gin.Context) {
 	// 清理参数
 	walletAddress := strings.TrimSpace(req.WalletAddress)
 
+	// 验证钱包地址是否为空
+	if walletAddress == "" {
+		bizLog.ValidationFailed("wallet_address", "钱包地址不能为空", "")
+		response.Fail(c, response.CodeWalletAddressEmpty, response.MsgWalletAddressEmpty)
+		return
+	}
+
+	// 验证钱包地址格式
+	if !utils.ValidateAddress(walletAddress) {
+		bizLog.ValidationFailed("wallet_address", "钱包地址格式错误", walletAddress)
+		response.Fail(c, response.CodeWalletAddressInvalid, response.MsgWalletAddressInvalid)
+		return
+	}
+
 	// 记录关键参数
 	bizLog.BusinessLogic("参数处理", map[string]interface{}{
 		"wallet_address": walletAddress,
 	})
 
 	// 调用服务层登录
-	loginData, err := h.authService.WalletLoginIn(c.Request.Context(), req.WalletAddress)
+	loginData, err := h.authService.WalletLoginIn(c.Request.Context(), walletAddress)
 	if err != nil {
 		h.handleAuthError(c, err)
 		return

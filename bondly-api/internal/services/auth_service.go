@@ -222,7 +222,7 @@ func (s *AuthService) CheckFirstLogin(ctx context.Context, email string) (string
 }
 
 // WalletLoginIn 钱包登录
-func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (*dto.LoginResponse, error) {
+func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (*dto.WalletLoginResponse, error) {
 	log := loggerpkg.FromContext(ctx)
 	log.WithFields(logrus.Fields{
 		"walletAddress": walletAddress,
@@ -231,6 +231,8 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 
 	// 1.检查用户是否存在
 	user, err := s.userRepo.GetByWalletAddress(walletAddress)
+	var isNewUser bool
+
 	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
 		log.WithFields(logrus.Fields{
 			"walletAddress": walletAddress,
@@ -242,12 +244,14 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 		// 用户不存在，需要创建用户
 		nickName := utils.GenerateRandomString(8)
 		email := utils.GenerateRandomString(6) + "@example.com"
-		imageUrl := "http://localhost:8080/uploads/2025/07/c76ca4a8-f402-413f-8468-d8998cae819a.png"
+		// 使用配置中的默认头像或环境变量
+		defaultAvatarURL := s.getDefaultAvatarURL()
 		user = &models.User{
-			Email:     &email,
-			Nickname:  nickName,
-			AvatarURL: &imageUrl,
-			Role:      "user", // 默认角色
+			Email:         &email,
+			Nickname:      nickName,
+			AvatarURL:     &defaultAvatarURL,
+			WalletAddress: &walletAddress, // 绑定钱包地址
+			Role:          "user",         // 默认角色
 		}
 		if err := s.userRepo.Create(user); err != nil {
 			log.WithFields(logrus.Fields{
@@ -260,6 +264,7 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 				"walletAddress": walletAddress,
 				"user":          user,
 			}).Info("用户创建成功")
+			isNewUser = true
 		}
 	}
 	if err == nil && user.ID > 0 {
@@ -277,6 +282,7 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 			}).Error("更新最后登录时间失败")
 			return nil, errors.NewUserUpdateFailedError(err)
 		}
+		isNewUser = false
 	}
 
 	// 3. 生成JWT Token
@@ -291,21 +297,28 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 	}
 
 	log.WithFields(logrus.Fields{
-		"userID":   user.ID,
-		"email":    user.Email,
-		"nickname": user.Nickname,
+		"userID":    user.ID,
+		"email":     user.Email,
+		"nickname":  user.Nickname,
+		"isNewUser": isNewUser,
 	}).Info("用户登录处理完成")
 
 	// 4. 返回登录响应
-	return &dto.LoginResponse{
+	return &dto.WalletLoginResponse{
 		Token:     token,
 		UserID:    user.ID,
 		Email:     *user.Email,
 		Nickname:  user.Nickname,
 		Role:      user.Role,
+		IsNewUser: isNewUser,
 		ExpiresIn: "24小时",
 	}, nil
+}
 
+// getDefaultAvatarURL 获取默认头像URL
+func (s *AuthService) getDefaultAvatarURL() string {
+	// 可以从配置文件中读取，这里先使用一个合理的默认值
+	return "https://api.bondly.com/uploads/default-avatar.png"
 }
 
 // LoginIn 登录 - 使用统一的错误码管理
