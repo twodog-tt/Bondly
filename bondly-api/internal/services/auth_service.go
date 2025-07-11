@@ -221,6 +221,93 @@ func (s *AuthService) CheckFirstLogin(ctx context.Context, email string) (string
 	return "", nil
 }
 
+// WalletLoginIn 钱包登录
+func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (*dto.LoginResponse, error) {
+	log := loggerpkg.FromContext(ctx)
+	log.WithFields(logrus.Fields{
+		"walletAddress": walletAddress,
+		"action":        "wallet-login",
+	}).Info("开始处理用户仅钱包登录")
+
+	// 1.检查用户是否存在
+	user, err := s.userRepo.GetByWalletAddress(walletAddress)
+	if err != nil && !stderrors.Is(err, gorm.ErrRecordNotFound) {
+		log.WithFields(logrus.Fields{
+			"walletAddress": walletAddress,
+			"error":         err.Error(),
+		}).Error("查询用户信息失败")
+		return nil, err
+	}
+	if err != nil && stderrors.Is(err, gorm.ErrRecordNotFound) {
+		// 用户不存在，需要创建用户
+		nickName := utils.GenerateRandomString(8)
+		email := utils.GenerateRandomString(6) + "@example.com"
+		imageUrl := "http://localhost:8080/uploads/2025/07/c76ca4a8-f402-413f-8468-d8998cae819a.png"
+		user = &models.User{
+			Email:     &email,
+			Nickname:  nickName,
+			AvatarURL: &imageUrl,
+			Role:      "user", // 默认角色
+		}
+		if err := s.userRepo.Create(user); err != nil {
+			log.WithFields(logrus.Fields{
+				"walletAddress": walletAddress,
+				"error":         err.Error(),
+			}).Error("创建用户失败")
+			return nil, errors.NewUserCreateFailedError(err)
+		} else {
+			log.WithFields(logrus.Fields{
+				"walletAddress": walletAddress,
+				"user":          user,
+			}).Info("用户创建成功")
+		}
+	}
+	if err == nil && user.ID > 0 {
+		log.WithFields(logrus.Fields{
+			"walletAddress": walletAddress,
+			"user":          user,
+		}).Info("用户已存在，返回Jwt-Token")
+
+		// 更新最后登录时间
+		if err := s.userRepo.UpdateLastLogin(user.ID); err != nil {
+			log.WithFields(logrus.Fields{
+				"userID": user.ID,
+				"email":  user.Email,
+				"error":  err.Error(),
+			}).Error("更新最后登录时间失败")
+			return nil, errors.NewUserUpdateFailedError(err)
+		}
+	}
+
+	// 3. 生成JWT Token
+	token, err := s.jwtUtil.GenerateToken(user.ID, *user.Email, user.Role)
+	if err != nil {
+		log.WithFields(logrus.Fields{
+			"userID": user.ID,
+			"email":  user.Email,
+			"error":  err.Error(),
+		}).Error("生成JWT Token失败")
+		return nil, errors.NewInternalError(err)
+	}
+
+	log.WithFields(logrus.Fields{
+		"userID":   user.ID,
+		"email":    user.Email,
+		"nickname": user.Nickname,
+	}).Info("用户登录处理完成")
+
+	// 4. 返回登录响应
+	return &dto.LoginResponse{
+		Token:     token,
+		UserID:    user.ID,
+		Email:     *user.Email,
+		Nickname:  user.Nickname,
+		Role:      user.Role,
+		ExpiresIn: "24小时",
+	}, nil
+
+}
+
 // LoginIn 登录 - 使用统一的错误码管理
 func (s *AuthService) LoginIn(ctx context.Context, email, nickname string, imageURL *string) (*dto.LoginResponse, error) {
 	log := loggerpkg.FromContext(ctx)

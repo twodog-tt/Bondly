@@ -240,6 +240,54 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	response.OK(c, data, response.MsgGetStatusSuccess)
 }
 
+// WalletLogin 用户仅通过钱包登陆
+// @Summary 用户仅通过钱包登陆
+// @Description 用户仅通过钱包登陆，如果用户不存在则自动创建新用户
+// @Tags 认证管理
+// @Accept json
+// @Produce json
+// @Param request body dto.WalletLoginRequest true "钱包登录请求体"
+// @Success 200 {object} response.Response[dto.WalletLoginResponse] "钱包登录成功"
+// @Failure 200 {object} response.Response[any] "钱包登录失败"
+// @Router /api/v1/auth/wallet-login [post]
+func (h *AuthHandlers) WalletLogin(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/auth/wallet-login", nil, "", nil)
+
+	var req dto.WalletLoginRequest
+
+	// 绑定请求参数
+	if err := c.ShouldBindJSON(&req); err != nil {
+		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
+		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
+		return
+	}
+
+	// 清理参数
+	walletAddress := strings.TrimSpace(req.WalletAddress)
+
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"wallet_address": walletAddress,
+	})
+
+	// 调用服务层登录
+	loginData, err := h.authService.WalletLoginIn(c.Request.Context(), req.WalletAddress)
+	if err != nil {
+		h.handleAuthError(c, err)
+		return
+	}
+
+	// 登录成功
+	bizLog.LoginSuccess(loginData.UserID, loginData.Email, loginData.IsNewUser)
+
+	// 登录成功
+	response.OK(c, loginData, response.MsgLoginSuccess)
+}
+
 // Login 用户登录接口
 // @Summary 用户登录
 // @Description 用户登录，如果用户不存在则自动创建新用户

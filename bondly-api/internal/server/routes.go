@@ -36,6 +36,7 @@ func (s *Server) setupRoutes() {
 			auth.POST("/verify-code", s.authHandlers.VerifyCode)
 			auth.GET("/code-status", s.authHandlers.GetCodeStatus)
 			auth.POST("/login", s.authHandlers.Login)
+			auth.POST("/wallet-login", s.authHandlers.WalletLogin)
 		}
 
 		// 区块链相关路由

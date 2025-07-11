@@ -50,3 +50,8 @@ type LoginResponse struct {
 	IsNewUser bool   `json:"is_new_user" example:"false"`
 	ExpiresIn string `json:"expires_in" example:"24小时"`
 }
+
+// WalletLoginRequest 钱包登录请求结构
+type WalletLoginRequest struct {
+	WalletAddress string `json:"wallet_address" binding:"required" example:"0x1234567890123456789012345678901234567890"`
+}

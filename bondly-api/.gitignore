@@ -62,3 +62,6 @@ coverage.html
 
 # Upload files
 uploads/
+
+# vendor files
+vendor/
