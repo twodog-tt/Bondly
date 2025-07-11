@@ -459,6 +459,162 @@ definitions:
         example: Vote submitted successfully
         type: string
     type: object
+  models.Comment:
+    properties:
+      author:
+        $ref: '#/definitions/models.User'
+      author_id:
+        type: integer
+      child_comments:
+        items:
+          $ref: '#/definitions/models.Comment'
+        type: array
+      content:
+        type: string
+      created_at:
+        type: string
+      id:
+        type: integer
+      likes:
+        type: integer
+      parent_comment:
+        $ref: '#/definitions/models.Comment'
+      parent_comment_id:
+        type: integer
+      post:
+        $ref: '#/definitions/models.Content'
+      post_id:
+        type: integer
+      updated_at:
+        type: string
+    type: object
+  models.Content:
+    properties:
+      author:
+        $ref: '#/definitions/models.User'
+      author_id:
+        type: integer
+      content:
+        type: string
+      created_at:
+        type: string
+      dislikes:
+        type: integer
+      id:
+        type: integer
+      likes:
+        type: integer
+      status:
+        description: draft, published, archived
+        type: string
+      title:
+        type: string
+      type:
+        description: article, post, comment
+        type: string
+      updated_at:
+        type: string
+      views:
+        type: integer
+    type: object
+  models.Proposal:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      end_time:
+        type: string
+      id:
+        type: integer
+      proposer:
+        $ref: '#/definitions/models.User'
+      proposer_id:
+        type: integer
+      start_time:
+        type: string
+      status:
+        description: active, passed, rejected, executed
+        type: string
+      title:
+        type: string
+      updated_at:
+        type: string
+      votes_against:
+        type: integer
+      votes_for:
+        type: integer
+    type: object
+  models.Transaction:
+    properties:
+      block_number:
+        type: integer
+      created_at:
+        type: string
+      from_address:
+        type: string
+      gas_price:
+        type: string
+      gas_used:
+        type: integer
+      hash:
+        type: string
+      id:
+        type: integer
+      status:
+        description: pending, confirmed, failed
+        type: string
+      to_address:
+        type: string
+      updated_at:
+        type: string
+      value:
+        type: string
+    type: object
+  models.User:
+    properties:
+      avatar_url:
+        type: string
+      bio:
+        type: string
+      created_at:
+        type: string
+      custody_wallet_address:
+        type: string
+      email:
+        type: string
+      encrypted_private_key:
+        type: string
+      id:
+        type: integer
+      last_login_at:
+        type: string
+      nickname:
+        type: string
+      reputation_score:
+        type: integer
+      role:
+        type: string
+      updated_at:
+        type: string
+      wallet_address:
+        type: string
+    type: object
+  models.WalletBinding:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: integer
+      network:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+      wallet_address:
+        type: string
+    type: object
   response.Response-any:
     properties:
       code:
@@ -770,6 +926,97 @@ definitions:
       success:
         type: boolean
     type: object
+  response.ResponseAny:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseComment:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseContent:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseProposal:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseTransaction:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseUserFollow:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
+  response.ResponseWalletBinding:
+    properties:
+      code:
+        example: 1000
+        type: integer
+      data: {}
+      message:
+        example: 操作成功
+        type: string
+      success:
+        example: true
+        type: boolean
+    type: object
 host: localhost:8080
 info:
   contact:
@@ -957,6 +1204,190 @@ paths:
       summary: 获取区块链连接状态
       tags:
       - 区块链
+  /api/v1/comments:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取评论列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseComment'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取评论列表
+      tags:
+      - 评论管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的评论
+      parameters:
+      - description: 评论信息
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResponseComment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 创建评论
+      tags:
+      - 评论管理
+  /api/v1/comments/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的评论
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除评论
+      tags:
+      - 评论管理
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取评论详情
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseComment'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取评论详情
+      tags:
+      - 评论管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定评论的信息
+      parameters:
+      - description: 评论ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的评论信息
+        in: body
+        name: comment
+        required: true
+        schema:
+          $ref: '#/definitions/models.Comment'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseComment'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 更新评论
+      tags:
+      - 评论管理
   /api/v1/content:
     get:
       consumes:
@@ -1023,6 +1454,48 @@ paths:
       tags:
       - 内容管理
   /api/v1/content/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的内容
+      parameters:
+      - description: 内容ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除内容
+      tags:
+      - 内容管理
     get:
       consumes:
       - application/json
@@ -1042,6 +1515,54 @@ paths:
           schema:
             $ref: '#/definitions/response.Response-any'
       summary: 获取内容详情
+      tags:
+      - 内容管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定内容的信息
+      parameters:
+      - description: 内容ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的内容信息
+        in: body
+        name: content
+        required: true
+        schema:
+          $ref: '#/definitions/models.Content'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseContent'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 更新内容
       tags:
       - 内容管理
   /api/v1/governance/proposals:
@@ -1151,6 +1672,190 @@ paths:
       summary: 对提案进行投票
       tags:
       - 治理管理
+  /api/v1/proposals:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取提案列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseProposal'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取提案列表
+      tags:
+      - 提案管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的提案
+      parameters:
+      - description: 提案信息
+        in: body
+        name: proposal
+        required: true
+        schema:
+          $ref: '#/definitions/models.Proposal'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResponseProposal'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 创建提案
+      tags:
+      - 提案管理
+  /api/v1/proposals/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的提案
+      parameters:
+      - description: 提案ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除提案
+      tags:
+      - 提案管理
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取提案详情
+      parameters:
+      - description: 提案ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseProposal'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取提案详情
+      tags:
+      - 提案管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定提案的信息
+      parameters:
+      - description: 提案ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的提案信息
+        in: body
+        name: proposal
+        required: true
+        schema:
+          $ref: '#/definitions/models.Proposal'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseProposal'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 更新提案
+      tags:
+      - 提案管理
   /api/v1/stats:
     get:
       consumes:
@@ -1166,6 +1871,230 @@ paths:
       summary: 获取平台统计信息
       tags:
       - 系统监控
+  /api/v1/transactions:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取交易列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseTransaction'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取交易列表
+      tags:
+      - 交易管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的交易记录
+      parameters:
+      - description: 交易信息
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/models.Transaction'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResponseTransaction'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 创建交易
+      tags:
+      - 交易管理
+  /api/v1/transactions/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的交易
+      parameters:
+      - description: 交易ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除交易
+      tags:
+      - 交易管理
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取交易详情
+      parameters:
+      - description: 交易ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseTransaction'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取交易详情
+      tags:
+      - transaction
+    put:
+      consumes:
+      - application/json
+      description: 更新指定交易的信息
+      parameters:
+      - description: 交易ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的交易信息
+        in: body
+        name: transaction
+        required: true
+        schema:
+          $ref: '#/definitions/models.Transaction'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseTransaction'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 更新交易
+      tags:
+      - 交易管理
+  /api/v1/transactions/hash/{hash}:
+    get:
+      consumes:
+      - application/json
+      description: 根据交易哈希获取交易详情
+      parameters:
+      - description: 交易哈希
+        in: path
+        name: hash
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseTransaction'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 根据哈希获取交易
+      tags:
+      - 交易管理
+  /api/v1/transactions/stats:
+    get:
+      consumes:
+      - application/json
+      description: 获取交易相关的统计数据
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取交易统计
+      tags:
+      - 交易管理
   /api/v1/upload/image:
     post:
       consumes:
@@ -1302,6 +2231,154 @@ paths:
       summary: 获取用户托管钱包信息
       tags:
       - 用户管理
+  /api/v1/users/{user_id}/follow:
+    post:
+      consumes:
+      - application/json
+      description: 关注指定用户
+      parameters:
+      - description: 要关注的用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 关注用户
+      tags:
+      - 粉丝管理
+  /api/v1/users/{user_id}/followers:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取指定用户的粉丝列表
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseUserFollow'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取用户的粉丝列表
+      tags:
+      - 粉丝管理
+  /api/v1/users/{user_id}/following:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取指定用户关注的人列表
+      parameters:
+      - description: 用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseUserFollow'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取用户关注的人列表
+      tags:
+      - 粉丝管理
+  /api/v1/users/{user_id}/unfollow:
+    delete:
+      consumes:
+      - application/json
+      description: 取消关注指定用户
+      parameters:
+      - description: 要取消关注的用户ID
+        in: path
+        name: user_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 取消关注用户
+      tags:
+      - 粉丝管理
   /api/v1/users/email/{email}:
     get:
       consumes:
@@ -1365,6 +2442,190 @@ paths:
       summary: 根据钱包地址获取用户信息
       tags:
       - 用户管理
+  /api/v1/wallet-bindings:
+    get:
+      consumes:
+      - application/json
+      description: 分页获取钱包绑定列表
+      parameters:
+      - default: 1
+        description: 页码
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: 每页数量
+        in: query
+        name: limit
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseWalletBinding'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取钱包绑定列表
+      tags:
+      - 钱包绑定管理
+    post:
+      consumes:
+      - application/json
+      description: 创建新的钱包绑定
+      parameters:
+      - description: 钱包绑定信息
+        in: body
+        name: binding
+        required: true
+        schema:
+          $ref: '#/definitions/models.WalletBinding'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/response.ResponseWalletBinding'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 创建钱包绑定
+      tags:
+      - 钱包绑定管理
+  /api/v1/wallet-bindings/{id}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除指定的钱包绑定
+      parameters:
+      - description: 钱包绑定ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除钱包绑定
+      tags:
+      - 钱包绑定管理
+    get:
+      consumes:
+      - application/json
+      description: 根据ID获取钱包绑定详情
+      parameters:
+      - description: 钱包绑定ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseWalletBinding'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取钱包绑定详情
+      tags:
+      - 钱包绑定管理
+    put:
+      consumes:
+      - application/json
+      description: 更新指定钱包绑定的信息
+      parameters:
+      - description: 钱包绑定ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: 更新的钱包绑定信息
+        in: body
+        name: binding
+        required: true
+        schema:
+          $ref: '#/definitions/models.WalletBinding'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseWalletBinding'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 更新钱包绑定
+      tags:
+      - 钱包绑定管理
   /api/v1/wallets/{user_id}:
     get:
       consumes:

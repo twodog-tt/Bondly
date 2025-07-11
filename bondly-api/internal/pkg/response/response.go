@@ -37,3 +37,67 @@ func Fail(c *gin.Context, code int, message string) {
 		Success: false,
 	})
 }
+
+// ResponseAny 非泛型Response类型，用于Swagger文档
+type ResponseAny struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseUser 用户相关响应类型
+type ResponseUser struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseContent 内容相关响应类型
+type ResponseContent struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseProposal 提案相关响应类型
+type ResponseProposal struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseTransaction 交易相关响应类型
+type ResponseTransaction struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseComment 评论相关响应类型
+type ResponseComment struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseWalletBinding 钱包绑定相关响应类型
+type ResponseWalletBinding struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}
+
+// ResponseUserFollow 用户关注相关响应类型
+type ResponseUserFollow struct {
+	Code    int         `json:"code" example:"1000"`
+	Message string      `json:"message" example:"操作成功"`
+	Data    interface{} `json:"data,omitempty"`
+	Success bool        `json:"success" example:"true"`
+}

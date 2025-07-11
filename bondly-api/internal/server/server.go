@@ -10,6 +10,7 @@ import (
 	"bondly-api/internal/redis"
 	"bondly-api/internal/repositories"
 	"bondly-api/internal/services"
+	"bondly-api/internal/utils"
 	"context"
 	"fmt"
 	"net/http"
@@ -27,10 +28,16 @@ type Server struct {
 	server       *http.Server
 
 	// 依赖注入
-	userHandlers   *handlers.UserHandlers
-	authHandlers   *handlers.AuthHandlers
-	uploadHandlers *handlers.UploadHandlers
-	walletHandlers *handlers.WalletHandlers
+	userHandlers          *handlers.UserHandlers
+	authHandlers          *handlers.AuthHandlers
+	uploadHandlers        *handlers.UploadHandlers
+	walletHandlers        *handlers.WalletHandlers
+	contentHandlers       *handlers.ContentHandlers
+	proposalHandlers      *handlers.ProposalHandlers
+	transactionHandlers   *handlers.TransactionHandlers
+	commentHandlers       *handlers.CommentHandlers
+	userFollowHandlers    *handlers.UserFollowHandlers
+	walletBindingHandlers *handlers.WalletBindingHandlers
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB) *Server {
@@ -80,6 +87,9 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	userHandlers := handlers.NewUserHandlers(userService)
 	walletHandlers := handlers.NewWalletHandlers(walletService, userService)
 
+	// 初始化JWT工具
+	utils.InitJWTUtil(cfg.JWT.Secret, cfg.JWT.ExpiresIn)
+
 	// 初始化认证服务
 	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret, emailService)
 	authHandlers := handlers.NewAuthHandlers(authService)
@@ -88,16 +98,46 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	uploadService := services.NewUploadService()
 	uploadHandlers := handlers.NewUploadHandlers(uploadService)
 
+	// 初始化新的repositories
+	contentRepo := repositories.NewContentRepository(db)
+	proposalRepo := repositories.NewProposalRepository(db)
+	transactionRepo := repositories.NewTransactionRepository(db)
+	commentRepo := repositories.NewCommentRepository(db)
+	userFollowRepo := repositories.NewUserFollowRepository(db)
+	walletBindingRepo := repositories.NewWalletBindingRepository(db)
+
+	// 初始化新的services
+	contentService := services.NewContentService(contentRepo)
+	proposalService := services.NewProposalService(proposalRepo)
+	transactionService := services.NewTransactionService(transactionRepo)
+	commentService := services.NewCommentService(commentRepo)
+	userFollowService := services.NewUserFollowService(userFollowRepo)
+	walletBindingService := services.NewWalletBindingService(walletBindingRepo)
+
+	// 初始化新的handlers
+	contentHandlers := handlers.NewContentHandlers(contentService)
+	proposalHandlers := handlers.NewProposalHandlers(proposalService)
+	transactionHandlers := handlers.NewTransactionHandlers(transactionService)
+	commentHandlers := handlers.NewCommentHandlers(commentService)
+	userFollowHandlers := handlers.NewUserFollowHandlers(userFollowService)
+	walletBindingHandlers := handlers.NewWalletBindingHandlers(walletBindingService)
+
 	server := &Server{
-		config:         cfg,
-		db:             db,
-		redisClient:    redisClient,
-		cacheService:   cacheService,
-		router:         router,
-		userHandlers:   userHandlers,
-		authHandlers:   authHandlers,
-		uploadHandlers: uploadHandlers,
-		walletHandlers: walletHandlers,
+		config:                cfg,
+		db:                    db,
+		redisClient:           redisClient,
+		cacheService:          cacheService,
+		router:                router,
+		userHandlers:          userHandlers,
+		authHandlers:          authHandlers,
+		uploadHandlers:        uploadHandlers,
+		walletHandlers:        walletHandlers,
+		contentHandlers:       contentHandlers,
+		proposalHandlers:      proposalHandlers,
+		transactionHandlers:   transactionHandlers,
+		commentHandlers:       commentHandlers,
+		userFollowHandlers:    userFollowHandlers,
+		walletBindingHandlers: walletBindingHandlers,
 	}
 
 	// 设置路由

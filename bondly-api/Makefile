@@ -159,12 +159,17 @@ dev:
 # 生成 API 文档
 docs:
 	@echo "Generating API documentation..."
-	swag init -g main.go
+	swag init -g main.go --parseDependency --parseInternal
 
 # 数据库迁移
 migrate:
 	@echo "Running database migrations..."
 	go run ./cmd/migrate/main.go
+
+# 数据填充
+seed:
+	@echo "Seeding database with sample data..."
+	go run ./cmd/seed-data/main.go
 
 # 帮助信息
 help:
@@ -204,6 +209,7 @@ help:
 	@echo ""
 	@echo "Database:"
 	@echo "  migrate      - Run database migrations"
+	@echo "  seed         - Seed database with sample data"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  deps         - Install dependencies"

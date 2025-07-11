@@ -207,7 +207,11 @@ func (s *AuthService) CheckFirstLogin(ctx context.Context, email string) (string
 			"email": email,
 		}).Info("用户已存在，返回Jwt-Token")
 		// 生成JWT Token
-		token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role)
+		walletAddr := ""
+		if user.WalletAddress != nil {
+			walletAddr = *user.WalletAddress
+		}
+		token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role, walletAddr)
 		if err != nil {
 			log.WithFields(logrus.Fields{
 				"userID": user.ID,
@@ -286,7 +290,11 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 	}
 
 	// 3. 生成JWT Token
-	token, err := s.jwtUtil.GenerateToken(user.ID, *user.Email, user.Role)
+	walletAddr := ""
+	if user.WalletAddress != nil {
+		walletAddr = *user.WalletAddress
+	}
+	token, err := s.jwtUtil.GenerateToken(user.ID, *user.Email, user.Role, walletAddr)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"userID": user.ID,
@@ -428,7 +436,11 @@ func (s *AuthService) LoginIn(ctx context.Context, email, nickname string, image
 	}
 
 	// 3. 生成JWT Token
-	token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role)
+	walletAddr := ""
+	if user.WalletAddress != nil {
+		walletAddr = *user.WalletAddress
+	}
+	token, err := s.jwtUtil.GenerateToken(user.ID, email, user.Role, walletAddr)
 	if err != nil {
 		log.WithFields(logrus.Fields{
 			"userID": user.ID,

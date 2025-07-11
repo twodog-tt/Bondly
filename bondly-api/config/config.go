@@ -4,6 +4,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/joho/godotenv"
 )
@@ -69,7 +70,8 @@ type CORSConfig struct {
 }
 
 type JWTConfig struct {
-	Secret string
+	Secret    string
+	ExpiresIn time.Duration
 }
 
 type WalletConfig struct {
@@ -130,7 +132,8 @@ func Load() (*Config, error) {
 			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"), ","),
 		},
 		JWT: JWTConfig{
-			Secret: getEnv("JWT_SECRET", "your-secret-key"),
+			Secret:    getEnv("JWT_SECRET", "your-secret-key"),
+			ExpiresIn: time.Duration(getEnvAsInt("JWT_EXPIRES_IN_HOURS", 24)) * time.Hour,
 		},
 		Wallet: WalletConfig{
 			SecretKey: getEnv("WALLET_SECRET_KEY", ""),

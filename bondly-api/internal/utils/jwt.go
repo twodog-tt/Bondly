@@ -15,9 +15,10 @@ var (
 
 // JWTClaims JWT声明结构
 type JWTClaims struct {
-	UserID int64  `json:"user_id"`
-	Email  string `json:"email"`
-	Role   string `json:"role"`
+	UserID        int64  `json:"user_id"`
+	Email         string `json:"email"`
+	Role          string `json:"role"`
+	WalletAddress string `json:"wallet_address"`
 	jwt.RegisteredClaims
 }
 
@@ -43,12 +44,13 @@ func NewJWTUtil(secretKey string, expiresIn time.Duration) *JWTUtil {
 }
 
 // GenerateToken 生成JWT token
-func (j *JWTUtil) GenerateToken(userID int64, email, role string) (string, error) {
+func (j *JWTUtil) GenerateToken(userID int64, email, role, walletAddress string) (string, error) {
 	now := time.Now()
 	claims := JWTClaims{
-		UserID: userID,
-		Email:  email,
-		Role:   role,
+		UserID:        userID,
+		Email:         email,
+		Role:          role,
+		WalletAddress: walletAddress,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(now.Add(j.config.ExpiresIn)),
 			IssuedAt:  jwt.NewNumericDate(now),
@@ -94,5 +96,29 @@ func (j *JWTUtil) RefreshToken(tokenString string) (string, error) {
 	}
 
 	// 生成新的token
-	return j.GenerateToken(claims.UserID, claims.Email, claims.Role)
+	return j.GenerateToken(claims.UserID, claims.Email, claims.Role, claims.WalletAddress)
+}
+
+// 全局JWT工具实例
+var jwtUtil *JWTUtil
+
+// InitJWTUtil 初始化全局JWT工具
+func InitJWTUtil(secretKey string, expiresIn time.Duration) {
+	jwtUtil = NewJWTUtil(secretKey, expiresIn)
+}
+
+// ValidateJWT 全局JWT验证函数
+func ValidateJWT(tokenString string) (*JWTClaims, error) {
+	if jwtUtil == nil {
+		return nil, errors.New("JWT util not initialized")
+	}
+	return jwtUtil.ValidateToken(tokenString)
+}
+
+// GenerateJWT 全局JWT生成函数
+func GenerateJWT(userID int64, email, role, walletAddress string) (string, error) {
+	if jwtUtil == nil {
+		return "", errors.New("JWT util not initialized")
+	}
+	return jwtUtil.GenerateToken(userID, email, role, walletAddress)
 }
