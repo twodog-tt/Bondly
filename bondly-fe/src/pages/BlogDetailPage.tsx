@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import { getContentById, Content } from '../api/content';
 
 interface BlogDetailPageProps {
   isMobile: boolean;
@@ -7,9 +8,144 @@ interface BlogDetailPageProps {
 }
 
 const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange }) => {
+  const [content, setContent] = useState<Content | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // 从URL参数获取内容ID
+  const getContentIdFromUrl = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const id = urlParams.get('id');
+    return id ? parseInt(id) : null;
+  };
+
+  // 获取内容详情
+  useEffect(() => {
+    const fetchContent = async () => {
+      const contentId = getContentIdFromUrl();
+      
+      if (!contentId) {
+        setError('未找到内容ID');
+        setLoading(false);
+        return;
+      }
+      
+      setLoading(true);
+      setError(null);
+      
+      try {
+        const contentData = await getContentById(contentId);
+        setContent(contentData);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : '获取内容失败');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContent();
+  }, []);
+
   const handleLoginClick = () => {
     console.log("Login clicked");
   };
+
+  // 计算阅读时间
+  const calculateReadTime = (content: string) => {
+    const words = content.trim().split(/\s+/).filter(word => word.length > 0).length;
+    return Math.ceil(words / 200); // 假设每分钟阅读200字
+  };
+
+  // 格式化日期
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
+
+  // 加载状态
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
+        <CommonNavbar 
+          isMobile={isMobile} 
+          onPageChange={onPageChange}
+          onLoginClick={handleLoginClick}
+          showHomeButton={true}
+          showWriteButton={true}
+          showExploreButton={true}
+          showDaoButton={true}
+          showProfileButton={true}
+          showDraftsButton={true}
+          currentPage="blog-detail"
+        />
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          height: "60vh",
+          flexDirection: "column",
+          gap: "20px"
+        }}>
+          <div style={{
+            width: "40px",
+            height: "40px",
+            border: "3px solid rgba(255, 255, 255, 0.3)",
+            borderTop: "3px solid #667eea",
+            borderRadius: "50%",
+            animation: "spin 1s linear infinite"
+          }}></div>
+          <p style={{ color: "#9ca3af" }}>加载中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 错误状态
+  if (error || !content) {
+    return (
+      <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
+        <CommonNavbar 
+          isMobile={isMobile} 
+          onPageChange={onPageChange}
+          onLoginClick={handleLoginClick}
+          showHomeButton={true}
+          showWriteButton={true}
+          showExploreButton={true}
+          showDaoButton={true}
+          showProfileButton={true}
+          showDraftsButton={true}
+          currentPage="blog-detail"
+        />
+        <div style={{ 
+          display: "flex", 
+          justifyContent: "center", 
+          alignItems: "center", 
+          height: "60vh",
+          flexDirection: "column",
+          gap: "20px"
+        }}>
+          <p style={{ color: "#ef4444" }}>加载失败: {error || '内容不存在'}</p>
+          <button
+            onClick={() => onPageChange?.('feed')}
+            style={{
+              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              color: "white",
+              border: "none",
+              padding: "10px 20px",
+              borderRadius: "8px",
+              fontSize: "14px",
+              cursor: "pointer"
+            }}
+          >
+            返回列表
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
@@ -37,11 +173,11 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             fontSize: "14px",
             color: "#9ca3af"
           }}>
-            <span>Technology</span>
+            <span>{content.type || 'article'}</span>
             <span>•</span>
-            <span>5 min read</span>
+            <span>{calculateReadTime(content.content)} min read</span>
             <span>•</span>
-            <span>January 15, 2024</span>
+            <span>{formatDate(content.created_at)}</span>
           </div>
           
           <h1 style={{
@@ -51,7 +187,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             lineHeight: "1.3",
             color: "white"
           }}>
-            Web3 Social Revolution: How Bondly is Changing the Game
+            {content.title}
           </h1>
           
           <div style={{
@@ -64,116 +200,76 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               width: "40px",
               height: "40px",
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: content.author?.avatar_url 
+                ? `url(${content.author.avatar_url})` 
+                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              backgroundSize: "cover",
+              backgroundPosition: "center",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
               color: "white",
-              fontWeight: "bold"
+              fontWeight: "bold",
+              fontSize: "16px"
             }}>
-              BT
+              {content.author?.avatar_url ? '' : (content.author?.nickname?.charAt(0) || 'U')}
             </div>
             <div>
-              <div style={{ fontWeight: "600", color: "white" }}>Bondly Team</div>
-              <div style={{ fontSize: "14px", color: "#9ca3af" }}>Official Bondly Team</div>
+              <div style={{ fontWeight: "600", color: "white" }}>
+                {content.author?.nickname || '匿名用户'}
+              </div>
+              <div style={{ fontSize: "14px", color: "#9ca3af" }}>
+                声誉积分: {content.author?.reputation_score || 0}
+              </div>
             </div>
           </div>
           
+          {/* 封面图片 */}
           <div style={{
             height: "300px",
-            background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            background: content.cover_image_url 
+              ? `url(${content.cover_image_url})` 
+              : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
             borderRadius: "12px",
             marginBottom: "32px",
             position: "relative",
             overflow: "hidden"
           }}>
-            <img 
-              src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=300&fit=crop"
-              alt="Blog cover"
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                opacity: "0.8"
-              }}
-            />
+            {/* 如果没有封面图片，显示渐变背景 */}
+            {!content.cover_image_url && (
+              <div style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+              }} />
+            )}
+            
+            {/* 渐变遮罩，确保文字可读性 */}
+            <div style={{
+              position: "absolute",
+              bottom: 0,
+              left: 0,
+              right: 0,
+              height: "80px",
+              background: "linear-gradient(transparent, rgba(0, 0, 0, 0.7))"
+            }} />
           </div>
         </div>
 
         {/* 博客内容 */}
         <div style={{ lineHeight: "1.8", fontSize: "18px" }}>
-          <p style={{ marginBottom: "24px", color: "#d1d5db" }}>
-            The social media landscape is undergoing a revolutionary transformation, and at the forefront of this change is Bondly - a decentralized social value network that's redefining how we interact, create, and monetize content online.
-          </p>
-          
-          <h2 style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            marginBottom: "16px",
-            marginTop: "32px",
-            color: "white"
+          <div style={{ 
+            color: "#d1d5db",
+            whiteSpace: "pre-wrap"
           }}>
-            The Problem with Traditional Social Media
-          </h2>
-          
-          <p style={{ marginBottom: "24px", color: "#d1d5db" }}>
-            Traditional social media platforms have created a system where users generate massive value through their content and interactions, but see little to no financial return. The platforms themselves capture all the value, leaving creators and active users with nothing but likes and follows.
-          </p>
-          
-          <h2 style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            marginBottom: "16px",
-            marginTop: "32px",
-            color: "white"
-          }}>
-            How Bondly Solves This
-          </h2>
-          
-          <p style={{ marginBottom: "24px", color: "#d1d5db" }}>
-            Bondly introduces a revolutionary approach where every interaction becomes a valuable asset. Through our innovative staking mechanism, users can stake tokens to interact with content, creating a direct value exchange between creators and consumers.
-          </p>
-          
-          <div style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "24px",
-            marginBottom: "24px"
-          }}>
-            <h3 style={{
-              fontSize: "20px",
-              fontWeight: "600",
-              marginBottom: "12px",
-              color: "white"
-            }}>
-              Key Features:
-            </h3>
-            <ul style={{ color: "#d1d5db", paddingLeft: "20px" }}>
-              <li style={{ marginBottom: "8px" }}>Staking-based interactions that create real value</li>
-              <li style={{ marginBottom: "8px" }}>NFT minting for content monetization</li>
-              <li style={{ marginBottom: "8px" }}>Reputation system based on on-chain behavior</li>
-              <li style={{ marginBottom: "8px" }}>DAO governance for community-driven decisions</li>
-            </ul>
+            {content.content}
           </div>
-          
-          <h2 style={{
-            fontSize: "24px",
-            fontWeight: "600",
-            marginBottom: "16px",
-            marginTop: "32px",
-            color: "white"
-          }}>
-            The Future of Social Media
-          </h2>
-          
-          <p style={{ marginBottom: "24px", color: "#d1d5db" }}>
-            As we move towards a more decentralized web, platforms like Bondly are paving the way for a future where users truly own their data, content, and social connections. This isn't just about technology - it's about creating a more equitable and sustainable social ecosystem.
-          </p>
-          
-          <p style={{ marginBottom: "24px", color: "#d1d5db" }}>
-            The Web3 social revolution is here, and Bondly is leading the charge towards a future where every interaction matters, every creator is valued, and every user has a stake in the platform's success.
-          </p>
         </div>
 
         {/* 互动区域 */}
@@ -199,7 +295,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
             onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
             >
-              👍 Like (24)
+              👍 Like ({content.likes})
             </button>
             <button style={{
               background: "rgba(255, 255, 255, 0.1)",
@@ -213,7 +309,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
             onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
             >
-              💬 Comment (8)
+              👁️ Views ({content.views})
             </button>
             <button style={{
               background: "rgba(255, 255, 255, 0.1)",
@@ -243,7 +339,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               marginBottom: "16px",
               color: "white"
             }}>
-              Comments (8)
+              Comments (0)
             </h3>
             
             <div style={{ marginBottom: "16px" }}>
@@ -275,55 +371,14 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               </button>
             </div>
             
-            {/* 评论列表 */}
-            <div style={{ color: "#d1d5db" }}>
-              <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                  <div style={{
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "white"
-                  }}>
-                    U
-                  </div>
-                  <span style={{ fontWeight: "600", color: "white" }}>User123</span>
-                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>2 hours ago</span>
-                </div>
-                <p style={{ fontSize: "14px", lineHeight: "1.5" }}>
-                  This is exactly what social media needs! Can't wait to see how this develops.
-                </p>
-              </div>
-              
-              <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid rgba(255, 255, 255, 0.1)" }}>
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
-                  <div style={{
-                    width: "24px",
-                    height: "24px",
-                    borderRadius: "50%",
-                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    fontSize: "12px",
-                    fontWeight: "bold",
-                    color: "white"
-                  }}>
-                    C
-                  </div>
-                  <span style={{ fontWeight: "600", color: "white" }}>Creator456</span>
-                  <span style={{ fontSize: "12px", color: "#9ca3af" }}>5 hours ago</span>
-                </div>
-                <p style={{ fontSize: "14px", lineHeight: "1.5" }}>
-                  As a content creator, I'm excited about the monetization possibilities here.
-                </p>
-              </div>
+            {/* 暂无评论 */}
+            <div style={{ 
+              color: "#9ca3af", 
+              textAlign: "center", 
+              padding: "40px 20px",
+              fontSize: "14px"
+            }}>
+              暂无评论，成为第一个评论者吧！
             </div>
           </div>
         </div>

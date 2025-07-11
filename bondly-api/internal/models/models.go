@@ -23,18 +23,19 @@ type User struct {
 
 // Content 内容模型
 type Content struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	AuthorID  int64     `json:"author_id"`
-	Title     string    `json:"title"`
-	Content   string    `json:"content"`
-	Type      string    `json:"type"`                        // article, post, comment
-	Status    string    `json:"status" gorm:"default:draft"` // draft, published, archived
-	Likes     int64     `json:"likes" gorm:"default:0"`
-	Dislikes  int64     `json:"dislikes" gorm:"default:0"`
-	Views     int64     `json:"views" gorm:"default:0"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Author    User      `json:"author" gorm:"foreignKey:AuthorID"`
+	ID            int64     `json:"id" gorm:"primaryKey"`
+	AuthorID      int64     `json:"author_id"`
+	Title         string    `json:"title"`
+	Content       string    `json:"content"`
+	Type          string    `json:"type"`                        // article, post, comment
+	Status        string    `json:"status" gorm:"default:draft"` // draft, published, archived
+	CoverImageURL *string   `json:"cover_image_url" gorm:"type:text" comment:"封面图片URL"`
+	Likes         int64     `json:"likes" gorm:"default:0"`
+	Dislikes      int64     `json:"dislikes" gorm:"default:0"`
+	Views         int64     `json:"views" gorm:"default:0"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	Author        User      `json:"author" gorm:"foreignKey:AuthorID"`
 }
 
 // Proposal 提案模型

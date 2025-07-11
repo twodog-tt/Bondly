@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>博客封面图片测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #0b0c1a;
+            color: white;
+        }
+        .container {
+            background-color: #151728;
+            border-radius: 12px;
+            border: 1px solid #374151;
+            padding: 20px;
+            margin-bottom: 20px;
+        }
+        .section {
+            margin-bottom: 30px;
+        }
+        .section h2 {
+            color: #60a5fa;
+            margin-bottom: 15px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            color: #9ca3af;
+        }
+        input, textarea, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            background-color: #1f2937;
+            color: white;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+        }
+        button:hover {
+            background-color: #1d4ed8;
+        }
+        button.secondary {
+            background-color: #374151;
+        }
+        button.secondary:hover {
+            background-color: #4b5563;
+        }
+        .result {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 15px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .error {
+            color: #ef4444;
+        }
+        .success {
+            color: #10b981;
+        }
+        .blog-card {
+            background-color: #1f2937;
+            border: 1px solid #374151;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 20px;
+            transition: transform 0.3s ease;
+        }
+        .blog-card:hover {
+            transform: translateY(-4px);
+        }
+        .blog-cover {
+            height: 200px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+        .blog-content {
+            padding: 20px;
+        }
+        .blog-meta {
+            display: flex;
+            gap: 12px;
+            font-size: 14px;
+            color: #9ca3af;
+            margin-bottom: 12px;
+        }
+        .blog-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: white;
+        }
+        .blog-excerpt {
+            color: #d1d5db;
+            line-height: 1.6;
+            margin-bottom: 16px;
+        }
+        .blog-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .blog-stats {
+            display: flex;
+            gap: 16px;
+            font-size: 14px;
+            color: #9ca3af;
+        }
+        .type-badge {
+            position: absolute;
+            top: 12px;
+            left: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .read-time {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 20px;
+        }
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1>博客封面图片测试</h1>
+    
+    <div class="container">
+        <div class="section">
+            <h2>1. 创建测试内容</h2>
+            <div class="form-group">
+                <label for="testTitle">标题:</label>
+                <input type="text" id="testTitle" placeholder="输入文章标题" value="Web3社交革命：Bondly如何改变游戏规则">
+            </div>
+            <div class="form-group">
+                <label for="testContent">内容:</label>
+                <textarea id="testContent" rows="6" placeholder="输入文章内容">社交媒体领域正在经历革命性的变革，而Bondly作为去中心化社交价值网络的先锋，正在重新定义我们在线互动、创作和内容变现的方式。
+
+传统社交媒体平台创造了一个系统，用户通过内容和互动产生巨大价值，但几乎看不到任何财务回报。平台本身捕获了所有价值，只给创作者和活跃用户留下了点赞和关注。
+
+Bondly引入了一种革命性的方法，每一次互动都成为有价值的资产。通过我们创新的质押机制，用户可以质押代币与内容互动，在创作者和消费者之间创造直接的价值交换。
+
+关键特性：
+• 基于质押的互动创造真实价值
+• NFT铸造用于内容变现
+• 基于链上行为的声誉系统
+• DAO治理用于社区驱动的决策
+
+随着我们向更去中心化的网络迈进，像Bondly这样的平台正在为未来铺平道路，用户真正拥有自己的数据、内容和社交连接。这不仅仅是关于技术——这是关于创造一个更公平和可持续的社交生态系统。
+
+Web3社交革命已经到来，Bondly正在引领潮流，走向一个每次互动都很重要、每个创作者都受到重视、每个用户都在平台成功中拥有股份的未来。</textarea>
+            </div>
+            <div class="form-group">
+                <label for="testCoverImage">封面图片URL:</label>
+                <input type="text" id="testCoverImage" placeholder="输入封面图片URL" value="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop">
+            </div>
+            <div class="form-group">
+                <label for="testType">类型:</label>
+                <select id="testType">
+                    <option value="article">文章</option>
+                    <option value="technology">技术</option>
+                    <option value="blockchain">区块链</option>
+                    <option value="defi">DeFi</option>
+                </select>
+            </div>
+            <button onclick="createTestContent()">创建测试内容</button>
+            <button onclick="createTestContentWithoutCover()" class="secondary">创建无封面内容</button>
+            <div id="createResult" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>2. 获取内容列表</h2>
+            <button onclick="getContentList()">获取已发布内容</button>
+            <button onclick="getAllContent()" class="secondary">获取所有内容</button>
+            <div id="contentListResult" class="result"></div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>3. 博客卡片预览</h2>
+            <div id="blogPreview" class="grid">
+                <!-- 博客卡片将在这里动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="section">
+            <h2>4. 页面跳转测试</h2>
+            <button onclick="openBlogListPage()">打开博客列表页</button>
+            <button onclick="openBlogDetailPage()" class="secondary">打开博客详情页</button>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8080';
+        let testContents = [];
+
+        // 通用API请求函数
+        async function apiRequest(endpoint, options = {}) {
+            const url = `${API_BASE}${endpoint}`;
+            const config = {
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...options.headers
+                },
+                ...options
+            };
+
+            console.log(`API Request: ${config.method || 'GET'} ${url}`);
+            if (options.body) {
+                console.log('Request Body:', options.body);
+            }
+
+            try {
+                const response = await fetch(url, config);
+                const data = await response.json();
+                
+                console.log(`API Response (${response.status}):`, data);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}: ${data.message || '请求失败'}`);
+                }
+                
+                return data;
+            } catch (error) {
+                console.error('API Error:', error);
+                throw error;
+            }
+        }
+
+        // 计算阅读时间
+        function calculateReadTime(content) {
+            const words = content.trim().split(/\s+/).filter(word => word.length > 0).length;
+            return Math.ceil(words / 200);
+        }
+
+        // 格式化日期
+        function formatDate(dateString) {
+            return new Date(dateString).toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric'
+            });
+        }
+
+        // 创建测试内容
+        async function createTestContent() {
+            const resultDiv = document.getElementById('createResult');
+            const title = document.getElementById('testTitle').value;
+            const content = document.getElementById('testContent').value;
+            const coverImageUrl = document.getElementById('testCoverImage').value;
+            const type = document.getElementById('testType').value;
+            
+            if (!title || !content) {
+                resultDiv.textContent = '❌ 请填写标题和内容';
+                resultDiv.className = 'result error';
+                return;
+            }
+
+            resultDiv.textContent = '正在创建测试内容...';
+            
+            try {
+                const requestBody = {
+                    title,
+                    content,
+                    type,
+                    status: 'published'
+                };
+                
+                if (coverImageUrl) {
+                    requestBody.cover_image_url = coverImageUrl;
+                }
+                
+                const data = await apiRequest('/api/v1/content', {
+                    method: 'POST',
+                    body: JSON.stringify(requestBody)
+                });
+                
+                resultDiv.textContent = `✅ 创建成功！\n\n内容ID: ${data.data.id}\n封面图片: ${data.data.cover_image_url || '无'}\n\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+                
+                // 刷新内容列表
+                setTimeout(() => {
+                    getContentList();
+                }, 1000);
+                
+            } catch (error) {
+                resultDiv.textContent = `❌ 创建失败：${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function createTestContentWithoutCover() {
+            document.getElementById('testCoverImage').value = '';
+            await createTestContent();
+        }
+
+        // 获取内容列表
+        async function getContentList() {
+            const resultDiv = document.getElementById('contentListResult');
+            resultDiv.textContent = '正在获取已发布内容...';
+            
+            try {
+                const data = await apiRequest('/api/v1/content?status=published&page=1&limit=10');
+                testContents = data.data.contents;
+                
+                resultDiv.textContent = `✅ 获取成功！\n\n内容数量: ${testContents.length}\n\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+                
+                // 更新博客预览
+                updateBlogPreview();
+                
+            } catch (error) {
+                resultDiv.textContent = `❌ 获取失败：${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function getAllContent() {
+            const resultDiv = document.getElementById('contentListResult');
+            resultDiv.textContent = '正在获取所有内容...';
+            
+            try {
+                const data = await apiRequest('/api/v1/content?page=1&limit=10');
+                testContents = data.data.contents;
+                
+                resultDiv.textContent = `✅ 获取成功！\n\n内容数量: ${testContents.length}\n\n响应数据:\n${JSON.stringify(data, null, 2)}`;
+                resultDiv.className = 'result success';
+                
+                // 更新博客预览
+                updateBlogPreview();
+                
+            } catch (error) {
+                resultDiv.textContent = `❌ 获取失败：${error.message}`;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        // 更新博客预览
+        function updateBlogPreview() {
+            const previewDiv = document.getElementById('blogPreview');
+            previewDiv.innerHTML = '';
+            
+            testContents.forEach(content => {
+                const blogCard = document.createElement('div');
+                blogCard.className = 'blog-card';
+                
+                const coverStyle = content.cover_image_url 
+                    ? `url(${content.cover_image_url})` 
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+                
+                blogCard.innerHTML = `
+                    <div class="blog-cover" style="background-image: ${coverStyle}">
+                        <div class="type-badge">${content.type || 'article'}</div>
+                        <div class="read-time">${calculateReadTime(content.content)} min</div>
+                    </div>
+                    <div class="blog-content">
+                        <div class="blog-meta">
+                            <span>${content.author?.nickname || '匿名用户'}</span>
+                            <span>•</span>
+                            <span>${formatDate(content.created_at)}</span>
+                        </div>
+                        <div class="blog-title">${content.title}</div>
+                        <div class="blog-excerpt">
+                            ${content.content.length > 150 
+                                ? content.content.substring(0, 150) + '...' 
+                                : content.content}
+                        </div>
+                        <div class="blog-actions">
+                            <button onclick="viewBlogDetail(${content.id})" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">
+                                阅读更多
+                            </button>
+                            <div class="blog-stats">
+                                <span>👁️ ${content.views}</span>
+                                <span>👍 ${content.likes}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                previewDiv.appendChild(blogCard);
+            });
+        }
+
+        // 查看博客详情
+        function viewBlogDetail(contentId) {
+            const url = `${window.location.origin}/?page=blog-detail&id=${contentId}`;
+            window.open(url, '_blank');
+        }
+
+        // 打开博客列表页
+        function openBlogListPage() {
+            const url = `${window.location.origin}/?page=feed`;
+            window.open(url, '_blank');
+        }
+
+        // 打开博客详情页
+        function openBlogDetailPage() {
+            const contentId = prompt('请输入要查看的内容ID:');
+            if (contentId) {
+                const url = `${window.location.origin}/?page=blog-detail&id=${contentId}`;
+                window.open(url, '_blank');
+            }
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            console.log('博客封面图片测试页面已加载');
+            console.log('API Base URL:', API_BASE);
+            
+            // 自动获取内容列表
+            setTimeout(() => {
+                getContentList();
+            }, 500);
+        };
+    </script>
+</body>
+</html> 

@@ -202,6 +202,45 @@ definitions:
         example: http://localhost:8080/uploads/2023/12/01/abc123.jpg
         type: string
     type: object
+  dto.CreateContentRequest:
+    properties:
+      title:
+        example: My Article Title
+        type: string
+      content:
+        example: This is the article content...
+        type: string
+      type:
+        example: article
+        type: string
+      status:
+        example: draft
+        type: string
+      cover_image_url:
+        example: https://example.com/cover.jpg
+        type: string
+    required:
+    - title
+    - content
+    type: object
+  dto.UpdateContentRequest:
+    properties:
+      title:
+        example: Updated Article Title
+        type: string
+      content:
+        example: Updated article content...
+        type: string
+      type:
+        example: article
+        type: string
+      status:
+        example: published
+        type: string
+      cover_image_url:
+        example: https://example.com/new-cover.jpg
+        type: string
+    type: object
   dto.UserResponse:
     properties:
       avatar_url:
@@ -495,6 +534,9 @@ definitions:
       author_id:
         type: integer
       content:
+        type: string
+      cover_image_url:
+        description: 封面图片URL
         type: string
       created_at:
         type: string

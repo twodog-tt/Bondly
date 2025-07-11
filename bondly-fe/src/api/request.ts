@@ -10,7 +10,7 @@ interface ApiResponse<T> {
 
 interface RequestOptions {
   method: string;
-  body?: string;
+  body?: string | FormData;
   headers?: Record<string, string>;
 }
 
@@ -21,9 +21,13 @@ export const apiRequest = async <T>(
   const url = `${API_BASE_URL}${endpoint}`;
   
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     ...options.headers,
   };
+
+  // 如果不是FormData，添加Content-Type
+  if (!(options.body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+  }
 
   // 添加认证token
   const token = TokenManager.getToken();
@@ -35,6 +39,7 @@ export const apiRequest = async <T>(
     method: options.method,
     headers,
     body: options.body,
+    redirect: 'follow', // 自动跟随重定向
   });
 
   if (!response.ok) {

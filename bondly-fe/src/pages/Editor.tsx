@@ -1,9 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import { createContent, updateContent, Content } from '../api/content';
 
 interface EditorProps {
   isMobile: boolean;
   onPageChange?: (newPage: string) => void;
+  editContentId?: number; // 用于编辑现有内容
 }
 
 interface ArticleData {
@@ -17,7 +19,7 @@ interface ArticleData {
   lastSaved: Date;
 }
 
-const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
+const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }) => {
   const [articleData, setArticleData] = useState<ArticleData>({
     title: '',
     content: '',
@@ -35,6 +37,8 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
   const [autoSaveInterval, setAutoSaveInterval] = useState<NodeJS.Timeout | null>(null);
   const [wordCount, setWordCount] = useState(0);
   const [readTime, setReadTime] = useState(0);
+  const [savedContentId, setSavedContentId] = useState<number | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 自动保存功能
@@ -62,38 +66,81 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
   const handleAutoSave = async () => {
     if (!articleData.title && !articleData.content) return;
     
-    setIsSaving(true);
     try {
-      // 模拟自动保存
-      await new Promise(resolve => setTimeout(resolve, 500));
+      if (savedContentId) {
+        // 更新现有内容
+        await updateContent(savedContentId, {
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'draft',
+          cover_image_url: articleData.coverImage
+        });
+      } else {
+        // 创建新内容
+        const newContent = await createContent({
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'draft',
+          cover_image_url: articleData.coverImage
+        });
+        setSavedContentId(newContent.id);
+      }
+      
       setArticleData(prev => ({
         ...prev,
         lastSaved: new Date()
       }));
+      setError(null);
     } catch (error) {
       console.error('Auto save failed:', error);
-    } finally {
-      setIsSaving(false);
+      setError('自动保存失败，请检查网络连接');
     }
   };
 
   const handleSave = async () => {
     if (!articleData.title.trim()) {
-      alert('Please enter a title');
+      setError('请输入文章标题');
       return;
     }
     
     setIsSaving(true);
+    setError(null);
+    
     try {
-      // 模拟保存
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (savedContentId) {
+        // 更新现有内容
+        await updateContent(savedContentId, {
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'draft',
+          cover_image_url: articleData.coverImage
+        });
+      } else {
+        // 创建新内容
+        const newContent = await createContent({
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'draft',
+          cover_image_url: articleData.coverImage
+        });
+        setSavedContentId(newContent.id);
+      }
+      
       setArticleData(prev => ({
         ...prev,
         lastSaved: new Date()
       }));
-      alert('Draft saved successfully!');
+      
+      // 显示成功消息
+      alert('草稿保存成功！');
     } catch (error) {
-      alert('Failed to save draft');
+      console.error('Save failed:', error);
+      setError('保存失败，请重试');
+      alert('保存失败，请检查网络连接');
     } finally {
       setIsSaving(false);
     }
@@ -101,31 +148,55 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
 
   const handlePublish = async () => {
     if (!articleData.title.trim()) {
-      alert('Please enter a title');
+      setError('请输入文章标题');
       return;
     }
     if (!articleData.content.trim()) {
-      alert('Please enter content');
+      setError('请输入文章内容');
       return;
     }
     if (!articleData.summary.trim()) {
-      alert('Please enter a summary');
+      setError('请输入文章摘要');
       return;
     }
     
     setIsSaving(true);
+    setError(null);
+    
     try {
-      // 模拟发布
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (savedContentId) {
+        // 更新现有内容为已发布
+        await updateContent(savedContentId, {
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'published',
+          cover_image_url: articleData.coverImage
+        });
+      } else {
+        // 创建新内容并发布
+        const newContent = await createContent({
+          title: articleData.title,
+          content: articleData.content,
+          type: articleData.category,
+          status: 'published',
+          cover_image_url: articleData.coverImage
+        });
+        setSavedContentId(newContent.id);
+      }
+      
       setArticleData(prev => ({
         ...prev,
         isPublished: true,
         lastSaved: new Date()
       }));
-      alert('Article published successfully!');
+      
+      alert('文章发布成功！');
       onPageChange?.('feed');
     } catch (error) {
-      alert('Failed to publish article');
+      console.error('Publish failed:', error);
+      setError('发布失败，请重试');
+      alert('发布失败，请检查网络连接');
     } finally {
       setIsSaving(false);
     }
@@ -135,7 +206,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
     const file = event.target.files?.[0];
     if (file) {
       try {
-        // 调用真实的后端API上传图片
+        // 使用与现有代码相同的API调用方式
         const { uploadApi } = await import('../utils/api');
         const result = await uploadApi.uploadImage(file);
         
@@ -143,6 +214,8 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
           ...prev,
           coverImage: result.url
         }));
+        
+        alert('封面图片上传成功！');
       } catch (error: any) {
         console.error("封面图片上传失败:", error);
         
@@ -237,6 +310,11 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
             <span style={{ fontSize: "14px", color: "#9ca3af" }}>
               • {wordCount} words • {readTime} min read
             </span>
+            {savedContentId && (
+              <span style={{ fontSize: "14px", color: "#10b981" }}>
+                • ID: {savedContentId}
+              </span>
+            )}
           </div>
           
           <div style={{ display: "flex", gap: "12px" }}>
@@ -258,6 +336,20 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
           </div>
         </div>
 
+        {/* 错误提示 */}
+        {error && (
+          <div style={{
+            background: "rgba(239, 68, 68, 0.1)",
+            border: "1px solid rgba(239, 68, 68, 0.3)",
+            borderRadius: "8px",
+            padding: "12px",
+            marginBottom: "16px",
+            color: "#ef4444"
+          }}>
+            {error}
+          </div>
+        )}
+
         <div style={{
           background: "rgba(255, 255, 255, 0.05)",
           borderRadius: "16px",
@@ -271,7 +363,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange }) => {
             textAlign: "center",
             color: "white"
           }}>
-            {showPreview ? "Preview" : "Create New Article"}
+            {editContentId ? "Edit Article" : "Create New Article"}
           </h1>
           
           {!showPreview ? (

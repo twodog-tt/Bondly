@@ -481,6 +481,7 @@ function AppContent() {
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : isMobile ? mobileContentStyle : contentStyle
         }>
+
           {page === "home" && <Home isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "feed" && <BlogListPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "profile" && <Profile isMobile={isMobile} onPageChange={handlePageChange} />}

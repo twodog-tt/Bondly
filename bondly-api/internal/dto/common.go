@@ -33,15 +33,16 @@ type ContentListData struct {
 
 // ContentData 内容数据
 type ContentData struct {
-	ID        uint   `json:"id" example:"1"`
-	Title     string `json:"title" example:"My First Article"`
-	Content   string `json:"content" example:"This is the content..."`
-	Type      string `json:"type" example:"article"`
-	Status    string `json:"status" example:"published"`
-	Likes     int64  `json:"likes" example:"10"`
-	Dislikes  int64  `json:"dislikes" example:"2"`
-	Views     int64  `json:"views" example:"100"`
-	CreatedAt string `json:"created_at" example:"2023-12-01T10:00:00Z"`
+	ID            uint    `json:"id" example:"1"`
+	Title         string  `json:"title" example:"My First Article"`
+	Content       string  `json:"content" example:"This is the content..."`
+	Type          string  `json:"type" example:"article"`
+	Status        string  `json:"status" example:"published"`
+	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/cover.jpg"`
+	Likes         int64   `json:"likes" example:"10"`
+	Dislikes      int64   `json:"dislikes" example:"2"`
+	Views         int64   `json:"views" example:"100"`
+	CreatedAt     string  `json:"created_at" example:"2023-12-01T10:00:00Z"`
 }
 
 // ContentDetailData 内容详情响应数据

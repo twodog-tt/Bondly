@@ -72,6 +72,10 @@ func (s *ContentService) UpdateContent(ctx context.Context, id int64, updateData
 	if updateData.Status != "" {
 		existingContent.Status = updateData.Status
 	}
+	// 更新封面图片URL（允许设置为空值）
+	if updateData.CoverImageURL != nil {
+		existingContent.CoverImageURL = updateData.CoverImageURL
+	}
 
 	err = s.contentRepo.Update(existingContent)
 	if err != nil {

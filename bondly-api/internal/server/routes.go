@@ -51,8 +51,10 @@ func (s *Server) setupRoutes() {
 		// 内容相关路由 - 完整的CRUD
 		content := v1.Group("/content")
 		{
-			content.GET("/", s.contentHandlers.ListContent)                                                                       // 获取内容列表
-			content.POST("/", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                       // 创建内容
+			content.GET("", s.contentHandlers.ListContent)                                                                        // 获取内容列表（不带斜杠）
+			content.GET("/", s.contentHandlers.ListContent)                                                                       // 获取内容列表（带斜杠）
+			content.POST("", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                        // 创建内容（不带斜杠）
+			content.POST("/", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                       // 创建内容（带斜杠）
 			content.GET("/:id", s.contentHandlers.GetContent)                                                                     // 获取内容详情
 			content.PUT("/:id", middleware.AuthMiddleware(), middleware.AdminOrOwner("content"), s.contentHandlers.UpdateContent) // 更新内容
 			content.DELETE("/:id", middleware.AuthMiddleware(), middleware.AdminOnly(), s.contentHandlers.DeleteContent)          // 删除内容

@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import { getContentList, Content } from '../api/content';
 
 interface BlogListPageProps {
   isMobile: boolean;
@@ -7,72 +8,82 @@ interface BlogListPageProps {
 }
 
 const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) => {
-  // 模拟博客数据
-  const blogs = [
-    {
-      id: 1,
-      title: "Web3 Social Revolution: How Bondly is Changing the Game",
-      excerpt: "Explore how Bondly is revolutionizing social media through blockchain technology, creating a new paradigm where user interactions become valuable assets.",
-      author: "Bondly Team",
-      readTime: "5 min read",
-      category: "Technology",
-      date: "2024-01-15",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop"
-    },
-    {
-      id: 2,
-      title: "The Future of Decentralized Social Networks",
-      excerpt: "Discover the potential of decentralized social platforms and how they're reshaping the way we connect, share, and monetize our online presence.",
-      author: "Crypto Analyst",
-      readTime: "7 min read",
-      category: "Analysis",
-      date: "2024-01-12",
-      image: "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=400&h=200&fit=crop"
-    },
-    {
-      id: 3,
-      title: "Building Trust in Web3: Reputation Systems Explained",
-      excerpt: "Learn how reputation systems work in decentralized networks and why they're crucial for building trust in the Web3 ecosystem.",
-      author: "Web3 Researcher",
-      readTime: "6 min read",
-      category: "Education",
-      date: "2024-01-10",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop"
-    },
-    {
-      id: 4,
-      title: "NFTs and Social Media: The Perfect Match",
-      excerpt: "Explore how NFTs are transforming social media by enabling users to monetize their content and build unique digital identities.",
-      author: "NFT Expert",
-      readTime: "8 min read",
-      category: "NFT",
-      date: "2024-01-08",
-      image: "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=400&h=200&fit=crop"
-    },
-    {
-      id: 5,
-      title: "DAO Governance: Community-Driven Decision Making",
-      excerpt: "Understand how DAOs are revolutionizing governance and decision-making processes in decentralized organizations.",
-      author: "DAO Specialist",
-      readTime: "9 min read",
-      category: "Governance",
-      date: "2024-01-05",
-      image: "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=400&h=200&fit=crop"
-    },
-    {
-      id: 6,
-      title: "Staking Mechanisms in SocialFi Platforms",
-      excerpt: "Learn about staking mechanisms and how they incentivize positive behavior in social finance platforms.",
-      author: "DeFi Analyst",
-      readTime: "6 min read",
-      category: "DeFi",
-      date: "2024-01-03",
-      image: "https://images.unsplash.com/photo-1639762681057-408e52192e55?w=400&h=200&fit=crop"
+  const [contents, setContents] = useState<Content[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+
+  // 获取内容列表
+  const fetchContents = useCallback(async (page: number = 1, category: string = 'all') => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const params: any = {
+        page,
+        limit: 10,
+        status: 'published'
+      };
+      
+      if (category !== 'all') {
+        params.type = category;
+      }
+      
+      const response = await getContentList(params);
+      
+      setContents(response.contents);
+      setTotalPages(Math.ceil(response.pagination.total / 10));
+      setCurrentPage(page);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : '获取内容失败');
+    } finally {
+      setLoading(false);
     }
-  ];
+  }, []);
+
+  // 组件挂载时获取数据
+  useEffect(() => {
+    fetchContents(1, selectedCategory);
+  }, [selectedCategory, fetchContents]);
+
+  // 处理分类切换
+  const handleCategoryChange = (category: string) => {
+    setSelectedCategory(category);
+    setCurrentPage(1);
+  };
+
+  // 处理分页
+  const handlePageChange = (page: number) => {
+    fetchContents(page, selectedCategory);
+  };
+
+  // 处理博客点击
+  const handleBlogClick = (contentId: number) => {
+    // 通过URL参数传递内容ID
+    const url = `${window.location.pathname}?page=blog-detail&id=${contentId}`;
+    window.history.pushState({}, '', url);
+    onPageChange?.('blog-detail');
+  };
+
+  // 计算阅读时间
+  const calculateReadTime = (content: string) => {
+    const words = content.trim().split(/\s+/).filter(word => word.length > 0).length;
+    return Math.ceil(words / 200); // 假设每分钟阅读200字
+  };
+
+  // 格式化日期
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('zh-CN', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+  };
 
   const handleLoginClick = () => {
-    console.log("Login clicked");
+    // 处理登录点击
   };
 
   return (
@@ -116,118 +127,303 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
           </p>
         </div>
 
+        {/* 分类筛选 */}
         <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(350px, 1fr))",
-          gap: "32px",
-          maxWidth: "1200px",
-          margin: "0 auto"
+          display: "flex",
+          justifyContent: "center",
+          gap: "12px",
+          marginBottom: "32px",
+          flexWrap: "wrap"
         }}>
-          {blogs.map((blog) => (
-            <div key={blog.id} style={{
-              background: "rgba(255, 255, 255, 0.05)",
-              borderRadius: "16px",
-              overflow: "hidden",
-              transition: "transform 0.3s ease, box-shadow 0.3s ease",
-              cursor: "pointer",
-              border: "1px solid rgba(255, 255, 255, 0.1)"
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = "translateY(-4px)";
-              e.currentTarget.style.boxShadow = "0 20px 40px rgba(0, 0, 0, 0.3)";
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = "translateY(0)";
-              e.currentTarget.style.boxShadow = "none";
-            }}
-            onClick={() => onPageChange?.("blog-detail")}
+          {['all', 'technology', 'blockchain', 'defi', 'nft', 'governance', 'tutorial', 'analysis', 'news'].map((category) => (
+            <button
+              key={category}
+              onClick={() => handleCategoryChange(category)}
+              style={{
+                background: selectedCategory === category 
+                  ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+                  : "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                color: "white",
+                padding: "8px 16px",
+                borderRadius: "20px",
+                fontSize: "14px",
+                cursor: "pointer",
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                if (selectedCategory !== category) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (selectedCategory !== category) {
+                  e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                }
+              }}
             >
-              <div style={{
-                height: "200px",
-                background: `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
-                position: "relative",
-                overflow: "hidden"
-              }}>
-                <img 
-                  src={blog.image} 
-                  alt={blog.title}
-                  style={{
-                    width: "100%",
-                    height: "100%",
-                    objectFit: "cover",
-                    opacity: "0.8"
-                  }}
-                />
-                <div style={{
-                  position: "absolute",
-                  top: "12px",
-                  left: "12px",
-                  background: "rgba(0, 0, 0, 0.7)",
-                  color: "white",
-                  padding: "4px 8px",
-                  borderRadius: "6px",
-                  fontSize: "12px",
-                  fontWeight: "500"
-                }}>
-                  {blog.category}
-                </div>
-              </div>
-              
-              <div style={{ padding: "24px" }}>
-                <div style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "12px",
-                  marginBottom: "12px",
-                  fontSize: "14px",
-                  color: "#9ca3af"
-                }}>
-                  <span>{blog.author}</span>
-                  <span>•</span>
-                  <span>{blog.readTime}</span>
-                  <span>•</span>
-                  <span>{blog.date}</span>
-                </div>
-                
-                <h3 style={{
-                  fontSize: "20px",
-                  fontWeight: "600",
-                  marginBottom: "12px",
-                  lineHeight: "1.4",
-                  color: "white"
-                }}>
-                  {blog.title}
-                </h3>
-                
-                <p style={{
-                  fontSize: "16px",
-                  color: "#d1d5db",
-                  lineHeight: "1.6",
-                  marginBottom: "20px"
-                }}>
-                  {blog.excerpt}
-                </p>
-                
-                <button style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "opacity 0.2s ease"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
-                >
-                  Read More
-                </button>
-              </div>
-            </div>
+              {category === 'all' ? '全部' : category.charAt(0).toUpperCase() + category.slice(1)}
+            </button>
           ))}
         </div>
+
+        {/* 加载状态 */}
+        {loading && (
+          <div style={{
+            textAlign: "center",
+            padding: "40px",
+            color: "#9ca3af"
+          }}>
+            <div style={{
+              width: "40px",
+              height: "40px",
+              border: "3px solid rgba(255, 255, 255, 0.3)",
+              borderTop: "3px solid #667eea",
+              borderRadius: "50%",
+              animation: "spin 1s linear infinite",
+              margin: "0 auto 16px"
+            }}></div>
+            加载中...
+          </div>
+        )}
+
+        {/* 错误状态 */}
+        {error && (
+          <div style={{
+            textAlign: "center",
+            padding: "40px",
+            color: "#ef4444"
+          }}>
+            <p>加载失败: {error}</p>
+            <button
+              onClick={() => fetchContents(currentPage, selectedCategory)}
+              style={{
+                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                color: "white",
+                border: "none",
+                padding: "10px 20px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                cursor: "pointer",
+                marginTop: "16px"
+              }}
+            >
+              重试
+            </button>
+          </div>
+        )}
+
+        {/* 内容列表 */}
+        {!loading && !error && (
+          <>
+            <div style={{
+              display: "grid",
+              gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fill, minmax(350px, 1fr))",
+              gap: "32px",
+              maxWidth: "1200px",
+              margin: "0 auto"
+            }}>
+              {contents.map((content) => (
+                <div key={content.id} style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  borderRadius: "16px",
+                  overflow: "hidden",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  cursor: "pointer",
+                  border: "1px solid rgba(255, 255, 255, 0.1)"
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-4px)";
+                  e.currentTarget.style.boxShadow = "0 20px 40px rgba(0, 0, 0, 0.3)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = "none";
+                }}
+                onClick={() => handleBlogClick(content.id)}
+                >
+                  <div style={{
+                    height: "200px",
+                    background: content.cover_image_url 
+                      ? `url(${content.cover_image_url})` 
+                      : `linear-gradient(135deg, #667eea 0%, #764ba2 100%)`,
+                    backgroundSize: "cover",
+                    backgroundPosition: "center",
+                    backgroundRepeat: "no-repeat",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}>
+                    {/* 如果没有封面图片，显示渐变背景 */}
+                    {!content.cover_image_url && (
+                      <div style={{
+                        position: "absolute",
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+                      }} />
+                    )}
+                    
+                    {/* 类型标签 */}
+                    <div style={{
+                      position: "absolute",
+                      top: "12px",
+                      left: "12px",
+                      background: "rgba(0, 0, 0, 0.7)",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      backdropFilter: "blur(10px)"
+                    }}>
+                      {content.type || 'article'}
+                    </div>
+                    
+                    {/* 阅读时间标签 */}
+                    <div style={{
+                      position: "absolute",
+                      top: "12px",
+                      right: "12px",
+                      background: "rgba(0, 0, 0, 0.7)",
+                      color: "white",
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      fontSize: "12px",
+                      fontWeight: "500",
+                      backdropFilter: "blur(10px)"
+                    }}>
+                      {calculateReadTime(content.content)} min
+                    </div>
+                    
+                    {/* 渐变遮罩，确保文字可读性 */}
+                    <div style={{
+                      position: "absolute",
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      height: "60px",
+                      background: "linear-gradient(transparent, rgba(0, 0, 0, 0.7))"
+                    }} />
+                  </div>
+                  
+                  <div style={{ padding: "24px" }}>
+                    <div style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "12px",
+                      marginBottom: "12px",
+                      fontSize: "14px",
+                      color: "#9ca3af"
+                    }}>
+                      <span>{content.author?.nickname || '匿名用户'}</span>
+                      <span>•</span>
+                      <span>{calculateReadTime(content.content)} min read</span>
+                      <span>•</span>
+                      <span>{formatDate(content.created_at)}</span>
+                    </div>
+                    
+                    <h3 style={{
+                      fontSize: "20px",
+                      fontWeight: "600",
+                      marginBottom: "12px",
+                      lineHeight: "1.4",
+                      color: "white"
+                    }}>
+                      {content.title}
+                    </h3>
+                    
+                    <p style={{
+                      fontSize: "16px",
+                      color: "#d1d5db",
+                      lineHeight: "1.6",
+                      marginBottom: "20px"
+                    }}>
+                      {content.content.length > 150 
+                        ? content.content.substring(0, 150) + '...' 
+                        : content.content}
+                    </p>
+                    
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}>
+                      <button style={{
+                        background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                        color: "white",
+                        border: "none",
+                        padding: "10px 20px",
+                        borderRadius: "8px",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                        cursor: "pointer",
+                        transition: "opacity 0.2s ease"
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                      onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                      >
+                        Read More
+                      </button>
+                      
+                      <div style={{
+                        display: "flex",
+                        gap: "16px",
+                        fontSize: "14px",
+                        color: "#9ca3af"
+                      }}>
+                        <span>👁️ {content.views}</span>
+                        <span>👍 {content.likes}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* 分页 */}
+            {totalPages > 1 && (
+              <div style={{
+                display: "flex",
+                justifyContent: "center",
+                gap: "8px",
+                marginTop: "40px"
+              }}>
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => handlePageChange(page)}
+                    style={{
+                      background: currentPage === page 
+                        ? "linear-gradient(135deg, #667eea 0%, #764ba2 100%)" 
+                        : "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      color: "white",
+                      padding: "8px 12px",
+                      borderRadius: "6px",
+                      fontSize: "14px",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease"
+                    }}
+                    onMouseEnter={(e) => {
+                      if (currentPage !== page) {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      if (currentPage !== page) {
+                        e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)";
+                      }
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+            )}
+          </>
+        )}
       </div>
     </div>
   );

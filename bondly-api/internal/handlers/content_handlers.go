@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bondly-api/internal/dto"
 	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/models"
 	"bondly-api/internal/pkg/response"
@@ -28,7 +29,7 @@ func NewContentHandlers(contentService *services.ContentService) *ContentHandler
 // @Tags 内容管理
 // @Accept json
 // @Produce json
-// @Param content body models.Content true "内容信息"
+// @Param content body dto.CreateContentRequest true "内容信息"
 // @Success 201 {object} response.ResponseContent
 // @Failure 400 {object} response.ResponseAny
 // @Failure 401 {object} response.ResponseAny
@@ -39,8 +40,8 @@ func (h *ContentHandlers) CreateContent(c *gin.Context) {
 	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
 	bizLog.StartAPI("POST", "/api/v1/content", nil, "", nil)
 
-	var content models.Content
-	if err := c.ShouldBindJSON(&content); err != nil {
+	var req dto.CreateContentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -53,12 +54,22 @@ func (h *ContentHandlers) CreateContent(c *gin.Context) {
 		response.Fail(c, response.CodeUnauthorized, "User not authenticated")
 		return
 	}
-	content.AuthorID = userID.(int64)
+
+	// 构建Content模型
+	content := models.Content{
+		AuthorID:      userID.(int64),
+		Title:         req.Title,
+		Content:       req.Content,
+		Type:          req.Type,
+		Status:        req.Status,
+		CoverImageURL: req.CoverImageURL,
+	}
 
 	bizLog.BusinessLogic("参数处理", map[string]interface{}{
 		"author_id": content.AuthorID,
 		"type":      content.Type,
 		"status":    content.Status,
+		"has_cover": content.CoverImageURL != nil,
 	})
 
 	if err := h.contentService.CreateContent(c.Request.Context(), &content); err != nil {
@@ -185,7 +196,7 @@ func (h *ContentHandlers) ListContent(c *gin.Context) {
 // @Accept json
 // @Produce json
 // @Param id path int true "内容ID"
-// @Param content body models.Content true "更新的内容信息"
+// @Param content body dto.UpdateContentRequest true "更新的内容信息"
 // @Success 200 {object} response.ResponseContent
 // @Failure 400 {object} response.ResponseAny
 // @Failure 401 {object} response.ResponseAny
@@ -205,8 +216,8 @@ func (h *ContentHandlers) UpdateContent(c *gin.Context) {
 		return
 	}
 
-	var updateData models.Content
-	if err := c.ShouldBindJSON(&updateData); err != nil {
+	var req dto.UpdateContentRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
 		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
 		response.Fail(c, response.CodeInvalidParams, err.Error())
 		return
@@ -220,9 +231,28 @@ func (h *ContentHandlers) UpdateContent(c *gin.Context) {
 		return
 	}
 
+	// 构建更新数据
+	updateData := models.Content{}
+	if req.Title != nil {
+		updateData.Title = *req.Title
+	}
+	if req.Content != nil {
+		updateData.Content = *req.Content
+	}
+	if req.Type != nil {
+		updateData.Type = *req.Type
+	}
+	if req.Status != nil {
+		updateData.Status = *req.Status
+	}
+	if req.CoverImageURL != nil {
+		updateData.CoverImageURL = req.CoverImageURL
+	}
+
 	bizLog.BusinessLogic("参数处理", map[string]interface{}{
 		"content_id": id,
 		"user_id":    userID,
+		"has_cover":  req.CoverImageURL != nil,
 	})
 
 	content, err := h.contentService.UpdateContent(c.Request.Context(), id, &updateData)
