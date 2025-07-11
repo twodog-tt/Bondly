@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import EditProfileModal from '../components/EditProfileModal';
 import { useAuth } from '../hooks/useAuth';
@@ -12,14 +12,51 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
   const { user, checkAuthStatus } = useAuth();
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [profileData, setProfileData] = useState<any>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const handleLoginClick = () => {
     console.log("Login clicked");
   };
 
+  // 获取用户详细信息
+  const fetchUserProfile = async () => {
+    console.log('fetchUserProfile called, user:', user);
+    
+    if (!user?.user_id) {
+      console.log('No user_id found, skipping API call');
+      setIsLoading(false);
+      setError('User not logged in');
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      setError(null);
+      
+      console.log('Calling API with user_id:', user.user_id);
+      const { userApi } = await import('../utils/api');
+      const result = await userApi.getUser(user.user_id.toString());
+      
+      console.log('User profile data from API:', result);
+      setProfileData(result);
+    } catch (error: any) {
+      console.error('Failed to fetch user profile:', error);
+      setError(error.message || 'Failed to load profile data');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleEditProfile = () => {
     setShowEditModal(true);
   };
+
+  // 组件加载时获取用户信息
+  useEffect(() => {
+    fetchUserProfile();
+  }, [user?.user_id]);
 
   const handleSaveProfile = async (profileData: {
     nickname: string;
@@ -36,8 +73,10 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
       
       console.log('Profile update result:', result);
       
-      // API调用成功，直接处理结果
-      // 刷新用户信息
+      // API调用成功，重新获取用户信息
+      await fetchUserProfile();
+      
+      // 刷新用户认证状态
       checkAuthStatus();
       
       // 关闭弹窗
@@ -83,103 +122,152 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
             gap: "24px",
             alignItems: isMobile ? "center" : "flex-start"
           }}>
-            {/* 头像 */}
-            <div style={{
-              width: "120px",
-              height: "120px",
-              borderRadius: "50%",
-              background: user?.avatar_url 
-                ? `url(${user.avatar_url}) center/cover`
-                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              fontSize: "48px",
-              fontWeight: "bold",
-              color: "white",
-              flexShrink: 0
-            }}>
-              {!user?.avatar_url && (user?.nickname?.charAt(0) || 'U')}
-            </div>
-            
-            {/* 用户信息 */}
-            <div style={{ flex: 1 }}>
-              <h1 style={{
-                fontSize: isMobile ? "24px" : "32px",
-                fontWeight: "bold",
-                marginBottom: "8px",
-                color: "white"
+            {/* 加载状态 */}
+            {isLoading ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+                padding: "40px"
               }}>
-                {user?.nickname || 'Anonymous'}
-              </h1>
-              <p style={{
-                fontSize: "16px",
-                color: "#9ca3af",
-                marginBottom: "12px"
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "3px solid rgba(102, 126, 234, 0.3)",
+                  borderTop: "3px solid #667eea",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }}></div>
+                <p style={{ color: "#9ca3af" }}>Loading profile...</p>
+              </div>
+            ) : error ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+                padding: "40px"
               }}>
-                {user?.role || 'User'} • Member since 2024
-              </p>
-              
-              {/* 个性签名 */}
-              {user?.bio ? (
+                <p style={{ color: "#ef4444" }}>Error: {error}</p>
+                <button
+                  onClick={fetchUserProfile}
+                  style={{
+                    background: "#667eea",
+                    color: "white",
+                    border: "none",
+                    padding: "8px 16px",
+                    borderRadius: "8px",
+                    cursor: "pointer"
+                  }}
+                >
+                  Retry
+                </button>
+              </div>
+            ) : (
+              <>
+                {/* 头像 */}
                 <div style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  marginBottom: "20px"
+                  width: "120px",
+                  height: "120px",
+                  borderRadius: "50%",
+                  background: profileData?.avatar_url || user?.avatar_url
+                    ? `url(${profileData?.avatar_url || user?.avatar_url}) center/cover`
+                    : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "48px",
+                  fontWeight: "bold",
+                  color: "white",
+                  flexShrink: 0
                 }}>
-                  <div style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    marginBottom: "8px"
-                  }}>
-                    <span style={{
-                      fontSize: "16px",
-                      color: "#667eea"
-                    }}>
-                      💬
-                    </span>
-                    <span style={{
-                      fontSize: "14px",
-                      fontWeight: "600",
-                      color: "#9ca3af",
-                      textTransform: "uppercase",
-                      letterSpacing: "0.5px"
-                    }}>
-                      Bio
-                    </span>
-                  </div>
-                  <p style={{
-                    fontSize: "15px",
-                    color: "#e5e7eb",
-                    lineHeight: "1.6",
-                    margin: 0,
-                    fontStyle: "italic"
-                  }}>
-                    "{user.bio}"
-                  </p>
+                  {!(profileData?.avatar_url || user?.avatar_url) && 
+                    ((profileData?.nickname || user?.nickname)?.charAt(0) || 'U')}
                 </div>
-              ) : (
-                <div style={{
-                  background: "rgba(255, 255, 255, 0.03)",
-                  border: "1px dashed rgba(255, 255, 255, 0.2)",
-                  borderRadius: "12px",
-                  padding: "16px",
-                  marginBottom: "20px",
-                  textAlign: "center"
-                }}>
-                  <p style={{
-                    fontSize: "14px",
-                    color: "#6b7280",
-                    margin: 0,
-                    fontStyle: "italic"
+                
+                {/* 用户信息 */}
+                <div style={{ flex: 1 }}>
+                  <h1 style={{
+                    fontSize: isMobile ? "24px" : "32px",
+                    fontWeight: "bold",
+                    marginBottom: "8px",
+                    color: "white"
                   }}>
-                    No bio yet. Click "Edit Profile" to add your personal signature.
+                    {profileData?.nickname || user?.nickname || 'Anonymous'}
+                  </h1>
+                  <p style={{
+                    fontSize: "16px",
+                    color: "#9ca3af",
+                    marginBottom: "12px"
+                  }}>
+                    {profileData?.role || user?.role || 'User'} • Member since {
+                      profileData?.created_at 
+                        ? new Date(profileData.created_at).getFullYear()
+                        : '2024'
+                    }
                   </p>
-                </div>
-              )}
+                  
+                                    {/* 个性签名 */}
+                  {(profileData?.bio || user?.bio) ? (
+                    <div style={{
+                      background: "rgba(255, 255, 255, 0.05)",
+                      border: "1px solid rgba(255, 255, 255, 0.1)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      marginBottom: "20px"
+                    }}>
+                      <div style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
+                        marginBottom: "8px"
+                      }}>
+                        <span style={{
+                          fontSize: "16px",
+                          color: "#667eea"
+                        }}>
+                          💬
+                        </span>
+                        <span style={{
+                          fontSize: "14px",
+                          fontWeight: "600",
+                          color: "#9ca3af",
+                          textTransform: "uppercase",
+                          letterSpacing: "0.5px"
+                        }}>
+                          Bio
+                        </span>
+                      </div>
+                      <p style={{
+                        fontSize: "15px",
+                        color: "#e5e7eb",
+                        lineHeight: "1.6",
+                        margin: 0,
+                        fontStyle: "italic"
+                      }}>
+                        "{profileData?.bio || user?.bio}"
+                      </p>
+                    </div>
+                  ) : (
+                    <div style={{
+                      background: "rgba(255, 255, 255, 0.03)",
+                      border: "1px dashed rgba(255, 255, 255, 0.2)",
+                      borderRadius: "12px",
+                      padding: "16px",
+                      marginBottom: "20px",
+                      textAlign: "center"
+                    }}>
+                      <p style={{
+                        fontSize: "14px",
+                        color: "#6b7280",
+                        margin: 0,
+                        fontStyle: "italic"
+                      }}>
+                        No bio yet. Click "Edit Profile" to add your personal signature.
+                      </p>
+                    </div>
+                  )}
               
               {/* 统计信息 */}
               <div style={{
@@ -194,7 +282,9 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   borderRadius: "8px",
                   textAlign: "center"
                 }}>
-                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>1,234</div>
+                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>
+                    {profileData?.reputation_score || 0}
+                  </div>
                   <div style={{ fontSize: "14px", color: "#9ca3af" }}>Reputation</div>
                 </div>
                 <div style={{
@@ -268,6 +358,8 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 </button>
               </div>
             </div>
+              </>
+            )}
           </div>
         </div>
 

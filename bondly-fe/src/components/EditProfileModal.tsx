@@ -64,11 +64,6 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
   };
 
   const handleSave = () => {
-    if (!nickname.trim()) {
-      alert('Please enter a nickname');
-      return;
-    }
-
     onSave({
       nickname: nickname.trim(),
       bio: bio.trim(),
@@ -255,7 +250,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               fontWeight: '600',
               color: 'white'
             }}>
-              Nickname *
+              Nickname
             </label>
             <input
               type="text"
