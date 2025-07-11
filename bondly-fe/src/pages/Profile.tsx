@@ -115,19 +115,70 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
               <p style={{
                 fontSize: "16px",
                 color: "#9ca3af",
-                marginBottom: "16px"
+                marginBottom: "12px"
               }}>
                 {user?.role || 'User'} • Member since 2024
               </p>
-              {user?.bio && (
-                <p style={{
-                  fontSize: "14px",
-                  color: "#9ca3af",
-                  marginBottom: "16px",
-                  lineHeight: "1.5"
+              
+              {/* 个性签名 */}
+              {user?.bio ? (
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.05)",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "20px"
                 }}>
-                  {user.bio}
-                </p>
+                  <div style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    marginBottom: "8px"
+                  }}>
+                    <span style={{
+                      fontSize: "16px",
+                      color: "#667eea"
+                    }}>
+                      💬
+                    </span>
+                    <span style={{
+                      fontSize: "14px",
+                      fontWeight: "600",
+                      color: "#9ca3af",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.5px"
+                    }}>
+                      Bio
+                    </span>
+                  </div>
+                  <p style={{
+                    fontSize: "15px",
+                    color: "#e5e7eb",
+                    lineHeight: "1.6",
+                    margin: 0,
+                    fontStyle: "italic"
+                  }}>
+                    "{user.bio}"
+                  </p>
+                </div>
+              ) : (
+                <div style={{
+                  background: "rgba(255, 255, 255, 0.03)",
+                  border: "1px dashed rgba(255, 255, 255, 0.2)",
+                  borderRadius: "12px",
+                  padding: "16px",
+                  marginBottom: "20px",
+                  textAlign: "center"
+                }}>
+                  <p style={{
+                    fontSize: "14px",
+                    color: "#6b7280",
+                    margin: 0,
+                    fontStyle: "italic"
+                  }}>
+                    No bio yet. Click "Edit Profile" to add your personal signature.
+                  </p>
+                </div>
               )}
               
               {/* 统计信息 */}

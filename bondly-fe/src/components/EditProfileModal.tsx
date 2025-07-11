@@ -283,7 +283,7 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
             />
           </div>
 
-          {/* 个人简介 */}
+          {/* 个性签名 */}
           <div>
             <label style={{
               display: 'block',
@@ -292,12 +292,12 @@ const EditProfileModal: React.FC<EditProfileModalProps> = ({
               fontWeight: '600',
               color: 'white'
             }}>
-              Bio
+              Personal Signature 💬
             </label>
             <textarea
               value={bio}
               onChange={(e) => setBio(e.target.value)}
-              placeholder="Tell us about yourself..."
+              placeholder="Share your thoughts, motto, or personal signature..."
               rows={4}
               style={{
                 width: '100%',
