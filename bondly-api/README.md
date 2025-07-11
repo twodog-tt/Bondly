@@ -34,6 +34,259 @@ go run main.go
 ### API 文档
 启动后访问 Swagger UI：`http://localhost:8080/swagger/index.html`
 
+### 数据库文档
+详细的数据库表结构说明：[DATABASE_SCHEMA.md](./docs/DATABASE_SCHEMA.md)
+
+## 📊 数据库表结构
+
+### 数据库概览
+- **数据库名**: bondly_db
+- **总表数**: 9个表
+- **数据库类型**: PostgreSQL
+
+### 表结构详情
+
+#### 1. **users 表** (用户表)
+```sql
+CREATE TABLE users (
+    id BIGSERIAL PRIMARY KEY,
+    wallet_address VARCHAR(42) UNIQUE,
+    email VARCHAR(255) UNIQUE,
+    nickname VARCHAR(255) NOT NULL DEFAULT 'Anonymous',
+    avatar_url TEXT,
+    bio TEXT,
+    role VARCHAR(255) NOT NULL DEFAULT 'user',
+    reputation_score BIGINT NOT NULL DEFAULT 0,
+    last_login_at TIMESTAMP,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    custody_wallet_address VARCHAR(42),
+    encrypted_private_key TEXT
+);
+
+-- 约束
+CHECK (char_length(wallet_address) = 42)
+CHECK (char_length(custody_wallet_address) = 42)
+CHECK (position('@' in email) > 1)
+CHECK (char_length(nickname) > 0)
+CHECK (role IN ('user', 'admin', 'moderator'))
+CHECK (reputation_score >= 0)
+
+-- 索引
+UNIQUE INDEX idx_users_wallet_address (wallet_address)
+UNIQUE INDEX idx_users_email (email)
+```
+
+#### 2. **posts 表** (文章表)
+```sql
+CREATE TABLE posts (
+    id BIGSERIAL PRIMARY KEY,
+    author_id BIGINT NOT NULL,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    cover_image_url TEXT,
+    tags TEXT[] DEFAULT '{}',
+    likes INTEGER NOT NULL DEFAULT 0,
+    views INTEGER NOT NULL DEFAULT 0,
+    is_published BOOLEAN NOT NULL DEFAULT true,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+-- 约束
+CHECK (char_length(title) > 0)
+CHECK (char_length(content) > 0)
+CHECK (likes >= 0)
+CHECK (views >= 0)
+
+-- 索引
+INDEX idx_posts_author (author_id)
+INDEX idx_posts_created_at (created_at)
+INDEX idx_posts_is_published (is_published)
+```
+
+#### 3. **comments 表** (评论表)
+```sql
+CREATE TABLE comments (
+    id BIGSERIAL PRIMARY KEY,
+    post_id BIGINT NOT NULL,
+    author_id BIGINT NOT NULL,
+    content TEXT NOT NULL,
+    parent_comment_id BIGINT,
+    likes INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_comment_id) REFERENCES comments(id)
+);
+
+-- 约束
+CHECK (char_length(content) > 0)
+CHECK (likes >= 0)
+
+-- 索引
+INDEX idx_comments_post (post_id)
+INDEX idx_comments_author (author_id)
+INDEX idx_comments_parent (parent_comment_id)
+```
+
+#### 4. **user_followers 表** (用户关注关系表)
+```sql
+CREATE TABLE user_followers (
+    follower_id BIGINT NOT NULL,
+    followed_id BIGINT NOT NULL,
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (follower_id, followed_id),
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE,
+    CHECK (follower_id <> followed_id)
+);
+
+-- 索引
+INDEX idx_user_followers_follower_id (follower_id)
+INDEX idx_user_followers_followed_id (followed_id)
+```
+
+#### 5. **wallet_bindings 表** (钱包绑定表)
+```sql
+CREATE TABLE wallet_bindings (
+    id BIGSERIAL PRIMARY KEY,
+    user_id BIGINT NOT NULL,
+    wallet_address VARCHAR(42) NOT NULL,
+    network VARCHAR(255) NOT NULL DEFAULT 'ethereum',
+    created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (user_id, wallet_address)
+);
+
+-- 约束
+CHECK (char_length(wallet_address) = 42)
+CHECK (network IN ('ethereum', 'polygon', 'arbitrum', 'optimism', 'bsc'))
+
+-- 索引
+INDEX idx_wallet_bindings_user_id (user_id)
+INDEX idx_wallet_bindings_wallet_address (wallet_address)
+```
+
+#### 6. **contents 表** (内容表 - 旧版)
+```sql
+CREATE TABLE contents (
+    id BIGSERIAL PRIMARY KEY,
+    author_id BIGINT,
+    title TEXT,
+    content TEXT,
+    type TEXT,
+    status TEXT DEFAULT 'draft',
+    likes BIGINT DEFAULT 0,
+    dislikes BIGINT DEFAULT 0,
+    views BIGINT DEFAULT 0,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    FOREIGN KEY (author_id) REFERENCES users(id)
+);
+
+-- 索引
+INDEX idx_contents_deleted_at (deleted_at)
+```
+
+#### 7. **proposals 表** (提案表)
+```sql
+CREATE TABLE proposals (
+    id BIGSERIAL PRIMARY KEY,
+    title TEXT,
+    description TEXT,
+    proposer_id BIGINT,
+    status TEXT DEFAULT 'active',
+    votes_for BIGINT DEFAULT 0,
+    votes_against BIGINT DEFAULT 0,
+    start_time TIMESTAMP,
+    end_time TIMESTAMP,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    FOREIGN KEY (proposer_id) REFERENCES users(id)
+);
+
+-- 索引
+INDEX idx_proposals_deleted_at (deleted_at)
+```
+
+#### 8. **votes 表** (投票表)
+```sql
+CREATE TABLE votes (
+    id BIGSERIAL PRIMARY KEY,
+    proposal_id BIGINT,
+    voter_id BIGINT,
+    vote BOOLEAN,
+    weight BIGINT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP,
+    FOREIGN KEY (proposal_id) REFERENCES proposals(id),
+    FOREIGN KEY (voter_id) REFERENCES users(id)
+);
+
+-- 索引
+INDEX idx_votes_deleted_at (deleted_at)
+```
+
+#### 9. **transactions 表** (交易表)
+```sql
+CREATE TABLE transactions (
+    id BIGSERIAL PRIMARY KEY,
+    hash TEXT UNIQUE,
+    from_address TEXT,
+    to_address TEXT,
+    value TEXT,
+    gas_used BIGINT,
+    gas_price TEXT,
+    status TEXT,
+    block_number BIGINT,
+    created_at TIMESTAMP,
+    updated_at TIMESTAMP,
+    deleted_at TIMESTAMP
+);
+
+-- 索引
+INDEX idx_transactions_hash (hash) UNIQUE
+INDEX idx_transactions_deleted_at (deleted_at)
+```
+
+### 表关系图
+
+```
+users (用户表)
+├── 1:N posts (文章表) - author_id
+├── 1:N comments (评论表) - author_id
+├── 1:N proposals (提案表) - proposer_id
+├── 1:N votes (投票表) - voter_id
+├── 1:N wallet_bindings (钱包绑定表) - user_id
+├── 1:N user_followers (关注关系表) - follower_id
+└── 1:N user_followers (关注关系表) - followed_id
+
+posts (文章表)
+└── 1:N comments (评论表) - post_id
+
+comments (评论表)
+└── 1:N comments (嵌套评论) - parent_comment_id
+
+proposals (提案表)
+└── 1:N votes (投票表) - proposal_id
+
+transactions (交易表) - 独立表，记录区块链交易
+```
+
+### 核心功能模块
+
+1. **用户系统**: 支持邮箱和钱包双重登录，用户关注机制
+2. **内容管理**: 文章发布、评论系统（支持嵌套评论）
+3. **钱包管理**: 多网络钱包绑定，托管钱包支持
+4. **治理系统**: 提案投票机制
+5. **区块链集成**: 交易记录和状态跟踪
+
 ## 📚 Swagger 文档使用
 
 ### 功能特性
@@ -166,6 +419,45 @@ ETH_CONTRACT_ADDRESS=0x...
 
 # Kafka 配置
 KAFKA_BROKERS=localhost:9092
+KAFKA_TOPIC_BONDLY_EVENTS=bondly_events
+
+# 日志配置
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# CORS 配置
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+
+# JWT 配置
+JWT_SECRET=your-secret-key
+
+# 钱包配置
+WALLET_SECRET_KEY=your-wallet-secret-key
+
+# 邮件配置
+EMAIL_PROVIDER=mock
+RESEND_API_KEY=your-resend-api-key
+EMAIL_FROM=Bondly <noreply@yourdomain.com>
+```
+
+## 🛠️ 开发工具
+
+### 数据库表结构查看
+```bash
+# 查看实际数据库表结构
+go run cmd/read-schema/main.go
+```
+
+### 数据库迁移
+```bash
+# 运行数据库迁移
+go run cmd/migrate/main.go
+```
+
+### 生成 Swagger 文档
+```bash
+# 生成 API 文档
+swag init -g main.go
 ```
 
 ## 📊 统一响应格式
