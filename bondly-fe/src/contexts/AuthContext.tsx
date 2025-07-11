@@ -45,14 +45,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // 检查登录状态
   const checkAuthStatus = () => {
+    console.log('AuthContext.checkAuthStatus - 开始检查登录状态');
     const isLoggedIn = TokenManager.isLoggedIn();
     const user = isLoggedIn ? TokenManager.getCurrentUser() : null;
+    
+    console.log('AuthContext.checkAuthStatus - TokenManager.isLoggedIn():', isLoggedIn);
+    console.log('AuthContext.checkAuthStatus - TokenManager.getCurrentUser():', user);
     
     setAuthState({
       isLoggedIn,
       user,
       loading: false
     });
+    
+    console.log('AuthContext.checkAuthStatus - 设置状态完成');
   };
 
   // 登录

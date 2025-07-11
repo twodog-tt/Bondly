@@ -358,15 +358,20 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         // 检查是否返回了token
         if (result.token) {
           // 如果有token，说明用户已经完成注册，直接完成登录
-  
+          
+          // 从token中解析用户信息
+          const { TokenManager } = await import('../utils/token');
+          const tokenPayload = TokenManager.parseToken(result.token);
+          
+          console.log('Token payload:', tokenPayload);
           
           // 使用认证Hook的login函数
           login(result.token, {
-            user_id: result.user_id || 0,
+            user_id: tokenPayload.user_id || 0,
             email: loginData.email,
-            nickname: result.nickname || loginData.email.split('@')[0],
-            role: result.role || 'user',
-            is_new_user: result.is_new_user || false
+            nickname: tokenPayload.nickname || loginData.email.split('@')[0],
+            role: tokenPayload.role || 'user',
+            is_new_user: tokenPayload.is_new_user || false
           });
           
   

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import EditProfileModal from '../components/EditProfileModal';
-import { useAuth } from '../hooks/useAuth';
+import { useAuth } from '../contexts/AuthContext';
 
 interface ProfileProps {
   isMobile: boolean;
@@ -9,7 +9,9 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
-  const { user, checkAuthStatus } = useAuth();
+  const { user, checkAuthStatus, isLoggedIn, loading } = useAuth();
+  
+  console.log('Profile component - AuthContext state:', { user, isLoggedIn, loading });
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
@@ -22,10 +24,19 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
 
   // 获取用户详细信息
   const fetchUserProfile = async () => {
-    console.log('fetchUserProfile called, user:', user);
+    console.log('Profile.fetchUserProfile called, user:', user);
+    console.log('Profile.fetchUserProfile - user?.user_id:', user?.user_id);
+    console.log('Profile.fetchUserProfile - isLoggedIn:', isLoggedIn);
+    
+    if (!isLoggedIn) {
+      console.log('Profile.fetchUserProfile - User not logged in');
+      setIsLoading(false);
+      setError('User not logged in');
+      return;
+    }
     
     if (!user?.user_id) {
-      console.log('No user_id found, skipping API call');
+      console.log('Profile.fetchUserProfile - No user_id found, skipping API call');
       setIsLoading(false);
       setError('User not logged in');
       return;
@@ -37,10 +48,15 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
       
       console.log('Calling API with user_id:', user.user_id);
       const { userApi } = await import('../utils/api');
-      const result = await userApi.getUser(user.user_id.toString());
       
-      console.log('User profile data from API:', result);
-      setProfileData(result);
+      try {
+        const result = await userApi.getUser(user.user_id.toString());
+        console.log('User profile data from API:', result);
+        setProfileData(result);
+      } catch (apiError) {
+        console.error('API call failed:', apiError);
+        throw apiError;
+      }
     } catch (error: any) {
       console.error('Failed to fetch user profile:', error);
       setError(error.message || 'Failed to load profile data');
@@ -55,8 +71,16 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
 
   // 组件加载时获取用户信息
   useEffect(() => {
+    console.log('Profile useEffect - loading:', loading, 'user:', user);
+    
+    // 等待AuthContext加载完成
+    if (loading) {
+      console.log('Profile useEffect - AuthContext still loading, skipping');
+      return;
+    }
+    
     fetchUserProfile();
-  }, [user?.user_id]);
+  }, [user?.user_id, loading]);
 
   const handleSaveProfile = async (profileData: {
     nickname: string;
@@ -123,7 +147,65 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
             alignItems: isMobile ? "center" : "flex-start"
           }}>
             {/* 加载状态 */}
-            {isLoading ? (
+            {loading ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+                padding: "40px"
+              }}>
+                <div style={{
+                  width: "40px",
+                  height: "40px",
+                  border: "3px solid rgba(102, 126, 234, 0.3)",
+                  borderTop: "3px solid #667eea",
+                  borderRadius: "50%",
+                  animation: "spin 1s linear infinite"
+                }}></div>
+                <p style={{ color: "#9ca3af" }}>Loading profile...</p>
+              </div>
+            ) : !isLoggedIn ? (
+              <div style={{
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                gap: "16px",
+                padding: "40px"
+              }}>
+                <div style={{
+                  width: "80px",
+                  height: "80px",
+                  borderRadius: "50%",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  fontSize: "32px",
+                  color: "white"
+                }}>
+                  👤
+                </div>
+                <h2 style={{ color: "white", margin: "0" }}>Please Log In</h2>
+                <p style={{ color: "#9ca3af", textAlign: "center", margin: "0" }}>
+                  You need to log in to view your profile information.
+                </p>
+                <button
+                  onClick={() => onPageChange?.('home')}
+                  style={{
+                    background: "#667eea",
+                    color: "white",
+                    border: "none",
+                    padding: "12px 24px",
+                    borderRadius: "8px",
+                    cursor: "pointer",
+                    fontSize: "16px"
+                  }}
+                >
+                  Go to Login
+                </button>
+              </div>
+            ) : isLoading ? (
               <div style={{
                 display: "flex",
                 flexDirection: "column",
