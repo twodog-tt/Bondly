@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useDisconnect } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+import useAuth from '../contexts/AuthContext';
 import { useWalletConnect } from '../contexts/WalletConnectContext';
-import useAuth from '../hooks/useAuth';
 
 interface WalletConnectProps {
   isMobile: boolean;
@@ -15,7 +15,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { setOpenConnectModal } = useWalletConnect();
-  const { login } = useAuth();
+  const { login, checkAuthStatus } = useAuth();
   
   // 新增：新用户欢迎弹窗状态
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -40,7 +40,6 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
 
   // 监听钱包连接状态变化
   useEffect(() => {
-    console.log('WalletConnect useEffect 触发:', { isConnected, address, hasCallback: !!onWalletConnected });
     if (isConnected && address) {
       // 自动调用后端钱包登录接口
       (async () => {
@@ -81,8 +80,8 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
   const handleCloseWelcomeModal = () => {
     setShowWelcomeModal(false);
     setWelcomeData(null);
-    // 可选：刷新页面以更新UI状态
-    window.location.reload();
+    // 移除页面刷新，改为局部更新状态
+    checkAuthStatus();
   };
 
   // 格式化钱包地址

@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useAccount } from 'wagmi';
 import WalletConnect from './WalletConnect';
-import useAuth from '../hooks/useAuth';
+import useAuth from '../contexts/AuthContext';
 import { bindUserWallet } from '../api/user';
 import TokenManager from '../utils/token';
 
@@ -52,35 +52,28 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       setHasAttemptedBinding(false);
       setLastAttemptedAddress(null);
       bindingRef.current = false;
-      console.log('钱包断开连接，重置绑定状态');
     }
   }, [isConnected]);
 
   // 静默绑定钱包（不显示弹窗）
   const handleWalletConnectedSilently = async (address: string) => {
-    console.log('静默绑定钱包:', address);
-    
     if (!isLoggedIn || !user) {
-      console.log('用户未登录，跳过钱包绑定');
       return;
     }
 
     // 防止重复绑定
     if (isBindingWallet) {
-      console.log('正在绑定中，跳过重复请求');
       return;
     }
 
     // 检查是否已经绑定了该钱包地址
     if (user.wallet_address === address) {
-      console.log('用户已绑定该钱包地址，跳过绑定:', address);
       setHasAttemptedBinding(true);
       return;
     }
 
     try {
       setIsBindingWallet(true);
-      console.log('开始静默绑定钱包地址:', address, '到用户:', user.user_id);
       // 绑定用户钱包地址
       await bindUserWallet(user.user_id, address);
       
@@ -93,17 +86,13 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       };
       TokenManager.setUserInfo(updatedUser);
       
-      console.log('钱包静默绑定成功，存储用户钱包地址:', address);
       setHasAttemptedBinding(true); // 标记已尝试绑定
     } catch (error) {
       console.error('钱包绑定失败:', error);
       // 任何绑定失败都停止重试，避免无限循环
       setHasAttemptedBinding(true);
       
-      // 记录具体的错误信息
-      if (error instanceof Error) {
-        console.log('绑定失败原因:', error.message);
-      }
+
     } finally {
       setIsBindingWallet(false);
     }
@@ -111,34 +100,25 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
 
   // 处理钱包连接成功（带弹窗）
   const handleWalletConnected = React.useCallback(async (address: string) => {
-    console.log('钱包连接回调被触发:', address);
-    console.log('用户登录状态:', isLoggedIn);
-    console.log('用户信息:', user);
-    
     if (!isLoggedIn || !user) {
-      console.log('用户未登录，跳过钱包绑定');
       return;
     }
 
     // 防止重复绑定
     if (isBindingWallet) {
-      console.log('正在绑定中，跳过重复请求');
       return;
     }
 
     // 检查是否已经绑定了该钱包地址
     if (user.wallet_address === address) {
-      console.log('用户已绑定该钱包地址，跳过绑定:', address);
       return;
     }
 
     try {
       setIsBindingWallet(true);
-      console.log('开始绑定钱包地址:', address, '到用户:', user.user_id);
       // 绑定用户钱包地址
       await bindUserWallet(user.user_id, address);
       
-      console.log('后端绑定成功');
       // 更新本地用户信息：用户连接了自己的钱包，存储用户钱包地址
       const updatedUser = { 
         ...user, 
@@ -147,8 +127,6 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
         custody_wallet_address: undefined 
       };
       TokenManager.setUserInfo(updatedUser);
-      
-      console.log('钱包绑定成功，存储用户钱包地址:', address);
     } catch (error) {
       console.error('钱包绑定失败:', error);
       // 可以添加错误提示
@@ -180,7 +158,6 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
     e.preventDefault();
     if (searchQuery.trim()) {
       // 执行搜索逻辑 - 可以跳转到搜索结果页面或在当前页面显示结果
-      console.log("搜索博客:", searchQuery);
       // 这里可以添加实际的搜索逻辑
       onPageChange?.("feed"); // 暂时跳转到博客列表页面
     }
@@ -401,7 +378,7 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
           )}
           
           {/* 登录/登出按钮 */}
-          {isLoggedIn && !isConnected ? (
+          {isLoggedIn ? (
             <button 
               style={{
                 background: "#ef4444",

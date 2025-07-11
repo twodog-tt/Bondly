@@ -705,7 +705,7 @@ export default function CommentSection({
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
         onReport={(reason) => {
-          console.log(`Reporting comment by ${reportModal.authorName}: ${reason}`);
+      
           setReportModal((prev) => ({ ...prev, isOpen: false }));
         }}
       />

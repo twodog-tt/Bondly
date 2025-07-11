@@ -892,7 +892,7 @@ export default function Feed({ isMobile }: FeedProps) {
         isOpen={tipModal.isOpen}
         onClose={() => setTipModal((prev) => ({ ...prev, isOpen: false }))}
         onTip={(amount) => {
-          console.log(`Tipping ${amount} to ${tipModal.authorName}`);
+      
           setTipModal((prev) => ({ ...prev, isOpen: false }));
         }}
       />
@@ -902,7 +902,7 @@ export default function Feed({ isMobile }: FeedProps) {
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
         onReport={(reason) => {
-          console.log(`Reporting ${reportModal.targetContent} by ${reportModal.authorName}: ${reason}`);
+      
           setReportModal((prev) => ({ ...prev, isOpen: false }));
         }}
       />

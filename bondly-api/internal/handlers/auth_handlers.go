@@ -29,8 +29,10 @@ func (h *AuthHandlers) handleAuthError(c *gin.Context, err error) {
 	if errors.As(err, &authErr) {
 		// 获取对应的业务错误码
 		businessCode := response.GetBusinessCode(authErr.Code)
+		// 使用GetMessage获取标准化的错误消息
+		errorMessage := response.GetMessage(authErr.Code)
 		// 返回统一的错误响应
-		response.Fail(c, businessCode, authErr.Error())
+		response.Fail(c, businessCode, errorMessage)
 		return
 	}
 

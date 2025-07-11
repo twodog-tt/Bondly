@@ -27,7 +27,14 @@ export class TokenManager {
   // 检查是否已登录
   static isLoggedIn(): boolean {
     const token = this.getToken();
+    
     if (!token) {
+      return false;
+    }
+
+    // 检查token是否为空字符串
+    if (token === '') {
+      this.clearAuth();
       return false;
     }
 
@@ -73,17 +80,41 @@ export class TokenManager {
     return this.getUserInfo();
   }
 
-  // 登出
+  // 登出（会刷新页面）
   static logout(): void {
     this.clearAuth();
     // 刷新页面以确保所有组件重新渲染
     window.location.reload();
   }
 
+  // 清除认证信息（不刷新页面）
+  static logoutWithoutReload(): void {
+    this.clearAuth();
+  }
+
   // 清除认证信息
   static clearAuth(): void {
+    console.log('TokenManager.clearAuth - 开始清除认证信息');
+    console.log('TokenManager.clearAuth - 清除前 TOKEN_KEY:', localStorage.getItem(this.TOKEN_KEY) ? 'exists' : 'null');
+    console.log('TokenManager.clearAuth - 清除前 USER_INFO_KEY:', localStorage.getItem(this.USER_INFO_KEY) ? 'exists' : 'null');
+    
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.USER_INFO_KEY);
+    
+    // 立即验证是否真的被清除了
+    const tokenAfterClear = localStorage.getItem(this.TOKEN_KEY);
+    const userInfoAfterClear = localStorage.getItem(this.USER_INFO_KEY);
+    
+    console.log('TokenManager.clearAuth - 清除后 TOKEN_KEY:', tokenAfterClear ? 'exists' : 'null');
+    console.log('TokenManager.clearAuth - 清除后 USER_INFO_KEY:', userInfoAfterClear ? 'exists' : 'null');
+    
+    if (tokenAfterClear || userInfoAfterClear) {
+      console.error('TokenManager.clearAuth - 警告：localStorage清除失败！');
+    } else {
+      console.log('TokenManager.clearAuth - localStorage清除成功');
+    }
+    
+    console.log('TokenManager.clearAuth - 认证信息清除完成');
   }
 
   // 获取token过期时间

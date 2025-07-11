@@ -1,4 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { useWalletConnect } from '../contexts/WalletConnectContext';
+import useAuth from '../contexts/AuthContext';
 import CommonNavbar from '../components/CommonNavbar';
 import HeroSection from '../components/HeroSection';
 import FeaturedArticles from '../components/FeaturedArticles';
@@ -6,8 +9,6 @@ import StakeSection from '../components/StakeSection';
 import GovernanceSection from '../components/GovernanceSection';
 import Footer from '../components/Footer';
 import WalletChoiceModal from '../components/WalletChoiceModal';
-import useAuth from '../hooks/useAuth';
-import { useWalletConnect } from '../contexts/WalletConnectContext';
 
 interface HomeProps {
   isMobile: boolean;
@@ -67,7 +68,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   const [isGeneratingWallet, setIsGeneratingWallet] = useState(false);
   
   // 使用认证Hook和钱包连接Hook
-  const { login } = useAuth();
+  const { login, checkAuthStatus } = useAuth();
   const { openConnectModal } = useWalletConnect();
 
   // 处理登录按钮点击
@@ -141,13 +142,13 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       }
 
       const walletAddress = accounts[0];
-      console.log('钱包地址:', walletAddress);
+      
 
       // 调用钱包登录接口
       const { authApi } = await import('../utils/api');
       const loginResult = await authApi.walletLogin(walletAddress);
 
-      console.log('钱包登录成功:', loginResult);
+      
 
       // 使用认证Hook的login函数
       const userInfo = {
@@ -171,10 +172,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       setShowSuccessModal(true);
       setShowLoginModal(false);
 
-      // 延迟2秒后刷新页面
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // 移除页面刷新，改为局部更新状态
+      checkAuthStatus();
 
     } catch (error: any) {
       console.error('钱包登录失败:', error);
@@ -359,7 +358,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         // 检查是否返回了token
         if (result.token) {
           // 如果有token，说明用户已经完成注册，直接完成登录
-          console.log('验证码验证返回token，直接完成登录');
+  
           
           // 使用认证Hook的login函数
           login(result.token, {
@@ -370,15 +369,17 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
             is_new_user: result.is_new_user || false
           });
           
+  
+          
           // 显示登录成功消息
           setSuccessMessage(`Welcome back!\nYou have successfully logged in with email: ${loginData.email}`);
           setShowSuccessModal(true);
           setShowLoginModal(false);
           
-          // 延迟2秒后刷新页面，让用户看到成功消息
-          setTimeout(() => {
-            window.location.reload();
-          }, 2000);
+          // 移除页面刷新，改为局部更新状态
+          // 调用checkAuthStatus确保所有组件都能获取到最新的登录状态
+          checkAuthStatus();
+  
         } else {
           // 没有token，说明是新用户，需要继续注册流程
           console.log('验证码验证成功，但需要继续注册流程');
@@ -447,7 +448,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       const imageUrl = avatarPreview || undefined;
       const loginResult = await authApi.login(loginData.email, loginData.username, imageUrl);
       
-      console.log('登录成功:', loginResult);
+      
       
       // 使用认证Hook的login函数
       // 根据用户是否有自己的钱包地址来决定存储哪个地址
@@ -467,18 +468,24 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
           const walletInfo = await walletApi.getWalletInfo(loginResult.user_id);
           if (walletInfo.custody_wallet_address) {
             (userInfo as any).custody_wallet_address = walletInfo.custody_wallet_address;
-            console.log('用户未连接自己的钱包，存储托管钱包地址:', walletInfo.custody_wallet_address);
+    
           }
         } catch (error) {
-          console.log('获取托管钱包信息失败，可能用户还没有托管钱包');
+  
         }
       } else {
         // 用户连接了自己的钱包，存储用户钱包地址
         (userInfo as any).wallet_address = loginResult.wallet_address;
-        console.log('用户连接了自己的钱包，存储用户钱包地址:', loginResult.wallet_address);
+
       }
       
       login(loginResult.token, userInfo);
+      
+      
+      
+      // 调用checkAuthStatus确保所有组件都能获取到最新的登录状态
+      checkAuthStatus();
+      
       
       // 如果是新用户，显示钱包选择弹窗
       if (loginResult.is_new_user) {
@@ -491,11 +498,6 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         setSuccessMessage(welcomeMessage);
         setShowSuccessModal(true);
         setShowLoginModal(false);
-        
-        // 延迟2秒后刷新页面，让用户看到成功消息
-        setTimeout(() => {
-          window.location.reload();
-        }, 2000);
       }
     } catch (error: any) {
       console.error("Failed to login:", error);
@@ -520,9 +522,10 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       const { walletApi } = await import('../utils/api');
       const result = await walletApi.generateCustodyWallet(currentUserId);
       
-      console.log('托管钱包生成成功:', result);
       
-
+      
+      // 调用checkAuthStatus确保所有组件都能获取到最新的登录状态
+      checkAuthStatus();
       
       // 显示成功消息
       const successMessage = `Welcome ${loginData.username}!\nYour account has been successfully created.\nCustody wallet generated: ${result.custody_wallet_address}\nNow you can start creating and exploring content!`;
@@ -530,10 +533,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       setShowWalletChoiceModal(false);
       setShowSuccessModal(true);
       
-      // 延迟2秒后刷新页面
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // 移除页面刷新，改为局部更新状态
+      checkAuthStatus();
     } catch (error: any) {
       console.error("Failed to generate custody wallet:", error);
       
@@ -572,10 +573,8 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     setSuccessMessage(successMessage);
     setShowSuccessModal(true);
     
-    // 延迟2秒后刷新页面
-    setTimeout(() => {
-      window.location.reload();
-    }, 2000);
+    // 移除页面刷新，改为局部更新状态
+    checkAuthStatus();
   };
 
   // 关闭成功模态框
