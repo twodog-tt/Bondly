@@ -1,7 +1,9 @@
 package handlers
 
 import (
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/pkg/response"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
@@ -213,6 +215,45 @@ func GetUserBalance(c *gin.Context) {
 // @Success 200 {object} response.Response[ContentListData] "内容列表"
 // @Router /api/v1/content [get]
 func GetContentList(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/content", nil, "", nil)
+
+	// 获取查询参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	category := c.Query("category")
+	keyword := c.Query("keyword")
+
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"page":        page,
+		"limit":       limit,
+		"category":    category,
+		"has_keyword": keyword != "",
+	})
+
+	// 参数验证
+	if page < 1 {
+		bizLog.ValidationFailed("page", "页码不能小于1", page)
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		bizLog.ValidationFailed("limit", "每页数量必须在1-100之间", limit)
+		limit = 20
+	}
+
+	// 获取内容列表成功
+	bizLog.Success("get_content_list", map[string]interface{}{
+		"page":          page,
+		"limit":         limit,
+		"category":      category,
+		"has_keyword":   keyword != "",
+		"content_count": 0, // 模拟数据
+	})
+
 	data := ContentListData{
 		Content: []interface{}{},
 		Message: "Content list",
@@ -231,7 +272,29 @@ func GetContentList(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "内容不存在或已被删除"
 // @Router /api/v1/content/{id} [get]
 func GetContentDetail(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/content/{id}", nil, "", nil)
+
 	id := c.Param("id")
+	if id == "" {
+		bizLog.ValidationFailed("content_id", "内容ID不能为空", "")
+		response.Fail(c, response.CodeInvalidParams, "内容ID不能为空")
+		return
+	}
+
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"content_id": id,
+	})
+
+	// 获取内容详情成功
+	bizLog.Success("get_content_detail", map[string]interface{}{
+		"content_id": id,
+	})
+
 	data := ContentDetailData{
 		ID:      id,
 		Message: "Content detail",
@@ -251,6 +314,42 @@ func GetContentDetail(c *gin.Context) {
 // @Success 200 {object} response.Response[ProposalListData] "提案列表"
 // @Router /api/v1/governance/proposals [get]
 func GetProposals(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/governance/proposals", nil, "", nil)
+
+	// 获取查询参数
+	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	status := c.Query("status")
+
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"page":   page,
+		"limit":  limit,
+		"status": status,
+	})
+
+	// 参数验证
+	if page < 1 {
+		bizLog.ValidationFailed("page", "页码不能小于1", page)
+		page = 1
+	}
+	if limit < 1 || limit > 100 {
+		bizLog.ValidationFailed("limit", "每页数量必须在1-100之间", limit)
+		limit = 20
+	}
+
+	// 获取提案列表成功
+	bizLog.Success("get_proposals", map[string]interface{}{
+		"page":           page,
+		"limit":          limit,
+		"status":         status,
+		"proposal_count": 0, // 模拟数据
+	})
+
 	data := ProposalListData{
 		Proposals: []interface{}{},
 		Message:   "Proposals list",
@@ -269,7 +368,29 @@ func GetProposals(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "提案不存在或已被删除"
 // @Router /api/v1/governance/proposals/{id} [get]
 func GetProposalDetail(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/governance/proposals/{id}", nil, "", nil)
+
 	id := c.Param("id")
+	if id == "" {
+		bizLog.ValidationFailed("proposal_id", "提案ID不能为空", "")
+		response.Fail(c, response.CodeInvalidParams, "提案ID不能为空")
+		return
+	}
+
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"proposal_id": id,
+	})
+
+	// 获取提案详情成功
+	bizLog.Success("get_proposal_detail", map[string]interface{}{
+		"proposal_id": id,
+	})
+
 	data := ProposalDetailData{
 		ID:      id,
 		Message: "Proposal detail",
@@ -288,6 +409,25 @@ func GetProposalDetail(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "请求参数错误"
 // @Router /api/v1/content [post]
 func CreateContent(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/content", nil, "", nil)
+
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"content_type": "article", // 模拟数据
+		"has_title":    true,
+		"has_content":  true,
+	})
+
+	// 内容创建成功
+	bizLog.Success("create_content", map[string]interface{}{
+		"content_id":   "1",
+		"content_type": "article",
+	})
+
 	data := CreateContentData{
 		ID:      "1",
 		Message: "Content created successfully",
@@ -306,6 +446,25 @@ func CreateContent(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "请求参数错误或截止时间无效"
 // @Router /api/v1/governance/proposals [post]
 func CreateProposal(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/governance/proposals", nil, "", nil)
+
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"has_title":       true,
+		"has_description": true,
+		"has_deadline":    true,
+	})
+
+	// 提案创建成功
+	bizLog.Success("create_proposal", map[string]interface{}{
+		"proposal_id": "1",
+		"status":      "pending",
+	})
+
 	data := CreateProposalData{
 		ID:      "1",
 		Message: "Proposal created successfully",
@@ -324,6 +483,26 @@ func CreateProposal(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "请求参数错误或提案已结束"
 // @Router /api/v1/governance/proposals/vote [post]
 func VoteProposal(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/governance/proposals/vote", nil, "", nil)
+
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"proposal_id":     "1",       // 模拟数据
+		"vote_type":       "approve", // 模拟数据
+		"has_vote_weight": true,
+	})
+
+	// 投票成功
+	bizLog.Success("vote_proposal", map[string]interface{}{
+		"proposal_id": "1",
+		"vote_type":   "approve",
+		"vote_weight": 100, // 模拟数据
+	})
+
 	data := VoteData{
 		Message: "Vote submitted successfully",
 	}
@@ -341,6 +520,25 @@ func VoteProposal(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "请求参数错误或余额不足"
 // @Router /api/v1/blockchain/stake [post]
 func StakeTokens(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/blockchain/stake", nil, "", nil)
+
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"token_amount":   1000,  // 模拟数据
+		"stake_duration": "30d", // 模拟数据
+	})
+
+	// 质押成功
+	bizLog.Success("stake_tokens", map[string]interface{}{
+		"token_amount":     1000,
+		"stake_duration":   "30d",
+		"transaction_hash": "0x123...", // 模拟数据
+	})
+
 	data := StakeData{
 		Message: "Tokens staked successfully",
 	}
@@ -356,6 +554,21 @@ func StakeTokens(c *gin.Context) {
 // @Success 200 {object} response.Response[StatsData] "统计信息"
 // @Router /api/v1/stats [get]
 func GetStats(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/stats", nil, "", nil)
+
+	// 获取统计信息成功
+	bizLog.Success("get_stats", map[string]interface{}{
+		"total_users":        10000,
+		"total_content":      25600,
+		"total_proposals":    125,
+		"active_stakers":     3500,
+		"total_value_locked": "1250000.50",
+	})
+
 	data := StatsData{
 		TotalUsers:       10000,
 		TotalContent:     25600,

@@ -52,6 +52,7 @@ export interface LoginResponse {
   role: string;
   is_new_user: boolean;
   expires_in: string;
+  wallet_address?: string;
 }
 
 // 图片上传响应数据
@@ -133,8 +134,8 @@ async function request<T>(
 
     const result: ApiResponse<T> = await response.json();
 
-    // 检查业务逻辑错误
-    if (!result.success) {
+    // 检查业务逻辑错误 - 后端返回code为1000表示成功
+    if (result.code !== 1000) {
       throw new ApiError(
         result.code,
         result.message || 'Unknown error'
@@ -184,8 +185,8 @@ async function uploadFile<T>(
 
     const result: ApiResponse<T> = await response.json();
 
-    // 检查业务逻辑错误
-    if (!result.success) {
+    // 检查业务逻辑错误 - 后端返回code为1000表示成功
+    if (result.code !== 1000) {
       throw new ApiError(
         result.code,
         result.message || 'Unknown error'
@@ -272,6 +273,28 @@ export const userApi = {
   // 获取用户信息
   async getUser(id: string): Promise<any> {
     return get<any>(`/api/v1/users/${id}`);
+  },
+
+  // 更新用户信息
+  async updateUser(userId: number, userData: {
+    nickname?: string;
+    bio?: string;
+    avatar_url?: string;
+  }): Promise<any> {
+    // 构建符合后端UpdateUserRequest格式的数据
+    const updateData: any = {};
+    
+    if (userData.nickname !== undefined) {
+      updateData.nickname = userData.nickname;
+    }
+    if (userData.bio !== undefined) {
+      updateData.bio = userData.bio;
+    }
+    if (userData.avatar_url !== undefined) {
+      updateData.avatar_url = userData.avatar_url;
+    }
+    
+    return post<any>(`/api/v1/users/${userId}`, updateData);
   },
 };
 

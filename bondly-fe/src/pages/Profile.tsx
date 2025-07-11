@@ -1,5 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import EditProfileModal from '../components/EditProfileModal';
+import { useAuth } from '../hooks/useAuth';
 
 interface ProfileProps {
   isMobile: boolean;
@@ -7,8 +9,48 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
+  const { user, checkAuthStatus } = useAuth();
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+
   const handleLoginClick = () => {
     console.log("Login clicked");
+  };
+
+  const handleEditProfile = () => {
+    setShowEditModal(true);
+  };
+
+  const handleSaveProfile = async (profileData: {
+    nickname: string;
+    bio: string;
+    avatar_url?: string;
+  }) => {
+    if (!user) return;
+
+    setIsSaving(true);
+    try {
+      // 调用后端API更新用户信息
+      const { userApi } = await import('../utils/api');
+      const result = await userApi.updateUser(user.user_id, profileData);
+      
+      console.log('Profile update result:', result);
+      
+      // API调用成功，直接处理结果
+      // 刷新用户信息
+      checkAuthStatus();
+      
+      // 关闭弹窗
+      setShowEditModal(false);
+      
+      // 显示成功消息
+      alert('Profile updated successfully!');
+    } catch (error: any) {
+      console.error('Failed to update profile:', error);
+      alert(`Failed to update profile: ${error.message || 'Please try again.'}`);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -46,7 +88,9 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
               width: "120px",
               height: "120px",
               borderRadius: "50%",
-              background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+              background: user?.avatar_url 
+                ? `url(${user.avatar_url}) center/cover`
+                : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
               display: "flex",
               alignItems: "center",
               justifyContent: "center",
@@ -55,7 +99,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
               color: "white",
               flexShrink: 0
             }}>
-              BT
+              {!user?.avatar_url && (user?.nickname?.charAt(0) || 'U')}
             </div>
             
             {/* 用户信息 */}
@@ -66,15 +110,25 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 marginBottom: "8px",
                 color: "white"
               }}>
-                Bondly Team
+                {user?.nickname || 'Anonymous'}
               </h1>
               <p style={{
                 fontSize: "16px",
                 color: "#9ca3af",
                 marginBottom: "16px"
               }}>
-                Official Bondly Team • Member since 2024
+                {user?.role || 'User'} • Member since 2024
               </p>
+              {user?.bio && (
+                <p style={{
+                  fontSize: "14px",
+                  color: "#9ca3af",
+                  marginBottom: "16px",
+                  lineHeight: "1.5"
+                }}>
+                  {user.bio}
+                </p>
+              )}
               
               {/* 统计信息 */}
               <div style={{
@@ -127,21 +181,23 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 gap: "12px",
                 flexWrap: "wrap"
               }}>
-                <button style={{
-                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                  color: "white",
-                  border: "none",
-                  padding: "10px 20px",
-                  borderRadius: "8px",
-                  fontSize: "14px",
-                  fontWeight: "500",
-                  cursor: "pointer",
-                  transition: "opacity 0.2s ease"
-                }}
-                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
-                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+                <button 
+                  onClick={handleEditProfile}
+                  style={{
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: "pointer",
+                    transition: "opacity 0.2s ease"
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                  onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
                 >
-                  Edit Profile
+                  {isSaving ? 'Saving...' : 'Edit Profile'}
                 </button>
                 <button style={{
                   background: "rgba(255, 255, 255, 0.1)",
@@ -514,6 +570,14 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
           </div>
         </div>
       </div>
+
+      {/* Edit Profile Modal */}
+      <EditProfileModal
+        isOpen={showEditModal}
+        onClose={() => setShowEditModal(false)}
+        onSave={handleSaveProfile}
+        isMobile={isMobile}
+      />
     </div>
   );
 };

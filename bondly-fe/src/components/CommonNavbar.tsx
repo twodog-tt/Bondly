@@ -84,11 +84,16 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       // 绑定用户钱包地址
       await bindUserWallet(user.user_id, address);
       
-      // 更新本地用户信息（不显示弹窗）
-      const updatedUser = { ...user, wallet_address: address };
+      // 更新本地用户信息：用户连接了自己的钱包，存储用户钱包地址
+      const updatedUser = { 
+        ...user, 
+        wallet_address: address,
+        // 如果用户连接了自己的钱包，清除托管钱包地址的显示（但保留在数据库中）
+        custody_wallet_address: undefined 
+      };
       TokenManager.setUserInfo(updatedUser);
       
-      console.log('钱包静默绑定成功:', address);
+      console.log('钱包静默绑定成功，存储用户钱包地址:', address);
       setHasAttemptedBinding(true); // 标记已尝试绑定
     } catch (error) {
       console.error('钱包绑定失败:', error);
@@ -134,11 +139,16 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
       await bindUserWallet(user.user_id, address);
       
       console.log('后端绑定成功');
-      // 更新本地用户信息
-      const updatedUser = { ...user, wallet_address: address };
+      // 更新本地用户信息：用户连接了自己的钱包，存储用户钱包地址
+      const updatedUser = { 
+        ...user, 
+        wallet_address: address,
+        // 如果用户连接了自己的钱包，清除托管钱包地址的显示（但保留在数据库中）
+        custody_wallet_address: undefined 
+      };
       TokenManager.setUserInfo(updatedUser);
       
-      console.log('钱包绑定成功:', address);
+      console.log('钱包绑定成功，存储用户钱包地址:', address);
     } catch (error) {
       console.error('钱包绑定失败:', error);
       // 可以添加错误提示

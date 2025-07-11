@@ -9,6 +9,9 @@ export interface UserInfo {
   role: string;
   is_new_user: boolean;
   wallet_address?: string;
+  custody_wallet_address?: string;
+  bio?: string;
+  avatar_url?: string;
 }
 
 // 认证状态接口

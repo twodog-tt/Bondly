@@ -32,13 +32,23 @@ func NewUserService(userRepo *repositories.UserRepository, cacheService cache.Ca
 
 // CreateUser 创建用户
 func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
+
+	bizLog.BusinessLogic("创建用户开始", map[string]interface{}{
+		"email":          user.Email,
+		"wallet_address": user.WalletAddress,
+		"nickname":       user.Nickname,
+	})
+
 	// 检查邮箱是否已存在
 	if user.Email != nil {
 		exists, err := s.userRepo.ExistsByEmail(*user.Email)
 		if err != nil {
+			bizLog.DatabaseError("select", "users", "SELECT EXISTS", err)
 			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgEmailCheckFailed, err))
 		}
 		if exists {
+			bizLog.ValidationFailed("email", "邮箱已存在", *user.Email)
 			return errors.NewUserAlreadyExistsError()
 		}
 	}
@@ -47,9 +57,11 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	if user.WalletAddress != nil {
 		exists, err := s.userRepo.ExistsByWalletAddress(*user.WalletAddress)
 		if err != nil {
+			bizLog.DatabaseError("select", "users", "SELECT EXISTS", err)
 			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgWalletCheckFailed, err))
 		}
 		if exists {
+			bizLog.ValidationFailed("wallet_address", "钱包地址已存在", *user.WalletAddress)
 			return errors.NewUserAlreadyExistsError()
 		}
 	}
@@ -67,121 +79,141 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 
 	// 创建用户
 	if err := s.userRepo.Create(user); err != nil {
+		bizLog.DatabaseError("insert", "users", "INSERT", err)
 		return errors.NewUserCreateFailedError(err)
 	}
 
 	// 清除缓存
 	s.clearUserCache(ctx, user.ID)
 
+	bizLog.UserCreated(user.ID, *user.Email, *user.WalletAddress)
 	return nil
 }
 
 // GetUserByID 根据ID获取用户
 func (s *UserService) GetUserByID(ctx context.Context, id int64) (*models.User, error) {
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
+
+	bizLog.BusinessLogic("根据ID查询用户开始", map[string]interface{}{
+		"user_id": id,
+	})
+
 	// 尝试从缓存获取
 	cacheKey := fmt.Sprintf("user:%d", id)
 	var user models.User
 	if err := s.cacheService.Get(ctx, cacheKey, &user); err == nil {
+		bizLog.CacheHit(cacheKey, "user")
 		return &user, nil
 	}
+
+	bizLog.CacheMiss(cacheKey, "user")
 
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByID(id)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			bizLog.UserNotFound("user_id", id)
 			return nil, errors.NewUserNotFoundError()
 		}
+		bizLog.DatabaseError("select", "users", "SELECT BY ID", err)
 		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 缓存用户信息
 	s.cacheService.Set(ctx, cacheKey, dbUser, 30*time.Minute)
+	bizLog.CacheSet(cacheKey, "user", "30m")
 
 	return dbUser, nil
 }
 
 // GetUserByWalletAddress 根据钱包地址获取用户
 func (s *UserService) GetUserByWalletAddress(ctx context.Context, walletAddress string) (*models.User, error) {
-	log := loggerpkg.FromContext(ctx)
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
 
-	log.WithField("钱包地址", walletAddress).Debug("根据钱包地址查询用户 - 开始")
+	bizLog.BusinessLogic("根据钱包地址查询用户开始", map[string]interface{}{
+		"wallet_address": walletAddress,
+	})
 
 	// 尝试从缓存获取
 	cacheKey := fmt.Sprintf("user:wallet:%s", walletAddress)
 	var user models.User
 	if err := s.cacheService.Get(ctx, cacheKey, &user); err == nil {
-		log.WithFields(logrus.Fields{
-			"钱包地址": walletAddress,
-			"用户ID": user.ID,
-		}).Debug("根据钱包地址查询用户 - 缓存命中")
+		bizLog.CacheHit(cacheKey, "user")
 		return &user, nil
 	}
 
-	log.WithField("钱包地址", walletAddress).Debug("根据钱包地址查询用户 - 缓存未命中，查询数据库")
+	bizLog.CacheMiss(cacheKey, "user")
 
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByWalletAddress(walletAddress)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
-			log.WithField("钱包地址", walletAddress).Info("根据钱包地址查询用户 - 用户不存在")
+			bizLog.UserNotFound("wallet_address", walletAddress)
 			return nil, errors.NewUserNotFoundError()
 		}
-		log.WithFields(logrus.Fields{
-			"钱包地址": walletAddress,
-			"错误":   err.Error(),
-		}).Error("根据钱包地址查询用户 - 数据库查询失败")
+		bizLog.DatabaseError("select", "users", "SELECT BY WALLET", err)
 		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
-	log.WithFields(logrus.Fields{
-		"钱包地址": walletAddress,
-		"用户ID": dbUser.ID,
-		"昵称":   dbUser.Nickname,
-	}).Debug("根据钱包地址查询用户 - 数据库查询成功")
-
 	// 缓存用户信息
 	s.cacheService.Set(ctx, cacheKey, dbUser, 30*time.Minute)
-
-	log.WithFields(logrus.Fields{
-		"钱包地址": walletAddress,
-		"用户ID": dbUser.ID,
-	}).Debug("根据钱包地址查询用户 - 已缓存用户信息")
+	bizLog.CacheSet(cacheKey, "user", "30m")
 
 	return dbUser, nil
 }
 
 // GetUserByEmail 根据邮箱获取用户
 func (s *UserService) GetUserByEmail(ctx context.Context, email string) (*models.User, error) {
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
+
+	bizLog.BusinessLogic("根据邮箱查询用户开始", map[string]interface{}{
+		"email": email,
+	})
+
 	// 尝试从缓存获取
 	cacheKey := fmt.Sprintf("user:email:%s", email)
 	var user models.User
 	if err := s.cacheService.Get(ctx, cacheKey, &user); err == nil {
+		bizLog.CacheHit(cacheKey, "user")
 		return &user, nil
 	}
+
+	bizLog.CacheMiss(cacheKey, "user")
 
 	// 从数据库获取
 	dbUser, err := s.userRepo.GetByEmail(email)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			bizLog.UserNotFound("email", email)
 			return nil, errors.NewUserNotFoundError()
 		}
+		bizLog.DatabaseError("select", "users", "SELECT BY EMAIL", err)
 		return nil, errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
 	// 缓存用户信息
 	s.cacheService.Set(ctx, cacheKey, dbUser, 30*time.Minute)
+	bizLog.CacheSet(cacheKey, "user", "30m")
 
 	return dbUser, nil
 }
 
 // UpdateUser 更新用户信息
 func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
+
+	bizLog.BusinessLogic("更新用户开始", map[string]interface{}{
+		"user_id": user.ID,
+	})
+
 	// 检查用户是否存在
 	existingUser, err := s.userRepo.GetByID(user.ID)
 	if err != nil {
 		if stderrors.Is(err, gorm.ErrRecordNotFound) {
+			bizLog.UserNotFound("user_id", user.ID)
 			return errors.NewUserNotFoundError()
 		}
+		bizLog.DatabaseError("select", "users", "SELECT BY ID", err)
 		return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgGetUserFailed, err))
 	}
 
@@ -189,9 +221,11 @@ func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
 	if user.Email != nil && existingUser.Email != nil && *user.Email != *existingUser.Email {
 		exists, err := s.userRepo.ExistsByEmail(*user.Email)
 		if err != nil {
+			bizLog.DatabaseError("select", "users", "SELECT EXISTS", err)
 			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgEmailCheckFailed, err))
 		}
 		if exists {
+			bizLog.ValidationFailed("email", "邮箱已存在", *user.Email)
 			return errors.NewUserAlreadyExistsError()
 		}
 	}
@@ -200,21 +234,27 @@ func (s *UserService) UpdateUser(ctx context.Context, user *models.User) error {
 	if user.WalletAddress != nil && existingUser.WalletAddress != nil && *user.WalletAddress != *existingUser.WalletAddress {
 		exists, err := s.userRepo.ExistsByWalletAddress(*user.WalletAddress)
 		if err != nil {
+			bizLog.DatabaseError("select", "users", "SELECT EXISTS", err)
 			return errors.NewInternalError(fmt.Errorf("%s: %w", response.MsgWalletCheckFailed, err))
 		}
 		if exists {
+			bizLog.ValidationFailed("wallet_address", "钱包地址已存在", *user.WalletAddress)
 			return errors.NewUserAlreadyExistsError()
 		}
 	}
 
 	// 更新用户
 	if err := s.userRepo.Update(user); err != nil {
+		bizLog.DatabaseError("update", "users", "UPDATE", err)
 		return errors.NewUserUpdateFailedError(err)
 	}
 
-	// 清除所有相关缓存
+	// 清除缓存
 	s.clearUserCacheByUser(ctx, user)
 
+	bizLog.Success("update_user", map[string]interface{}{
+		"user_id": user.ID,
+	})
 	return nil
 }
 

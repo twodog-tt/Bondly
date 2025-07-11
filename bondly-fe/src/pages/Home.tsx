@@ -373,13 +373,35 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       console.log('登录成功:', loginResult);
       
       // 使用认证Hook的login函数
-      login(loginResult.token, {
+      // 根据用户是否有自己的钱包地址来决定存储哪个地址
+      const userInfo = {
         user_id: loginResult.user_id,
         email: loginResult.email,
         nickname: loginResult.nickname,
         role: loginResult.role,
         is_new_user: loginResult.is_new_user
-      });
+      };
+      
+      // 如果用户没有连接自己的钱包，则获取并存储托管钱包地址
+      if (!loginResult.wallet_address) {
+        try {
+          // 获取用户的托管钱包信息
+          const { walletApi } = await import('../utils/api');
+          const walletInfo = await walletApi.getWalletInfo(loginResult.user_id);
+          if (walletInfo.custody_wallet_address) {
+            (userInfo as any).custody_wallet_address = walletInfo.custody_wallet_address;
+            console.log('用户未连接自己的钱包，存储托管钱包地址:', walletInfo.custody_wallet_address);
+          }
+        } catch (error) {
+          console.log('获取托管钱包信息失败，可能用户还没有托管钱包');
+        }
+      } else {
+        // 用户连接了自己的钱包，存储用户钱包地址
+        (userInfo as any).wallet_address = loginResult.wallet_address;
+        console.log('用户连接了自己的钱包，存储用户钱包地址:', loginResult.wallet_address);
+      }
+      
+      login(loginResult.token, userInfo);
       
       // 如果是新用户，显示钱包选择弹窗
       if (loginResult.is_new_user) {

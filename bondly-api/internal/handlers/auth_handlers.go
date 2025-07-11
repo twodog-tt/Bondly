@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bondly-api/internal/dto"
+	loggerpkg "bondly-api/internal/logger"
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
 	"errors"
@@ -46,10 +47,17 @@ func (h *AuthHandlers) handleAuthError(c *gin.Context, err error) {
 // @Failure 200 {object} response.Response[any] "请求参数错误或邮箱格式无效"
 // @Router /api/v1/auth/send-code [post]
 func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/auth/send-code", nil, "", nil)
+
 	var req dto.SendCodeRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
+		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
 		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
 		return
 	}
@@ -57,13 +65,29 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 	// 清理邮箱地址（去除空格）
 	req.Email = strings.TrimSpace(req.Email)
 
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"email": req.Email,
+	})
+
 	// 调用服务层发送验证码
 	if err := h.authService.SendVerificationCode(c.Request.Context(), req.Email); err != nil {
+		// 根据错误类型记录不同的日志
+		var authErr *services.AuthError
+		if errors.As(err, &authErr) {
+			bizLog.ValidationFailed("email", authErr.Error(), req.Email)
+		} else {
+			bizLog.ThirdPartyError("email_service", "send_verification_code", map[string]interface{}{
+				"email": req.Email,
+			}, err)
+		}
 		h.handleAuthError(c, err)
 		return
 	}
 
 	// 发送成功
+	bizLog.CodeSent(req.Email, "10分钟")
+
 	data := dto.SendCodeData{
 		Email:     req.Email,
 		ExpiresIn: "10分钟",
@@ -82,10 +106,17 @@ func (h *AuthHandlers) SendVerificationCode(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "请求参数错误或验证码不正确"
 // @Router /api/v1/auth/verify-code [post]
 func (h *AuthHandlers) VerifyCode(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/auth/verify-code", nil, "", nil)
+
 	var req dto.VerifyCodeRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
+		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
 		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
 		return
 	}
@@ -94,8 +125,26 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 	req.Email = strings.TrimSpace(req.Email)
 	req.Code = strings.TrimSpace(req.Code)
 
+	// 记录关键参数（验证码脱敏）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"email":       req.Email,
+		"code_length": len(req.Code),
+	})
+
 	// 验证验证码
 	if err := h.authService.VerifyCode(c.Request.Context(), req.Email, req.Code); err != nil {
+		// 根据错误类型记录不同的日志
+		var authErr *services.AuthError
+		if errors.As(err, &authErr) {
+			bizLog.ValidationFailed("verification_code", authErr.Error(), map[string]interface{}{
+				"email":       req.Email,
+				"code_length": len(req.Code),
+			})
+		} else {
+			bizLog.ThirdPartyError("verification_service", "verify_code", map[string]interface{}{
+				"email": req.Email,
+			}, err)
+		}
 		h.handleAuthError(c, err)
 		return
 	}
@@ -103,11 +152,16 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 	// 判断用户是否是第一次登陆
 	token, err := h.authService.CheckFirstLogin(c.Request.Context(), req.Email)
 	if err != nil {
+		bizLog.ThirdPartyError("auth_service", "check_first_login", map[string]interface{}{
+			"email": req.Email,
+		}, err)
 		h.handleAuthError(c, err)
 		return
 	}
 
 	// 验证成功
+	bizLog.CodeVerified(req.Email)
+
 	data := dto.VerifyCodeData{
 		Email:   req.Email,
 		IsValid: true,
@@ -127,17 +181,32 @@ func (h *AuthHandlers) VerifyCode(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "邮箱参数缺失或格式错误"
 // @Router /api/v1/auth/code-status [get]
 func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("GET", "/api/v1/auth/code-status", nil, "", nil)
+
 	email := c.Query("email")
 	if email == "" {
+		bizLog.ValidationFailed("email", "邮箱参数缺失", "")
 		response.Fail(c, response.CodeEmailParamEmpty, response.GetMessage(response.CodeEmailParamEmpty))
 		return
 	}
 
 	email = strings.TrimSpace(email)
 
+	// 记录关键参数
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"email": email,
+	})
+
 	// 获取验证码剩余时间
 	codeTTL, err := h.authService.GetCodeTTL(c.Request.Context(), email)
 	if err != nil {
+		bizLog.ThirdPartyError("redis_service", "get_code_ttl", map[string]interface{}{
+			"email": email,
+		}, err)
 		h.handleAuthError(c, err)
 		return
 	}
@@ -145,9 +214,21 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 	// 获取限流剩余时间
 	lockTTL, err := h.authService.GetLockTTL(c.Request.Context(), email)
 	if err != nil {
+		bizLog.ThirdPartyError("redis_service", "get_lock_ttl", map[string]interface{}{
+			"email": email,
+		}, err)
 		h.handleAuthError(c, err)
 		return
 	}
+
+	// 查询成功
+	bizLog.Success("get_code_status", map[string]interface{}{
+		"email":            email,
+		"code_exists":      codeTTL > 0,
+		"code_ttl_seconds": int(codeTTL.Seconds()),
+		"locked":           lockTTL > 0,
+		"lock_ttl_seconds": int(lockTTL.Seconds()),
+	})
 
 	data := dto.CodeStatusData{
 		Email:          email,
@@ -170,10 +251,17 @@ func (h *AuthHandlers) GetCodeStatus(c *gin.Context) {
 // @Failure 200 {object} response.Response[any] "登录失败"
 // @Router /api/v1/auth/login [post]
 func (h *AuthHandlers) Login(c *gin.Context) {
+	// 创建业务日志工具
+	bizLog := loggerpkg.NewBusinessLogger(c.Request.Context())
+
+	// 记录接口开始
+	bizLog.StartAPI("POST", "/api/v1/auth/login", nil, "", nil)
+
 	var req dto.LoginRequest
 
 	// 绑定请求参数
 	if err := c.ShouldBindJSON(&req); err != nil {
+		bizLog.ValidationFailed("request_body", "JSON格式错误", err.Error())
 		response.Fail(c, response.CodeRequestFormatError, response.GetMessage(response.CodeRequestFormatError))
 		return
 	}
@@ -182,12 +270,33 @@ func (h *AuthHandlers) Login(c *gin.Context) {
 	req.Email = strings.TrimSpace(req.Email)
 	req.Nickname = strings.TrimSpace(req.Nickname)
 
+	// 记录关键参数（脱敏处理）
+	bizLog.BusinessLogic("参数处理", map[string]interface{}{
+		"email":         req.Email,
+		"nickname":      req.Nickname,
+		"has_image_url": req.ImageURL != nil,
+	})
+
 	// 调用服务层登录
 	loginData, err := h.authService.LoginIn(c.Request.Context(), req.Email, req.Nickname, req.ImageURL)
 	if err != nil {
+		// 根据错误类型记录不同的日志
+		var authErr *services.AuthError
+		if errors.As(err, &authErr) {
+			bizLog.ValidationFailed("login_params", authErr.Error(), map[string]interface{}{
+				"email": req.Email,
+			})
+		} else {
+			bizLog.ThirdPartyError("auth_service", "login", map[string]interface{}{
+				"email": req.Email,
+			}, err)
+		}
 		h.handleAuthError(c, err)
 		return
 	}
+
+	// 登录成功
+	bizLog.LoginSuccess(loginData.UserID, req.Email, loginData.IsNewUser)
 
 	// 登录成功
 	response.OK(c, loginData, response.MsgLoginSuccess)
