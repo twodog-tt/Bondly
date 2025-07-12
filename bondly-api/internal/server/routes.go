@@ -92,11 +92,12 @@ func (s *Server) setupRoutes() {
 		// 评论相关路由 - 完整的CRUD
 		comments := v1.Group("/comments")
 		{
-			comments.GET("/", s.commentHandlers.ListComments)                                                                         // 获取评论列表
-			comments.POST("/", middleware.AuthMiddleware(), s.commentHandlers.CreateComment)                                          // 创建评论
-			comments.GET("/:id", s.commentHandlers.GetComment)                                                                        // 获取评论详情
-			comments.PUT("/:id", middleware.AuthMiddleware(), middleware.AdminOrOwner("comment"), s.commentHandlers.UpdateComment)    // 更新评论
-			comments.DELETE("/:id", middleware.AuthMiddleware(), middleware.AdminOrOwner("comment"), s.commentHandlers.DeleteComment) // 删除评论
+			comments.GET("", s.commentHandlers.ListComments)                                           // 获取评论列表
+			comments.POST("", middleware.AuthMiddleware(), s.commentHandlers.CreateComment)            // 创建评论
+			comments.GET("/:id", s.commentHandlers.GetComment)                                         // 获取评论详情
+			comments.DELETE("/:id", middleware.AuthMiddleware(), s.commentHandlers.DeleteComment)      // 删除评论
+			comments.POST("/:id/like", middleware.AuthMiddleware(), s.commentHandlers.LikeComment)     // 点赞评论
+			comments.POST("/:id/unlike", middleware.AuthMiddleware(), s.commentHandlers.UnlikeComment) // 取消点赞
 		}
 
 		// 用户关注相关路由

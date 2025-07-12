@@ -290,7 +290,7 @@ const docTemplate = `{
         },
         "/api/v1/comments": {
             "get": {
-                "description": "分页获取评论列表",
+                "description": "获取指定内容下的评论列表，支持分页和父评论过滤",
                 "consumes": [
                     "application/json"
                 ],
@@ -298,20 +298,31 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "评论管理"
+                    "评论"
                 ],
                 "summary": "获取评论列表",
                 "parameters": [
                     {
                         "type": "integer",
-                        "default": 1,
+                        "description": "内容ID",
+                        "name": "post_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "父评论ID",
+                        "name": "parent_comment_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
                         "description": "页码",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "default": 10,
                         "description": "每页数量",
                         "name": "limit",
                         "in": "query"
@@ -321,13 +332,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.ResponseComment"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CommentListResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -338,7 +355,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "创建新的评论",
+                "description": "用户创建评论",
                 "consumes": [
                     "application/json"
                 ],
@@ -346,41 +363,41 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "评论管理"
+                    "评论"
                 ],
                 "summary": "创建评论",
                 "parameters": [
                     {
-                        "description": "评论信息",
-                        "name": "comment",
+                        "description": "评论内容",
+                        "name": "request",
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Comment"
+                            "$ref": "#/definitions/dto.CreateCommentRequest"
                         }
                     }
                 ],
                 "responses": {
-                    "201": {
-                        "description": "Created",
+                    "200": {
+                        "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.ResponseComment"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     },
                     "400": {
                         "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/response.ResponseAny"
                         }
@@ -390,7 +407,7 @@ const docTemplate = `{
         },
         "/api/v1/comments/{id}": {
             "get": {
-                "description": "根据ID获取评论详情",
+                "description": "获取单条评论详情",
                 "consumes": [
                     "application/json"
                 ],
@@ -398,7 +415,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "评论管理"
+                    "评论"
                 ],
                 "summary": "获取评论详情",
                 "parameters": [
@@ -414,93 +431,19 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/response.ResponseComment"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    }
-                }
-            },
-            "put": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "description": "更新指定评论的信息",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "评论管理"
-                ],
-                "summary": "更新评论",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "评论ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "更新的评论信息",
-                        "name": "comment",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/models.Comment"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseComment"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.CommentResponse"
+                                        }
+                                    }
+                                }
+                            ]
                         }
                     }
                 }
@@ -511,7 +454,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "删除指定的评论",
+                "description": "用户删除自己的评论",
                 "consumes": [
                     "application/json"
                 ],
@@ -519,7 +462,7 @@ const docTemplate = `{
                     "application/json"
                 ],
                 "tags": [
-                    "评论管理"
+                    "评论"
                 ],
                 "summary": "删除评论",
                 "parameters": [
@@ -538,8 +481,45 @@ const docTemplate = `{
                             "$ref": "#/definitions/response.ResponseAny"
                         }
                     },
-                    "400": {
-                        "description": "Bad Request",
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}/like": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "用户点赞评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "点赞评论",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.ResponseAny"
                         }
@@ -549,21 +529,46 @@ const docTemplate = `{
                         "schema": {
                             "$ref": "#/definitions/response.ResponseAny"
                         }
-                    },
-                    "403": {
-                        "description": "Forbidden",
+                    }
+                }
+            }
+        },
+        "/api/v1/comments/{id}/unlike": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "用户取消点赞评论",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "评论"
+                ],
+                "summary": "取消点赞",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "评论ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
                         "schema": {
                             "$ref": "#/definitions/response.ResponseAny"
                         }
                     },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/response.ResponseAny"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
+                    "401": {
+                        "description": "Unauthorized",
                         "schema": {
                             "$ref": "#/definitions/response.ResponseAny"
                         }
@@ -3000,6 +3005,66 @@ const docTemplate = `{
                 }
             }
         },
+        "dto.CommentListResponse": {
+            "type": "object",
+            "properties": {
+                "comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CommentResponse"
+                    }
+                },
+                "pagination": {
+                    "$ref": "#/definitions/dto.PaginationData"
+                }
+            }
+        },
+        "dto.CommentResponse": {
+            "type": "object",
+            "properties": {
+                "author": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                },
+                "author_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "child_comments": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/dto.CommentResponse"
+                    }
+                },
+                "content": {
+                    "type": "string",
+                    "example": "这是一条评论内容"
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "likes": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "parent_comment_id": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "post_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "updated_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                }
+            }
+        },
         "dto.ContentInteraction": {
             "type": "object",
             "properties": {
@@ -3023,6 +3088,27 @@ const docTemplate = `{
                     "$ref": "#/definitions/dto.UserResponse"
                 },
                 "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.CreateCommentRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "post_id"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "这是一条评论内容"
+                },
+                "parent_comment_id": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "post_id": {
                     "type": "integer",
                     "example": 1
                 }
@@ -3248,6 +3334,27 @@ const docTemplate = `{
                 "user_id": {
                     "type": "integer",
                     "example": 1
+                }
+            }
+        },
+        "dto.PaginationData": {
+            "type": "object",
+            "properties": {
+                "limit": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "page": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "total": {
+                    "type": "integer",
+                    "example": 100
+                },
+                "total_pages": {
+                    "type": "integer",
+                    "example": 10
                 }
             }
         },
@@ -3724,96 +3831,6 @@ const docTemplate = `{
                 "message": {
                     "type": "string",
                     "example": "Vote submitted successfully"
-                }
-            }
-        },
-        "models.Comment": {
-            "type": "object",
-            "properties": {
-                "author": {
-                    "$ref": "#/definitions/models.User"
-                },
-                "author_id": {
-                    "type": "integer"
-                },
-                "child_comments": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/models.Comment"
-                    }
-                },
-                "content": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "likes": {
-                    "type": "integer"
-                },
-                "parent_comment": {
-                    "$ref": "#/definitions/models.Comment"
-                },
-                "parent_comment_id": {
-                    "type": "integer"
-                },
-                "post": {
-                    "$ref": "#/definitions/models.Content"
-                },
-                "post_id": {
-                    "type": "integer"
-                },
-                "updated_at": {
-                    "type": "string"
-                }
-            }
-        },
-        "models.Content": {
-            "type": "object",
-            "properties": {
-                "author": {
-                    "$ref": "#/definitions/models.User"
-                },
-                "author_id": {
-                    "type": "integer"
-                },
-                "content": {
-                    "type": "string"
-                },
-                "cover_image_url": {
-                    "type": "string"
-                },
-                "created_at": {
-                    "type": "string"
-                },
-                "dislikes": {
-                    "type": "integer"
-                },
-                "id": {
-                    "type": "integer"
-                },
-                "likes": {
-                    "type": "integer"
-                },
-                "status": {
-                    "description": "draft, published, archived",
-                    "type": "string"
-                },
-                "title": {
-                    "type": "string"
-                },
-                "type": {
-                    "description": "article, post, comment",
-                    "type": "string"
-                },
-                "updated_at": {
-                    "type": "string"
-                },
-                "views": {
-                    "type": "integer"
                 }
             }
         },
@@ -4446,24 +4463,6 @@ const docTemplate = `{
             }
         },
         "response.ResponseAny": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "integer",
-                    "example": 1000
-                },
-                "data": {},
-                "message": {
-                    "type": "string",
-                    "example": "操作成功"
-                },
-                "success": {
-                    "type": "boolean",
-                    "example": true
-                }
-            }
-        },
-        "response.ResponseComment": {
             "type": "object",
             "properties": {
                 "code": {

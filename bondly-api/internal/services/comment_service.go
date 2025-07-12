@@ -1,144 +1,52 @@
 package services
 
 import (
+	"bondly-api/internal/dto"
 	"bondly-api/internal/models"
 	"bondly-api/internal/repositories"
-	"context"
-	"errors"
-
-	"gorm.io/gorm"
+	"time"
 )
 
 type CommentService struct {
-	commentRepo *repositories.CommentRepository
+	repo *repositories.CommentRepository
 }
 
-func NewCommentService(commentRepo *repositories.CommentRepository) *CommentService {
-	return &CommentService{
-		commentRepo: commentRepo,
+func NewCommentService(repo *repositories.CommentRepository) *CommentService {
+	return &CommentService{repo: repo}
+}
+
+func (s *CommentService) CreateComment(req *dto.CreateCommentRequest, authorID int64) (*models.Comment, error) {
+	comment := &models.Comment{
+		PostID:          req.PostID,
+		AuthorID:        authorID,
+		Content:         req.Content,
+		ParentCommentID: req.ParentCommentID,
+		CreatedAt:       time.Now(),
+		UpdatedAt:       time.Now(),
 	}
-}
-
-// CreateComment 创建评论
-func (s *CommentService) CreateComment(ctx context.Context, comment *models.Comment) error {
-	return s.commentRepo.Create(comment)
-}
-
-// GetComment 获取评论
-func (s *CommentService) GetComment(ctx context.Context, id int64) (*models.Comment, error) {
-	comment, err := s.commentRepo.GetByID(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("comment not found")
-		}
+	if err := s.repo.Create(comment); err != nil {
 		return nil, err
 	}
-
 	return comment, nil
 }
 
-// UpdateComment 更新评论
-func (s *CommentService) UpdateComment(ctx context.Context, id int64, updateData *models.Comment) (*models.Comment, error) {
-	// 检查评论是否存在
-	existingComment, err := s.commentRepo.GetByID(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, errors.New("comment not found")
-		}
-		return nil, err
-	}
-
-	// 更新字段
-	if updateData.Content != "" {
-		existingComment.Content = updateData.Content
-	}
-
-	err = s.commentRepo.Update(existingComment)
-	if err != nil {
-		return nil, err
-	}
-
-	return existingComment, nil
+func (s *CommentService) GetComment(id int64) (*models.Comment, error) {
+	return s.repo.GetByID(id)
 }
 
-// DeleteComment 删除评论
-func (s *CommentService) DeleteComment(ctx context.Context, id int64) error {
-	// 检查评论是否存在
-	_, err := s.commentRepo.GetByID(id)
-	if err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return errors.New("comment not found")
-		}
-		return err
-	}
-
-	return s.commentRepo.Delete(id)
-}
-
-// ListComment 获取评论列表
-func (s *CommentService) ListComment(ctx context.Context, page, limit int) ([]models.Comment, int64, error) {
+func (s *CommentService) ListComments(postID int64, parentCommentID *int64, page, limit int) ([]models.Comment, int64, error) {
 	offset := (page - 1) * limit
-
-	comments, err := s.commentRepo.List(offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	total, err := s.commentRepo.Count()
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return comments, total, nil
+	return s.repo.List(postID, parentCommentID, offset, limit)
 }
 
-// GetCommentByPost 根据文章获取评论列表
-func (s *CommentService) GetCommentByPost(ctx context.Context, postID int64, page, limit int) ([]models.Comment, int64, error) {
-	offset := (page - 1) * limit
-
-	comments, err := s.commentRepo.GetByPostID(postID, offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	total, err := s.commentRepo.CountByPostID(postID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return comments, total, nil
+func (s *CommentService) DeleteComment(id int64, authorID int64) error {
+	return s.repo.Delete(id, authorID)
 }
 
-// GetCommentByAuthor 根据作者获取评论列表
-func (s *CommentService) GetCommentByAuthor(ctx context.Context, authorID int64, page, limit int) ([]models.Comment, int64, error) {
-	offset := (page - 1) * limit
-
-	comments, err := s.commentRepo.GetByAuthorID(authorID, offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	total, err := s.commentRepo.CountByAuthorID(authorID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return comments, total, nil
+func (s *CommentService) LikeComment(id int64) error {
+	return s.repo.Like(id)
 }
 
-// GetCommentByParent 根据父评论获取子评论列表
-func (s *CommentService) GetCommentByParent(ctx context.Context, parentCommentID int64, page, limit int) ([]models.Comment, int64, error) {
-	offset := (page - 1) * limit
-
-	comments, err := s.commentRepo.GetByParentCommentID(parentCommentID, offset, limit)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	total, err := s.commentRepo.CountByParentCommentID(parentCommentID)
-	if err != nil {
-		return nil, 0, err
-	}
-
-	return comments, total, nil
+func (s *CommentService) UnlikeComment(id int64) error {
+	return s.repo.Unlike(id)
 }

@@ -129,7 +129,7 @@ func Load() (*Config, error) {
 			Format: getEnv("LOG_FORMAT", "json"),
 		},
 		CORS: CORSConfig{
-			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173"), ","),
+			AllowedOrigins: strings.Split(getEnv("CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:5173,http://localhost:5174"), ","),
 		},
 		JWT: JWTConfig{
 			Secret:    getEnv("JWT_SECRET", "your-secret-key"),
