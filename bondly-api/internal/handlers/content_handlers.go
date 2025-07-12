@@ -80,10 +80,7 @@ func (h *ContentHandlers) CreateContent(c *gin.Context) {
 		return
 	}
 
-	bizLog.BusinessLogic("内容创建成功", map[string]interface{}{
-		"content_id": content.ID,
-		"author_id":  content.AuthorID,
-	})
+	bizLog.ContentCreated(content.ID, content.AuthorID, content.Type)
 	response.OK(c, content, "Content created successfully")
 }
 
@@ -121,7 +118,7 @@ func (h *ContentHandlers) GetContent(c *gin.Context) {
 		return
 	}
 
-	bizLog.BusinessLogic("获取内容成功", map[string]interface{}{"content_id": id})
+	bizLog.ContentRetrieved(id, content.Views)
 	response.OK(c, content, "Content retrieved successfully")
 }
 
@@ -176,7 +173,11 @@ func (h *ContentHandlers) ListContent(c *gin.Context) {
 		return
 	}
 
-	bizLog.BusinessLogic("获取内容列表成功", map[string]interface{}{"total": total, "page": page, "limit": limit})
+	bizLog.ContentListRetrieved(total, page, limit, map[string]interface{}{
+		"author_id": authorID,
+		"type":      c.Query("type"),
+		"status":    c.Query("status"),
+	})
 	result := gin.H{
 		"contents": contents,
 		"pagination": gin.H{
@@ -267,7 +268,25 @@ func (h *ContentHandlers) UpdateContent(c *gin.Context) {
 		return
 	}
 
-	bizLog.BusinessLogic("内容更新成功", map[string]interface{}{"content_id": id})
+	// 记录更新的字段
+	var updatedFields []string
+	if req.Title != nil {
+		updatedFields = append(updatedFields, "title")
+	}
+	if req.Content != nil {
+		updatedFields = append(updatedFields, "content")
+	}
+	if req.Type != nil {
+		updatedFields = append(updatedFields, "type")
+	}
+	if req.Status != nil {
+		updatedFields = append(updatedFields, "status")
+	}
+	if req.CoverImageURL != nil {
+		updatedFields = append(updatedFields, "cover_image_url")
+	}
+
+	bizLog.ContentUpdated(id, userID.(int64), updatedFields)
 	response.OK(c, content, "Content updated successfully")
 }
 
@@ -321,6 +340,6 @@ func (h *ContentHandlers) DeleteContent(c *gin.Context) {
 		return
 	}
 
-	bizLog.BusinessLogic("内容删除成功", map[string]interface{}{"content_id": id})
+	bizLog.ContentDeleted(id, userID.(int64))
 	response.OK(c, gin.H{}, "Content deleted successfully")
 }

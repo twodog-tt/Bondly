@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import ContentInteractionSimple from '../components/ContentInteractionSimple';
 import { getContentList, Content } from '../api/content';
 
 interface BlogListPageProps {
@@ -367,15 +368,16 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
                         Read More
                       </button>
                       
-                      <div style={{
-                        display: "flex",
-                        gap: "16px",
-                        fontSize: "14px",
-                        color: "#9ca3af"
-                      }}>
-                        <span>👁️ {content.views}</span>
-                        <span>👍 {content.likes}</span>
-                      </div>
+                      <ContentInteractionSimple
+                        contentId={content.id}
+                        initialStats={{
+                          likes: content.likes,
+                          dislikes: content.dislikes,
+                          bookmarks: 0,
+                          shares: 0,
+                          views: content.views
+                        }}
+                      />
                     </div>
                   </div>
                 </div>

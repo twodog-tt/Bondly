@@ -45,6 +45,60 @@ definitions:
         example: false
         type: boolean
     type: object
+  dto.ContentInteraction:
+    properties:
+      content_id:
+        example: 1
+        type: integer
+      created_at:
+        example: "2023-12-01T10:00:00Z"
+        type: string
+      id:
+        example: 1
+        type: integer
+      interaction_type:
+        example: like
+        type: string
+      user:
+        $ref: '#/definitions/dto.UserResponse'
+      user_id:
+        example: 1
+        type: integer
+    type: object
+  dto.CreateContentRequest:
+    properties:
+      content:
+        example: This is the article content...
+        type: string
+      cover_image_url:
+        example: https://example.com/cover.jpg
+        type: string
+      status:
+        example: draft
+        type: string
+      title:
+        example: My Article Title
+        type: string
+      type:
+        example: article
+        type: string
+    required:
+    - content
+    - title
+    type: object
+  dto.CreateInteractionRequest:
+    properties:
+      content_id:
+        example: 1
+        type: integer
+      interaction_type:
+        description: like, dislike, bookmark, share
+        example: like
+        type: string
+    required:
+    - content_id
+    - interaction_type
+    type: object
   dto.CreateUserRequest:
     properties:
       avatar_url:
@@ -112,6 +166,26 @@ definitions:
         example: 1
         type: integer
     type: object
+  dto.InteractionStats:
+    properties:
+      bookmarks:
+        example: 5
+        type: integer
+      content_id:
+        example: 1
+        type: integer
+      dislikes:
+        example: 2
+        type: integer
+      likes:
+        example: 10
+        type: integer
+      shares:
+        example: 3
+        type: integer
+      user_interactions:
+        $ref: '#/definitions/dto.UserInteractionStatus'
+    type: object
   dto.LoginRequest:
     properties:
       email:
@@ -169,6 +243,24 @@ definitions:
     required:
     - email
     type: object
+  dto.UpdateContentRequest:
+    properties:
+      content:
+        example: Updated article content...
+        type: string
+      cover_image_url:
+        example: https://example.com/new-cover.jpg
+        type: string
+      status:
+        example: published
+        type: string
+      title:
+        example: Updated Article Title
+        type: string
+      type:
+        example: article
+        type: string
+    type: object
   dto.UpdateUserRequest:
     properties:
       avatar_url:
@@ -202,44 +294,17 @@ definitions:
         example: http://localhost:8080/uploads/2023/12/01/abc123.jpg
         type: string
     type: object
-  dto.CreateContentRequest:
+  dto.UserInteractionStatus:
     properties:
-      title:
-        example: My Article Title
-        type: string
-      content:
-        example: This is the article content...
-        type: string
-      type:
-        example: article
-        type: string
-      status:
-        example: draft
-        type: string
-      cover_image_url:
-        example: https://example.com/cover.jpg
-        type: string
-    required:
-    - title
-    - content
-    type: object
-  dto.UpdateContentRequest:
-    properties:
-      title:
-        example: Updated Article Title
-        type: string
-      content:
-        example: Updated article content...
-        type: string
-      type:
-        example: article
-        type: string
-      status:
-        example: published
-        type: string
-      cover_image_url:
-        example: https://example.com/new-cover.jpg
-        type: string
+      bookmarked:
+        example: true
+        type: boolean
+      disliked:
+        example: false
+        type: boolean
+      liked:
+        example: true
+        type: boolean
     type: object
   dto.UserResponse:
     properties:
@@ -536,7 +601,6 @@ definitions:
       content:
         type: string
       cover_image_url:
-        description: 封面图片URL
         type: string
       created_at:
         type: string
@@ -1495,6 +1559,161 @@ paths:
       summary: 创建新内容
       tags:
       - 内容管理
+  /api/v1/content-interactions:
+    post:
+      consumes:
+      - application/json
+      description: 创建用户对内容的互动（点赞、点踩、收藏、分享）
+      parameters:
+      - description: 互动信息
+        in: body
+        name: interaction
+        required: true
+        schema:
+          $ref: '#/definitions/dto.CreateInteractionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.ResponseAny'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.ContentInteraction'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 创建内容互动
+      tags:
+      - 内容互动
+  /api/v1/content-interactions/{content_id}/{interaction_type}:
+    delete:
+      consumes:
+      - application/json
+      description: 删除用户对内容的互动
+      parameters:
+      - description: 内容ID
+        in: path
+        name: content_id
+        required: true
+        type: integer
+      - description: 互动类型
+        in: path
+        name: interaction_type
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 删除内容互动
+      tags:
+      - 内容互动
+  /api/v1/content-interactions/{content_id}/stats:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定内容的互动统计数据
+      parameters:
+      - description: 内容ID
+        in: path
+        name: content_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.ResponseAny'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.InteractionStats'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      summary: 获取内容互动统计
+      tags:
+      - 内容互动
+  /api/v1/content-interactions/{content_id}/user-status:
+    get:
+      consumes:
+      - application/json
+      description: 获取当前用户对指定内容的互动状态
+      parameters:
+      - description: 内容ID
+        in: path
+        name: content_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.ResponseAny'
+            - properties:
+                data:
+                  $ref: '#/definitions/dto.UserInteractionStatus'
+              type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ResponseAny'
+      security:
+      - BearerAuth: []
+      summary: 获取用户互动状态
+      tags:
+      - 内容互动
   /api/v1/content/{id}:
     delete:
       consumes:
@@ -1574,7 +1793,7 @@ paths:
         name: content
         required: true
         schema:
-          $ref: '#/definitions/models.Content'
+          $ref: '#/definitions/dto.UpdateContentRequest'
       produces:
       - application/json
       responses:

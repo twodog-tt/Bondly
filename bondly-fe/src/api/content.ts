@@ -147,3 +147,75 @@ export const getPublishedContents = async (params?: {
     status: 'published'
   });
 }; 
+
+// 内容互动相关接口
+export interface ContentInteraction {
+  id: number;
+  content_id: number;
+  user_id: number;
+  interaction_type: 'like' | 'dislike' | 'bookmark' | 'share';
+  created_at: string;
+  user?: {
+    id: number;
+    nickname: string;
+    avatar_url?: string;
+  };
+}
+
+export interface CreateInteractionRequest {
+  content_id: number;
+  interaction_type: 'like' | 'dislike' | 'bookmark' | 'share';
+}
+
+export interface InteractionStats {
+  content_id: number;
+  likes: number;
+  dislikes: number;
+  bookmarks: number;
+  shares: number;
+  user_interactions: {
+    liked: boolean;
+    disliked: boolean;
+    bookmarked: boolean;
+  };
+}
+
+// 创建内容互动
+export const createInteraction = async (data: CreateInteractionRequest): Promise<ContentInteraction> => {
+  const response = await apiRequest<ContentInteraction>('/api/v1/content-interactions', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  });
+  return response;
+};
+
+// 删除内容互动
+export const deleteInteraction = async (contentId: number, interactionType: string): Promise<void> => {
+  await apiRequest<void>(`/api/v1/content-interactions/${contentId}/${interactionType}`, {
+    method: 'DELETE',
+  });
+};
+
+// 获取内容的互动统计
+export const getInteractionStats = async (contentId: number): Promise<InteractionStats> => {
+  const response = await apiRequest<InteractionStats>(`/api/v1/content-interactions/${contentId}/stats`, {
+    method: 'GET',
+  });
+  return response;
+};
+
+// 获取用户对特定内容的互动状态
+export const getUserInteractionStatus = async (contentId: number): Promise<{
+  liked: boolean;
+  disliked: boolean;
+  bookmarked: boolean;
+}> => {
+  const response = await apiRequest<{
+    liked: boolean;
+    disliked: boolean;
+    bookmarked: boolean;
+  }>(`/api/v1/content-interactions/${contentId}/user-status`, {
+    method: 'GET',
+  });
+  return response;
+}; 

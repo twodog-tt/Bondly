@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
+import ContentInteraction from '../components/ContentInteraction';
 import { getContentById, Content } from '../api/content';
 
 interface BlogDetailPageProps {
@@ -278,54 +279,25 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           marginTop: "40px",
           paddingTop: "32px"
         }}>
-          <div style={{
-            display: "flex",
-            gap: "16px",
-            marginBottom: "24px"
-          }}>
-            <button style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              color: "white",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s ease"
+          {/* 内容互动组件 */}
+          <ContentInteraction
+            contentId={content.id}
+            initialStats={{
+              likes: content.likes,
+              dislikes: content.dislikes,
+              bookmarks: 0,
+              shares: 0,
+              views: content.views
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
-            >
-              👍 Like ({content.likes})
-            </button>
-            <button style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              color: "white",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s ease"
+            onStatsChange={(newStats) => {
+              // 更新本地内容状态
+              setContent(prev => prev ? {
+                ...prev,
+                likes: newStats.likes,
+                dislikes: newStats.dislikes
+              } : null);
             }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
-            >
-              👁️ Views ({content.views})
-            </button>
-            <button style={{
-              background: "rgba(255, 255, 255, 0.1)",
-              border: "1px solid rgba(255, 255, 255, 0.2)",
-              color: "white",
-              padding: "8px 16px",
-              borderRadius: "8px",
-              cursor: "pointer",
-              transition: "all 0.2s ease"
-            }}
-            onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
-            onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
-            >
-              🔗 Share
-            </button>
-          </div>
+          />
           
           <div style={{
             background: "rgba(255, 255, 255, 0.05)",

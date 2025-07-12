@@ -28,16 +28,17 @@ type Server struct {
 	server       *http.Server
 
 	// 依赖注入
-	userHandlers          *handlers.UserHandlers
-	authHandlers          *handlers.AuthHandlers
-	uploadHandlers        *handlers.UploadHandlers
-	walletHandlers        *handlers.WalletHandlers
-	contentHandlers       *handlers.ContentHandlers
-	proposalHandlers      *handlers.ProposalHandlers
-	transactionHandlers   *handlers.TransactionHandlers
-	commentHandlers       *handlers.CommentHandlers
-	userFollowHandlers    *handlers.UserFollowHandlers
-	walletBindingHandlers *handlers.WalletBindingHandlers
+	userHandlers               *handlers.UserHandlers
+	authHandlers               *handlers.AuthHandlers
+	uploadHandlers             *handlers.UploadHandlers
+	walletHandlers             *handlers.WalletHandlers
+	contentHandlers            *handlers.ContentHandlers
+	contentInteractionHandlers *handlers.ContentInteractionHandlers
+	proposalHandlers           *handlers.ProposalHandlers
+	transactionHandlers        *handlers.TransactionHandlers
+	commentHandlers            *handlers.CommentHandlers
+	userFollowHandlers         *handlers.UserFollowHandlers
+	walletBindingHandlers      *handlers.WalletBindingHandlers
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB) *Server {
@@ -108,6 +109,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 
 	// 初始化新的services
 	contentService := services.NewContentService(contentRepo)
+	contentInteractionService := services.NewContentInteractionService(db)
 	proposalService := services.NewProposalService(proposalRepo)
 	transactionService := services.NewTransactionService(transactionRepo)
 	commentService := services.NewCommentService(commentRepo)
@@ -116,6 +118,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 
 	// 初始化新的handlers
 	contentHandlers := handlers.NewContentHandlers(contentService)
+	contentInteractionHandlers := handlers.NewContentInteractionHandlers(contentInteractionService)
 	proposalHandlers := handlers.NewProposalHandlers(proposalService)
 	transactionHandlers := handlers.NewTransactionHandlers(transactionService)
 	commentHandlers := handlers.NewCommentHandlers(commentService)
@@ -123,21 +126,22 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	walletBindingHandlers := handlers.NewWalletBindingHandlers(walletBindingService)
 
 	server := &Server{
-		config:                cfg,
-		db:                    db,
-		redisClient:           redisClient,
-		cacheService:          cacheService,
-		router:                router,
-		userHandlers:          userHandlers,
-		authHandlers:          authHandlers,
-		uploadHandlers:        uploadHandlers,
-		walletHandlers:        walletHandlers,
-		contentHandlers:       contentHandlers,
-		proposalHandlers:      proposalHandlers,
-		transactionHandlers:   transactionHandlers,
-		commentHandlers:       commentHandlers,
-		userFollowHandlers:    userFollowHandlers,
-		walletBindingHandlers: walletBindingHandlers,
+		config:                     cfg,
+		db:                         db,
+		redisClient:                redisClient,
+		cacheService:               cacheService,
+		router:                     router,
+		userHandlers:               userHandlers,
+		authHandlers:               authHandlers,
+		uploadHandlers:             uploadHandlers,
+		walletHandlers:             walletHandlers,
+		contentHandlers:            contentHandlers,
+		contentInteractionHandlers: contentInteractionHandlers,
+		proposalHandlers:           proposalHandlers,
+		transactionHandlers:        transactionHandlers,
+		commentHandlers:            commentHandlers,
+		userFollowHandlers:         userFollowHandlers,
+		walletBindingHandlers:      walletBindingHandlers,
 	}
 
 	// 设置路由

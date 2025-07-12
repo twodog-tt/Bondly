@@ -201,87 +201,184 @@ func (b *BusinessLogger) StartAPI(method, path string, userID interface{}, walle
 	b.StartAction(action, userID, wallet, params)
 }
 
-// UserNotFound 用户不存在
+// UserNotFound 用户未找到
 func (b *BusinessLogger) UserNotFound(identifier string, value interface{}) {
 	b.entry.WithFields(logrus.Fields{
 		"user_not_found": true,
 		"identifier":     identifier,
 		"value":          value,
-	}).Info("用户不存在")
+	}).Warn("用户未找到")
 }
 
-// UserCreated 用户创建成功
+// UserCreated 用户创建
 func (b *BusinessLogger) UserCreated(userID int64, email string, wallet string) {
-	b.Success("user_created", map[string]interface{}{
-		"user_id": userID,
-		"email":   email,
-		"wallet":  wallet,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"user_created": true,
+		"user_id":      userID,
+		"email":        email,
+		"wallet":       wallet,
+	}).Info("用户创建成功")
 }
 
-// UserUpdated 用户更新成功
+// UserUpdated 用户更新
 func (b *BusinessLogger) UserUpdated(userID int64, updatedFields []string) {
-	b.Success("user_updated", map[string]interface{}{
+	b.entry.WithFields(logrus.Fields{
+		"user_updated":   true,
 		"user_id":        userID,
 		"updated_fields": updatedFields,
-	})
+	}).Info("用户信息更新成功")
 }
 
-// WalletGenerated 钱包生成成功
+// WalletGenerated 钱包生成
 func (b *BusinessLogger) WalletGenerated(userID int64, walletAddress string) {
-	b.Success("wallet_generated", map[string]interface{}{
-		"user_id":        userID,
-		"wallet_address": walletAddress,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"wallet_generated": true,
+		"user_id":          userID,
+		"wallet_address":   walletAddress,
+	}).Info("托管钱包生成成功")
 }
 
-// WalletBound 钱包绑定成功
+// WalletBound 钱包绑定
 func (b *BusinessLogger) WalletBound(userID int64, walletAddress string) {
-	b.Success("wallet_bound", map[string]interface{}{
+	b.entry.WithFields(logrus.Fields{
+		"wallet_bound":   true,
 		"user_id":        userID,
 		"wallet_address": walletAddress,
-	})
+	}).Info("钱包绑定成功")
 }
 
-// FileUploaded 文件上传成功
+// FileUploaded 文件上传
 func (b *BusinessLogger) FileUploaded(fileName string, fileSize int64, fileType string, accessURL string) {
-	b.Success("file_uploaded", map[string]interface{}{
-		"file_name":  fileName,
-		"file_size":  fileSize,
-		"file_type":  fileType,
-		"access_url": accessURL,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"file_uploaded": true,
+		"file_name":     fileName,
+		"file_size":     fileSize,
+		"file_type":     fileType,
+		"access_url":    accessURL,
+	}).Info("文件上传成功")
 }
 
-// EmailSent 邮件发送成功
+// EmailSent 邮件发送
 func (b *BusinessLogger) EmailSent(to string, subject string, template string) {
-	b.Success("email_sent", map[string]interface{}{
-		"to":       to,
-		"subject":  subject,
-		"template": template,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"email_sent": true,
+		"to":         to,
+		"subject":    subject,
+		"template":   template,
+	}).Info("邮件发送成功")
 }
 
-// CodeSent 验证码发送成功
+// CodeSent 验证码发送
 func (b *BusinessLogger) CodeSent(email string, expiresIn string) {
-	b.Success("code_sent", map[string]interface{}{
+	b.entry.WithFields(logrus.Fields{
+		"code_sent":  true,
 		"email":      email,
 		"expires_in": expiresIn,
-	})
+	}).Info("验证码发送成功")
 }
 
-// CodeVerified 验证码验证成功
+// CodeVerified 验证码验证
 func (b *BusinessLogger) CodeVerified(email string) {
-	b.Success("code_verified", map[string]interface{}{
-		"email": email,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"code_verified": true,
+		"email":         email,
+	}).Info("验证码验证成功")
 }
 
 // LoginSuccess 登录成功
 func (b *BusinessLogger) LoginSuccess(userID int64, email string, isNewUser bool) {
-	b.Success("login_success", map[string]interface{}{
-		"user_id":     userID,
-		"email":       email,
-		"is_new_user": isNewUser,
-	})
+	b.entry.WithFields(logrus.Fields{
+		"login_success": true,
+		"user_id":       userID,
+		"email":         email,
+		"is_new_user":   isNewUser,
+	}).Info("用户登录成功")
+}
+
+// ContentInteractionCreated 内容互动创建
+func (b *BusinessLogger) ContentInteractionCreated(contentID int64, userID int64, interactionType string) {
+	b.entry.WithFields(logrus.Fields{
+		"content_interaction_created": true,
+		"content_id":                  contentID,
+		"user_id":                     userID,
+		"interaction_type":            interactionType,
+	}).Info("内容互动创建成功")
+}
+
+// ContentInteractionDeleted 内容互动删除
+func (b *BusinessLogger) ContentInteractionDeleted(contentID int64, userID int64, interactionType string) {
+	b.entry.WithFields(logrus.Fields{
+		"content_interaction_deleted": true,
+		"content_id":                  contentID,
+		"user_id":                     userID,
+		"interaction_type":            interactionType,
+	}).Info("内容互动删除成功")
+}
+
+// ContentInteractionStatsRetrieved 内容互动统计获取
+func (b *BusinessLogger) ContentInteractionStatsRetrieved(contentID int64, stats map[string]interface{}) {
+	b.entry.WithFields(logrus.Fields{
+		"content_interaction_stats_retrieved": true,
+		"content_id":                          contentID,
+		"stats":                               stats,
+	}).Info("内容互动统计获取成功")
+}
+
+// ContentInteractionStatusRetrieved 用户互动状态获取
+func (b *BusinessLogger) ContentInteractionStatusRetrieved(contentID int64, userID int64, status map[string]interface{}) {
+	b.entry.WithFields(logrus.Fields{
+		"content_interaction_status_retrieved": true,
+		"content_id":                           contentID,
+		"user_id":                              userID,
+		"status":                               status,
+	}).Info("用户互动状态获取成功")
+}
+
+// ContentCreated 内容创建
+func (b *BusinessLogger) ContentCreated(contentID int64, authorID int64, contentType string) {
+	b.entry.WithFields(logrus.Fields{
+		"content_created": true,
+		"content_id":      contentID,
+		"author_id":       authorID,
+		"content_type":    contentType,
+	}).Info("内容创建成功")
+}
+
+// ContentUpdated 内容更新
+func (b *BusinessLogger) ContentUpdated(contentID int64, authorID int64, updatedFields []string) {
+	b.entry.WithFields(logrus.Fields{
+		"content_updated": true,
+		"content_id":      contentID,
+		"author_id":       authorID,
+		"updated_fields":  updatedFields,
+	}).Info("内容更新成功")
+}
+
+// ContentDeleted 内容删除
+func (b *BusinessLogger) ContentDeleted(contentID int64, authorID int64) {
+	b.entry.WithFields(logrus.Fields{
+		"content_deleted": true,
+		"content_id":      contentID,
+		"author_id":       authorID,
+	}).Info("内容删除成功")
+}
+
+// ContentRetrieved 内容获取
+func (b *BusinessLogger) ContentRetrieved(contentID int64, viewCount int64) {
+	b.entry.WithFields(logrus.Fields{
+		"content_retrieved": true,
+		"content_id":        contentID,
+		"view_count":        viewCount,
+	}).Info("内容获取成功")
+}
+
+// ContentListRetrieved 内容列表获取
+func (b *BusinessLogger) ContentListRetrieved(total int64, page int, limit int, filters map[string]interface{}) {
+	b.entry.WithFields(logrus.Fields{
+		"content_list_retrieved": true,
+		"total":                  total,
+		"page":                   page,
+		"limit":                  limit,
+		"filters":                filters,
+	}).Info("内容列表获取成功")
 }

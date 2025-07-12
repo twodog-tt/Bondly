@@ -662,6 +662,260 @@
                 }
             }
         },
+        "/api/v1/content-interactions": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "创建用户对内容的互动（点赞、点踩、收藏、分享）",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "内容互动"
+                ],
+                "summary": "创建内容互动",
+                "parameters": [
+                    {
+                        "description": "互动信息",
+                        "name": "interaction",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/dto.CreateInteractionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.ContentInteraction"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/content-interactions/{content_id}/stats": {
+            "get": {
+                "description": "获取指定内容的互动统计数据",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "内容互动"
+                ],
+                "summary": "获取内容互动统计",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "内容ID",
+                        "name": "content_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.InteractionStats"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/content-interactions/{content_id}/user-status": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "获取当前用户对指定内容的互动状态",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "内容互动"
+                ],
+                "summary": "获取用户互动状态",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "内容ID",
+                        "name": "content_id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "allOf": [
+                                {
+                                    "$ref": "#/definitions/response.ResponseAny"
+                                },
+                                {
+                                    "type": "object",
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/definitions/dto.UserInteractionStatus"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/content-interactions/{content_id}/{interaction_type}": {
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "删除用户对内容的互动",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "内容互动"
+                ],
+                "summary": "删除内容互动",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "内容ID",
+                        "name": "content_id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "互动类型",
+                        "name": "interaction_type",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ResponseAny"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/content/{id}": {
             "get": {
                 "description": "根据内容ID获取详细的内容信息，包括完整内容、作者信息、点赞/踩数、评论统计等。访问时会自动增加浏览次数。",
@@ -725,7 +979,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/models.Content"
+                            "$ref": "#/definitions/dto.UpdateContentRequest"
                         }
                     }
                 ],
@@ -2743,6 +2997,81 @@
                 }
             }
         },
+        "dto.ContentInteraction": {
+            "type": "object",
+            "properties": {
+                "content_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "created_at": {
+                    "type": "string",
+                    "example": "2023-12-01T10:00:00Z"
+                },
+                "id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "interaction_type": {
+                    "type": "string",
+                    "example": "like"
+                },
+                "user": {
+                    "$ref": "#/definitions/dto.UserResponse"
+                },
+                "user_id": {
+                    "type": "integer",
+                    "example": 1
+                }
+            }
+        },
+        "dto.CreateContentRequest": {
+            "type": "object",
+            "required": [
+                "content",
+                "title"
+            ],
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "This is the article content..."
+                },
+                "cover_image_url": {
+                    "type": "string",
+                    "example": "https://example.com/cover.jpg"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "draft"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "My Article Title"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "article"
+                }
+            }
+        },
+        "dto.CreateInteractionRequest": {
+            "type": "object",
+            "required": [
+                "content_id",
+                "interaction_type"
+            ],
+            "properties": {
+                "content_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "interaction_type": {
+                    "description": "like, dislike, bookmark, share",
+                    "type": "string",
+                    "example": "like"
+                }
+            }
+        },
         "dto.CreateUserRequest": {
             "type": "object",
             "required": [
@@ -2837,6 +3166,34 @@
                 }
             }
         },
+        "dto.InteractionStats": {
+            "type": "object",
+            "properties": {
+                "bookmarks": {
+                    "type": "integer",
+                    "example": 5
+                },
+                "content_id": {
+                    "type": "integer",
+                    "example": 1
+                },
+                "dislikes": {
+                    "type": "integer",
+                    "example": 2
+                },
+                "likes": {
+                    "type": "integer",
+                    "example": 10
+                },
+                "shares": {
+                    "type": "integer",
+                    "example": 3
+                },
+                "user_interactions": {
+                    "$ref": "#/definitions/dto.UserInteractionStatus"
+                }
+            }
+        },
         "dto.LoginRequest": {
             "type": "object",
             "required": [
@@ -2917,6 +3274,31 @@
                 }
             }
         },
+        "dto.UpdateContentRequest": {
+            "type": "object",
+            "properties": {
+                "content": {
+                    "type": "string",
+                    "example": "Updated article content..."
+                },
+                "cover_image_url": {
+                    "type": "string",
+                    "example": "https://example.com/new-cover.jpg"
+                },
+                "status": {
+                    "type": "string",
+                    "example": "published"
+                },
+                "title": {
+                    "type": "string",
+                    "example": "Updated Article Title"
+                },
+                "type": {
+                    "type": "string",
+                    "example": "article"
+                }
+            }
+        },
         "dto.UpdateUserRequest": {
             "type": "object",
             "properties": {
@@ -2960,6 +3342,23 @@
                 "url": {
                     "type": "string",
                     "example": "http://localhost:8080/uploads/2023/12/01/abc123.jpg"
+                }
+            }
+        },
+        "dto.UserInteractionStatus": {
+            "type": "object",
+            "properties": {
+                "bookmarked": {
+                    "type": "boolean",
+                    "example": true
+                },
+                "disliked": {
+                    "type": "boolean",
+                    "example": false
+                },
+                "liked": {
+                    "type": "boolean",
+                    "example": true
                 }
             }
         },
@@ -3379,6 +3778,9 @@
                     "type": "integer"
                 },
                 "content": {
+                    "type": "string"
+                },
+                "cover_image_url": {
                     "type": "string"
                 },
                 "created_at": {

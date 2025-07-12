@@ -51,13 +51,20 @@ func (s *Server) setupRoutes() {
 		// 内容相关路由 - 完整的CRUD
 		content := v1.Group("/content")
 		{
-			content.GET("", s.contentHandlers.ListContent)                                                                        // 获取内容列表（不带斜杠）
-			content.GET("/", s.contentHandlers.ListContent)                                                                       // 获取内容列表（带斜杠）
-			content.POST("", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                        // 创建内容（不带斜杠）
-			content.POST("/", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                       // 创建内容（带斜杠）
+			content.GET("", s.contentHandlers.ListContent)                                                                        // 获取内容列表
+			content.POST("", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                        // 创建内容
 			content.GET("/:id", s.contentHandlers.GetContent)                                                                     // 获取内容详情
 			content.PUT("/:id", middleware.AuthMiddleware(), middleware.AdminOrOwner("content"), s.contentHandlers.UpdateContent) // 更新内容
 			content.DELETE("/:id", middleware.AuthMiddleware(), middleware.AdminOnly(), s.contentHandlers.DeleteContent)          // 删除内容
+		}
+
+		// 内容互动相关路由
+		contentInteractions := v1.Group("/content-interactions")
+		{
+			contentInteractions.POST("", middleware.AuthMiddleware(), s.contentInteractionHandlers.CreateInteraction)                                 // 创建内容互动
+			contentInteractions.DELETE("/:content_id/:interaction_type", middleware.AuthMiddleware(), s.contentInteractionHandlers.DeleteInteraction) // 删除内容互动
+			contentInteractions.GET("/:content_id/stats", s.contentInteractionHandlers.GetInteractionStats)                                           // 获取内容互动统计
+			contentInteractions.GET("/:content_id/user-status", middleware.AuthMiddleware(), s.contentInteractionHandlers.GetUserInteractionStatus)   // 获取用户互动状态
 		}
 
 		// 提案相关路由 - 完整的CRUD
