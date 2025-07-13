@@ -15,6 +15,7 @@ import BlogListPage from "./pages/BlogListPage";
 import BlogDetailPage from "./pages/BlogDetailPage";
 import DaoPage from "./pages/DaoPage";
 import UserPublicProfilePage from "./pages/UserPublicProfilePage";
+import FollowListPage from "./pages/FollowListPage";
 
 // 工具函数：渲染装饰元素
 function renderDecorations(isMobile: boolean) {
@@ -478,6 +479,7 @@ function AppContent() {
           {page === "blog-detail" && <BlogDetailPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page.startsWith("user-profile-") && <UserPublicProfilePage isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page.startsWith("follow/") && <FollowListPage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>
     </div>

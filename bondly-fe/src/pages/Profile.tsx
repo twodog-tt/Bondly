@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import EditProfileModal from '../components/EditProfileModal';
+import FollowButton from '../components/FollowButton';
 import { useAuth } from '../contexts/AuthContext';
+import { getFollowers, getFollowing } from '../api/follow';
 
 interface ProfileProps {
   isMobile: boolean;
@@ -9,14 +11,19 @@ interface ProfileProps {
 }
 
 const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
-  const { user, checkAuthStatus, isLoggedIn, loading } = useAuth();
+  const { user: currentUser, checkAuthStatus, isLoggedIn, loading } = useAuth();
   
-  console.log('Profile component - AuthContext state:', { user, isLoggedIn, loading });
+  console.log('Profile component - AuthContext state:', { currentUser, isLoggedIn, loading });
   const [showEditModal, setShowEditModal] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [profileData, setProfileData] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [followStats, setFollowStats] = useState({
+    followers: 0,
+    following: 0,
+  });
+  const [isFollowing, setIsFollowing] = useState(false);
 
   const handleLoginClick = () => {
     console.log("Login clicked");
@@ -24,8 +31,8 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
 
   // 获取用户详细信息
   const fetchUserProfile = async () => {
-    console.log('Profile.fetchUserProfile called, user:', user);
-    console.log('Profile.fetchUserProfile - user?.user_id:', user?.user_id);
+    console.log('Profile.fetchUserProfile called, user:', currentUser);
+    console.log('Profile.fetchUserProfile - user?.user_id:', currentUser?.user_id);
     console.log('Profile.fetchUserProfile - isLoggedIn:', isLoggedIn);
     
     if (!isLoggedIn) {
@@ -35,7 +42,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
       return;
     }
     
-    if (!user?.user_id) {
+    if (!currentUser?.user_id) {
       console.log('Profile.fetchUserProfile - No user_id found, skipping API call');
       setIsLoading(false);
       setError('User not logged in');
@@ -46,13 +53,16 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
       setIsLoading(true);
       setError(null);
       
-      console.log('Calling API with user_id:', user.user_id);
+      console.log('Calling API with user_id:', currentUser.user_id);
       const { userApi } = await import('../utils/api');
       
       try {
-        const result = await userApi.getUser(user.user_id.toString());
+        const result = await userApi.getUser(currentUser.user_id.toString());
         console.log('User profile data from API:', result);
         setProfileData(result);
+        
+        // 获取关注统计
+        await fetchFollowStats(currentUser.user_id);
       } catch (apiError) {
         console.error('API call failed:', apiError);
         throw apiError;
@@ -65,13 +75,30 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
     }
   };
 
+  // 获取关注统计
+  const fetchFollowStats = async (userId: number) => {
+    try {
+      const [followersResponse, followingResponse] = await Promise.all([
+        getFollowers(userId, 1, 1), // 只获取第一页，用于统计总数
+        getFollowing(userId, 1, 1),
+      ]);
+      
+      setFollowStats({
+        followers: followersResponse.pagination.total,
+        following: followingResponse.pagination.total,
+      });
+    } catch (error) {
+      console.error('Failed to fetch follow stats:', error);
+    }
+  };
+
   const handleEditProfile = () => {
     setShowEditModal(true);
   };
 
   // 组件加载时获取用户信息
   useEffect(() => {
-    console.log('Profile useEffect - loading:', loading, 'user:', user);
+    console.log('Profile useEffect - loading:', loading, 'user:', currentUser);
     
     // 等待AuthContext加载完成
     if (loading) {
@@ -80,20 +107,20 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
     }
     
     fetchUserProfile();
-  }, [user?.user_id, loading]);
+  }, [currentUser?.user_id, loading]);
 
   const handleSaveProfile = async (profileData: {
     nickname: string;
     bio: string;
     avatar_url?: string;
   }) => {
-    if (!user) return;
+    if (!currentUser) return;
 
     setIsSaving(true);
     try {
       // 调用后端API更新用户信息
       const { userApi } = await import('../utils/api');
-      const result = await userApi.updateUser(user.user_id, profileData);
+      const result = await userApi.updateUser(currentUser.user_id, profileData);
       
       console.log('Profile update result:', result);
       
@@ -253,8 +280,8 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   width: "120px",
                   height: "120px",
                   borderRadius: "50%",
-                  background: profileData?.avatar_url || user?.avatar_url
-                    ? `url(${profileData?.avatar_url || user?.avatar_url}) center/cover`
+                  background: profileData?.avatar_url || currentUser?.avatar_url
+                    ? `url(${profileData?.avatar_url || currentUser?.avatar_url}) center/cover`
                     : "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
                   display: "flex",
                   alignItems: "center",
@@ -264,8 +291,8 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   color: "white",
                   flexShrink: 0
                 }}>
-                  {!(profileData?.avatar_url || user?.avatar_url) && 
-                    ((profileData?.nickname || user?.nickname)?.charAt(0) || 'U')}
+                  {!(profileData?.avatar_url || currentUser?.avatar_url) && 
+                    ((profileData?.nickname || currentUser?.nickname)?.charAt(0) || 'U')}
                 </div>
                 
                 {/* 用户信息 */}
@@ -276,14 +303,14 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                     marginBottom: "8px",
                     color: "white"
                   }}>
-                    {profileData?.nickname || user?.nickname || 'Anonymous'}
+                    {profileData?.nickname || currentUser?.nickname || 'Anonymous'}
                   </h1>
                   <p style={{
                     fontSize: "16px",
                     color: "#9ca3af",
                     marginBottom: "12px"
                   }}>
-                    {profileData?.role || user?.role || 'User'} • Member since {
+                    {profileData?.role || currentUser?.role || 'User'} • Member since {
                       profileData?.created_at 
                         ? new Date(profileData.created_at).getFullYear()
                         : '2024'
@@ -291,7 +318,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   </p>
                   
                                     {/* 个性签名 */}
-                  {(profileData?.bio || user?.bio) ? (
+                  {(profileData?.bio || currentUser?.bio) ? (
                     <div style={{
                       background: "rgba(255, 255, 255, 0.05)",
                       border: "1px solid rgba(255, 255, 255, 0.1)",
@@ -328,7 +355,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                         margin: 0,
                         fontStyle: "italic"
                       }}>
-                        "{profileData?.bio || user?.bio}"
+                        "{profileData?.bio || currentUser?.bio}"
                       </p>
                     </div>
                   ) : (
@@ -351,50 +378,211 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                     </div>
                   )}
               
-              {/* 统计信息 */}
+              {/* 统计信息 - 优化版本 */}
               <div style={{
                 display: "grid",
                 gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
                 gap: "16px",
                 marginBottom: "24px"
               }}>
+                {/* 粉丝统计卡片 */}
+                <div 
+                  className="group cursor-pointer"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                  onClick={() => {
+                    window.history.pushState({}, '', `/follow/${currentUser?.user_id}/followers`);
+                    onPageChange?.(`follow/${currentUser?.user_id}/followers`);
+                  }}
+                >
+                  <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "16px",
+                    opacity: "0.6"
+                  }}>
+                    👥
+                  </div>
+                  <div style={{ 
+                    fontSize: "28px", 
+                    fontWeight: "bold", 
+                    color: "white",
+                    marginBottom: "4px"
+                  }}>
+                    {followStats.followers}
+                  </div>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    color: "#9ca3af",
+                    fontWeight: "500"
+                  }}>
+                    粉丝
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    bottom: "0",
+                    left: "0",
+                    right: "0",
+                    height: "2px",
+                    background: "linear-gradient(90deg, #667eea, #764ba2)",
+                    transform: "scaleX(0)",
+                    transition: "transform 0.3s ease"
+                  }} className="group-hover:scale-x-100"></div>
+                </div>
+
+                {/* 关注统计卡片 */}
+                <div 
+                  className="group cursor-pointer"
+                  style={{
+                    background: "rgba(255, 255, 255, 0.05)",
+                    padding: "20px",
+                    borderRadius: "12px",
+                    textAlign: "center",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    transition: "all 0.3s ease",
+                    position: "relative",
+                    overflow: "hidden"
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
+                    e.currentTarget.style.transform = "translateY(-2px)";
+                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.3)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                  onClick={() => {
+                    window.history.pushState({}, '', `/follow/${currentUser?.user_id}/following`);
+                    onPageChange?.(`follow/${currentUser?.user_id}/following`);
+                  }}
+                >
+                  <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "16px",
+                    opacity: "0.6"
+                  }}>
+                    ❤️
+                  </div>
+                  <div style={{ 
+                    fontSize: "28px", 
+                    fontWeight: "bold", 
+                    color: "white",
+                    marginBottom: "4px"
+                  }}>
+                    {followStats.following}
+                  </div>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    color: "#9ca3af",
+                    fontWeight: "500"
+                  }}>
+                    关注
+                  </div>
+                  <div style={{
+                    position: "absolute",
+                    bottom: "0",
+                    left: "0",
+                    right: "0",
+                    height: "2px",
+                    background: "linear-gradient(90deg, #667eea, #764ba2)",
+                    transform: "scaleX(0)",
+                    transition: "transform 0.3s ease"
+                  }} className="group-hover:scale-x-100"></div>
+                </div>
+
+                {/* 声誉积分卡片 */}
                 <div style={{
                   background: "rgba(255, 255, 255, 0.05)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  textAlign: "center"
+                  padding: "20px",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  position: "relative",
+                  overflow: "hidden"
                 }}>
-                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>
+                  <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "16px",
+                    opacity: "0.6"
+                  }}>
+                    ⭐
+                  </div>
+                  <div style={{ 
+                    fontSize: "28px", 
+                    fontWeight: "bold", 
+                    color: "white",
+                    marginBottom: "4px"
+                  }}>
                     {profileData?.reputation_score || 0}
                   </div>
-                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Reputation</div>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    color: "#9ca3af",
+                    fontWeight: "500"
+                  }}>
+                    声誉积分
+                  </div>
                 </div>
+
+                {/* NFTs卡片 */}
                 <div style={{
                   background: "rgba(255, 255, 255, 0.05)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  textAlign: "center"
+                  padding: "20px",
+                  borderRadius: "12px",
+                  textAlign: "center",
+                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  position: "relative",
+                  overflow: "hidden"
                 }}>
-                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>Level 5</div>
-                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Level</div>
-                </div>
-                <div style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  textAlign: "center"
-                }}>
-                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>567</div>
-                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>Bond Tokens</div>
-                </div>
-                <div style={{
-                  background: "rgba(255, 255, 255, 0.05)",
-                  padding: "16px",
-                  borderRadius: "8px",
-                  textAlign: "center"
-                }}>
-                  <div style={{ fontSize: "24px", fontWeight: "bold", color: "white" }}>12</div>
-                  <div style={{ fontSize: "14px", color: "#9ca3af" }}>NFTs</div>
+                  <div style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "16px",
+                    opacity: "0.6"
+                  }}>
+                    🎨
+                  </div>
+                  <div style={{ 
+                    fontSize: "28px", 
+                    fontWeight: "bold", 
+                    color: "white",
+                    marginBottom: "4px"
+                  }}>
+                    12
+                  </div>
+                  <div style={{ 
+                    fontSize: "14px", 
+                    color: "#9ca3af",
+                    fontWeight: "500"
+                  }}>
+                    NFTs
+                  </div>
                 </div>
               </div>
               
@@ -402,7 +590,8 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
               <div style={{
                 display: "flex",
                 gap: "12px",
-                flexWrap: "wrap"
+                flexWrap: "wrap",
+                alignItems: "center"
               }}>
                 <button 
                   onClick={handleEditProfile}
@@ -420,8 +609,29 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
                   onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
                 >
-                  {isSaving ? 'Saving...' : 'Edit Profile'}
+                  {isSaving ? '保存中...' : '编辑资料'}
                 </button>
+                
+                {/* 关注按钮 - 只在查看其他用户资料时显示 */}
+                {false && (
+                  <div style={{ display: "inline-block" }}>
+                    <FollowButton
+                      userId={currentUser?.user_id || 0}
+                      isFollowing={isFollowing}
+                      onFollowChange={(following) => {
+                        setIsFollowing(following);
+                        // 更新关注统计
+                        setFollowStats(prev => ({
+                          ...prev,
+                          followers: following ? prev.followers + 1 : prev.followers - 1
+                        }));
+                      }}
+                      size="medium"
+                      variant="outline"
+                    />
+                  </div>
+                )}
+                
                 <button style={{
                   background: "rgba(255, 255, 255, 0.1)",
                   border: "1px solid rgba(255, 255, 255, 0.2)",
@@ -436,7 +646,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
                 >
-                  Share Profile
+                  分享资料
                 </button>
               </div>
             </div>
