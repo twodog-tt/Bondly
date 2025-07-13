@@ -5,6 +5,7 @@ import (
 	"bondly-api/internal/models"
 	"context"
 	"errors"
+	"fmt"
 	"time"
 
 	"gorm.io/gorm"
@@ -62,6 +63,12 @@ func (s *ContentInteractionService) CreateInteraction(req dto.CreateInteractionR
 		return nil, err
 	}
 
+	// 同步更新content表中的统计字段
+	if err := s.updateContentStats(ctx, req.ContentID, req.InteractionType, 1); err != nil {
+		// 记录错误但不影响主流程
+		// TODO: 考虑使用事务来确保数据一致性
+	}
+
 	return s.convertToDTO(&interaction), nil
 }
 
@@ -79,6 +86,12 @@ func (s *ContentInteractionService) DeleteInteraction(contentID int64, userID in
 
 	if result.RowsAffected == 0 {
 		return errors.New("interaction not found")
+	}
+
+	// 同步更新content表中的统计字段
+	if err := s.updateContentStats(ctx, contentID, interactionType, -1); err != nil {
+		// 记录错误但不影响主流程
+		// TODO: 考虑使用事务来确保数据一致性
 	}
 
 	return nil
@@ -99,9 +112,21 @@ func (s *ContentInteractionService) GetInteractionStats(contentID int64) (*dto.I
 
 	stats := &dto.InteractionStats{
 		ContentID: contentID,
-		Likes:     content.Likes,
-		Dislikes:  content.Dislikes,
 	}
+
+	// 统计点赞数
+	var likeCount int64
+	if err := s.db.WithContext(ctx).Model(&models.ContentInteraction{}).Where("content_id = ? AND interaction_type = ?", contentID, "like").Count(&likeCount).Error; err != nil {
+		return nil, err
+	}
+	stats.Likes = likeCount
+
+	// 统计点踩数
+	var dislikeCount int64
+	if err := s.db.WithContext(ctx).Model(&models.ContentInteraction{}).Where("content_id = ? AND interaction_type = ?", contentID, "dislike").Count(&dislikeCount).Error; err != nil {
+		return nil, err
+	}
+	stats.Dislikes = dislikeCount
 
 	// 统计收藏数
 	var bookmarkCount int64
@@ -217,4 +242,22 @@ func (s *ContentInteractionService) convertToDTO(interaction *models.ContentInte
 		InteractionType: interaction.InteractionType,
 		CreatedAt:       interaction.CreatedAt.Format(time.RFC3339),
 	}
+}
+
+// updateContentStats 更新content表中的统计字段
+func (s *ContentInteractionService) updateContentStats(ctx context.Context, contentID int64, interactionType string, delta int) error {
+	var updateField string
+	switch interactionType {
+	case "like":
+		updateField = "likes"
+	case "dislike":
+		updateField = "dislikes"
+	default:
+		// 对于bookmark和share，不需要更新content表
+		return nil
+	}
+
+	// 使用原生SQL更新，避免并发问题
+	query := fmt.Sprintf("UPDATE contents SET %s = %s + ?, updated_at = NOW() WHERE id = ?", updateField, updateField)
+	return s.db.WithContext(ctx).Exec(query, delta, contentID).Error
 }
