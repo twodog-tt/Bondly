@@ -15,7 +15,7 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
   const [showDropdown, setShowDropdown] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const { setOpenConnectModal } = useWalletConnect();
-  const { login, checkAuthStatus } = useAuth();
+  const { login, checkAuthStatus, isLoggedIn, user } = useAuth();
   
   // 新增：新用户欢迎弹窗状态
   const [showWelcomeModal, setShowWelcomeModal] = useState(false);
@@ -41,40 +41,47 @@ const WalletConnect: React.FC<WalletConnectProps> = ({ isMobile, onWalletConnect
   // 监听钱包连接状态变化
   useEffect(() => {
     if (isConnected && address) {
-      // 自动调用后端钱包登录接口
-      (async () => {
-        try {
-          const { authApi } = await import('../utils/api');
-          const loginResult = await authApi.walletLogin(address);
-          
-          // 存储token和用户信息
-          login(loginResult.token, {
-            user_id: loginResult.user_id,
-            email: loginResult.email,
-            nickname: loginResult.nickname,
-            role: loginResult.role,
-            is_new_user: loginResult.is_new_user,
-            wallet_address: address
-          });
-
-          // 处理新用户欢迎
-          if (loginResult.is_new_user) {
-            setWelcomeData({
+      // 检查用户是否已经登录
+      if (!isLoggedIn || !user) {
+        // 用户未登录，调用钱包登录接口
+        (async () => {
+          try {
+            const { authApi } = await import('../utils/api');
+            const loginResult = await authApi.walletLogin(address);
+            
+            // 存储token和用户信息
+            login(loginResult.token, {
+              user_id: loginResult.user_id,
+              email: loginResult.email,
               nickname: loginResult.nickname,
-              walletAddress: address
+              role: loginResult.role,
+              is_new_user: loginResult.is_new_user,
+              wallet_address: address
             });
-            setShowWelcomeModal(true);
+
+            // 处理新用户欢迎
+            if (loginResult.is_new_user) {
+              setWelcomeData({
+                nickname: loginResult.nickname,
+                walletAddress: address
+              });
+              setShowWelcomeModal(true);
+            }
+          } catch (error) {
+            console.error('钱包自动登录失败:', error);
           }
-        } catch (error) {
-          console.error('钱包自动登录失败:', error);
-        }
-      })();
+        })();
+      } else {
+        // 用户已登录，只进行钱包绑定（通过onWalletConnected回调）
+        console.log('用户已登录，进行钱包绑定:', address);
+      }
     }
-    // 保持原有回调逻辑
+    
+    // 保持原有回调逻辑（用于钱包绑定）
     if (isConnected && address && onWalletConnected) {
       onWalletConnected(address);
     }
-  }, [isConnected, address, onWalletConnected]);
+  }, [isConnected, address, onWalletConnected, isLoggedIn, user]);
 
   // 关闭欢迎弹窗
   const handleCloseWelcomeModal = () => {
