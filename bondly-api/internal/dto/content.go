@@ -1,91 +1,63 @@
 package dto
 
-// CreateContentRequest 创建内容请求
+import "time"
+
+// CreateContentRequest 创建内容请求结构
 type CreateContentRequest struct {
-	Title         string  `json:"title" binding:"required" example:"My Article Title"`
-	Content       string  `json:"content" binding:"required" example:"This is the article content..."`
-	Type          string  `json:"type" example:"article"`
-	Status        string  `json:"status" example:"draft"`
-	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/cover.jpg"`
+	Title         string  `json:"title" binding:"required" example:"文章标题"`
+	Content       string  `json:"content" binding:"required" example:"文章内容"`
+	Type          string  `json:"type" binding:"required" example:"article"` // article, post, comment
+	Status        string  `json:"status" example:"draft"`                    // draft, published, archived
+	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/image.jpg"`
 }
 
-// UpdateContentRequest 更新内容请求
+// UpdateContentRequest 更新内容请求结构
 type UpdateContentRequest struct {
-	Title         *string `json:"title" example:"Updated Article Title"`
-	Content       *string `json:"content" example:"Updated article content..."`
+	Title         *string `json:"title" example:"更新后的标题"`
+	Content       *string `json:"content" example:"更新后的内容"`
 	Type          *string `json:"type" example:"article"`
 	Status        *string `json:"status" example:"published"`
-	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/new-cover.jpg"`
+	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/new-image.jpg"`
 }
 
-// ContentResponse 内容响应数据
+// ContentResponse 内容响应结构
 type ContentResponse struct {
-	ID            int64   `json:"id" example:"1"`
-	AuthorID      int64   `json:"author_id" example:"1"`
-	Title         string  `json:"title" example:"My Article Title"`
-	Content       string  `json:"content" example:"This is the article content..."`
-	Type          string  `json:"type" example:"article"`
-	Status        string  `json:"status" example:"published"`
-	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/cover.jpg"`
-	Likes         int64   `json:"likes" example:"10"`
-	Dislikes      int64   `json:"dislikes" example:"2"`
-	Views         int64   `json:"views" example:"100"`
-	CreatedAt     string  `json:"created_at" example:"2023-12-01T10:00:00Z"`
-	UpdatedAt     string  `json:"updated_at" example:"2023-12-01T10:00:00Z"`
+	ID            int64        `json:"id" example:"1"`
+	AuthorID      int64        `json:"author_id" example:"1"`
+	Title         string       `json:"title" example:"文章标题"`
+	Content       string       `json:"content" example:"文章内容"`
+	Type          string       `json:"type" example:"article"`
+	Status        string       `json:"status" example:"published"`
+	CoverImageURL *string      `json:"cover_image_url" example:"https://example.com/image.jpg"`
+	Likes         int64        `json:"likes" example:"10"`
+	Dislikes      int64        `json:"dislikes" example:"2"`
+	Views         int64        `json:"views" example:"100"`
+	CreatedAt     time.Time    `json:"created_at" example:"2023-12-01T10:00:00Z"`
+	UpdatedAt     time.Time    `json:"updated_at" example:"2023-12-01T10:00:00Z"`
+	Author        UserResponse `json:"author"`
 }
 
-// ContentListResponse 内容列表响应数据
-type ContentListResponse struct {
-	Contents   []ContentResponse `json:"contents"`
+// ListContentRequest 获取内容列表请求结构
+type ListContentRequest struct {
+	Page     int    `form:"page" binding:"min=1" example:"1"`
+	Limit    int    `form:"limit" binding:"min=1,max=100" example:"10"`
+	Type     string `form:"type" example:"article"`
+	Status   string `form:"status" example:"published"`
+	AuthorID int64  `form:"author_id" example:"1"`
+}
+
+// ListContentResponse 获取内容列表响应结构
+type ListContentResponse struct {
+	Data       []ContentResponse `json:"data"`
 	Pagination PaginationData    `json:"pagination"`
 }
 
-// PaginationData 分页数据
+// PaginationData 分页数据结构
 type PaginationData struct {
 	Total      int64 `json:"total" example:"100"`
 	Page       int   `json:"page" example:"1"`
 	Limit      int   `json:"limit" example:"10"`
 	TotalPages int   `json:"total_pages" example:"10"`
-}
-
-// ContentLikeRequest 内容点赞请求
-type ContentLikeRequest struct {
-	ContentID int64 `json:"content_id" binding:"required" example:"1"`
-	IsLike    bool  `json:"is_like" example:"true"` // true for like, false for dislike
-}
-
-// ContentLikeResponse 内容点赞响应
-type ContentLikeResponse struct {
-	ContentID int64 `json:"content_id" example:"1"`
-	UserID    int64 `json:"user_id" example:"1"`
-	IsLike    bool  `json:"is_like" example:"true"`
-	Likes     int64 `json:"likes" example:"10"`
-	Dislikes  int64 `json:"dislikes" example:"2"`
-}
-
-// ContentBookmarkRequest 内容收藏请求
-type ContentBookmarkRequest struct {
-	ContentID int64 `json:"content_id" binding:"required" example:"1"`
-}
-
-// ContentBookmarkResponse 内容收藏响应
-type ContentBookmarkResponse struct {
-	ContentID    int64 `json:"content_id" example:"1"`
-	UserID       int64 `json:"user_id" example:"1"`
-	IsBookmarked bool  `json:"is_bookmarked" example:"true"`
-}
-
-// ContentShareRequest 内容分享请求
-type ContentShareRequest struct {
-	ContentID int64  `json:"content_id" binding:"required" example:"1"`
-	Platform  string `json:"platform" binding:"required" example:"twitter"`
-}
-
-// ContentShareResponse 内容分享响应
-type ContentShareResponse struct {
-	ContentID int64  `json:"content_id" example:"1"`
-	Platform  string `json:"platform" example:"twitter"`
-	ShareURL  string `json:"share_url" example:"https://twitter.com/intent/tweet?text=..."`
 }
 
 // UserInteractionStats 用户互动统计

@@ -117,39 +117,6 @@ type WalletBinding struct {
 	User          User      `json:"user" gorm:"foreignKey:UserID"`
 }
 
-// ContentLike 内容点赞模型
-type ContentLike struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	ContentID int64     `json:"content_id"`
-	UserID    int64     `json:"user_id"`
-	IsLike    bool      `json:"is_like"` // true for like, false for dislike
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
-	Content   Content   `json:"content" gorm:"foreignKey:ContentID"`
-	User      User      `json:"user" gorm:"foreignKey:UserID"`
-}
-
-// ContentBookmark 内容收藏模型
-type ContentBookmark struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	ContentID int64     `json:"content_id"`
-	UserID    int64     `json:"user_id"`
-	CreatedAt time.Time `json:"created_at"`
-	Content   Content   `json:"content" gorm:"foreignKey:ContentID"`
-	User      User      `json:"user" gorm:"foreignKey:UserID"`
-}
-
-// ContentShare 内容分享统计模型
-type ContentShare struct {
-	ID        int64     `json:"id" gorm:"primaryKey"`
-	ContentID int64     `json:"content_id"`
-	UserID    int64     `json:"user_id"`
-	Platform  string    `json:"platform"` // twitter, facebook, wechat, etc.
-	CreatedAt time.Time `json:"created_at"`
-	Content   Content   `json:"content" gorm:"foreignKey:ContentID"`
-	User      User      `json:"user" gorm:"foreignKey:UserID"`
-}
-
 // ContentInteraction 内容互动模型
 type ContentInteraction struct {
 	ID              int64     `json:"id" gorm:"primaryKey"`
