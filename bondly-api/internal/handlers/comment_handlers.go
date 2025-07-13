@@ -221,6 +221,7 @@ func (h *CommentHandlers) UnlikeComment(c *gin.Context) {
 		response.Fail(c, 400, "评论ID格式错误")
 		return
 	}
+	// 假设已通过中间件获取用户ID
 	_, exists := c.Get("user_id")
 	if !exists {
 		response.Fail(c, 401, "未认证")
@@ -232,6 +233,41 @@ func (h *CommentHandlers) UnlikeComment(c *gin.Context) {
 		return
 	}
 	response.OKMsg(c, "取消点赞成功")
+}
+
+// GetCommentCount 获取评论数量
+// @Summary 获取评论数量
+// @Description 获取指定内容的评论数量
+// @Tags 评论
+// @Accept json
+// @Produce json
+// @Param post_id query int true "内容ID"
+// @Success 200 {object} response.ResponseAny{data=map[string]int64}
+// @Router /api/v1/comments/count [get]
+func (h *CommentHandlers) GetCommentCount(c *gin.Context) {
+	bizLog := logger.NewBusinessLogger(c.Request.Context())
+	bizLog.StartAPI("GET", "/api/v1/comments/count", nil, "", nil)
+
+	postIDStr := c.Query("post_id")
+	if postIDStr == "" {
+		response.Fail(c, 400, "post_id参数必填")
+		return
+	}
+
+	postID, err := strconv.ParseInt(postIDStr, 10, 64)
+	if err != nil {
+		response.Fail(c, 400, "post_id参数格式错误")
+		return
+	}
+
+	count, err := h.service.GetCommentCount(postID)
+	if err != nil {
+		bizLog.BusinessLogic("error", map[string]interface{}{"err": err})
+		response.Fail(c, 500, "获取评论数量失败")
+		return
+	}
+
+	response.OK(c, map[string]int64{"count": count}, "获取评论数量成功")
 }
 
 // toCommentResponse 工具函数

@@ -52,3 +52,10 @@ func (r *CommentRepository) Like(id int64) error {
 func (r *CommentRepository) Unlike(id int64) error {
 	return r.db.Model(&models.Comment{}).Where("id = ? AND likes > 0", id).UpdateColumn("likes", gorm.Expr("likes - 1")).Error
 }
+
+// GetCommentCount 获取指定内容的评论数量
+func (r *CommentRepository) GetCommentCount(postID int64) (int64, error) {
+	var count int64
+	err := r.db.Model(&models.Comment{}).Where("post_id = ?", postID).Count(&count).Error
+	return count, err
+}

@@ -71,5 +71,20 @@ func (r *ContentRepository) CountByAuthorID(authorID int64) (int64, error) {
 
 // IncrementViews 增加浏览量
 func (r *ContentRepository) IncrementViews(id int64) error {
-	return r.db.Model(&models.Content{}).Where("id = ?", id).UpdateColumn("views", gorm.Expr("views + ?", 1)).Error
+	return r.db.Model(&models.Content{}).Where("id = ?", id).UpdateColumn("views", gorm.Expr("views + 1")).Error
+}
+
+// GetInteractionStats 获取内容的互动统计
+func (r *ContentRepository) GetInteractionStats(contentID int64) (likes int64, dislikes int64, err error) {
+	// 统计点赞数
+	if err := r.db.Model(&models.ContentInteraction{}).Where("content_id = ? AND interaction_type = ?", contentID, "like").Count(&likes).Error; err != nil {
+		return 0, 0, err
+	}
+
+	// 统计点踩数
+	if err := r.db.Model(&models.ContentInteraction{}).Where("content_id = ? AND interaction_type = ?", contentID, "dislike").Count(&dislikes).Error; err != nil {
+		return 0, 0, err
+	}
+
+	return likes, dislikes, nil
 }

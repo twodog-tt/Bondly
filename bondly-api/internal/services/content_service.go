@@ -108,6 +108,17 @@ func (s *ContentService) ListContent(ctx context.Context, page, limit int) ([]mo
 		return nil, 0, err
 	}
 
+	// 为每个内容更新真实的点赞和点踩数量
+	for i := range contents {
+		likes, dislikes, err := s.contentRepo.GetInteractionStats(contents[i].ID)
+		if err != nil {
+			// 如果获取失败，保持默认值
+			continue
+		}
+		contents[i].Likes = likes
+		contents[i].Dislikes = dislikes
+	}
+
 	total, err := s.contentRepo.Count()
 	if err != nil {
 		return nil, 0, err
@@ -123,6 +134,17 @@ func (s *ContentService) GetContentByAuthor(ctx context.Context, authorID int64,
 	contents, err := s.contentRepo.GetByAuthorID(authorID, offset, limit)
 	if err != nil {
 		return nil, 0, err
+	}
+
+	// 为每个内容更新真实的点赞和点踩数量
+	for i := range contents {
+		likes, dislikes, err := s.contentRepo.GetInteractionStats(contents[i].ID)
+		if err != nil {
+			// 如果获取失败，保持默认值
+			continue
+		}
+		contents[i].Likes = likes
+		contents[i].Dislikes = dislikes
 	}
 
 	total, err := s.contentRepo.CountByAuthorID(authorID)

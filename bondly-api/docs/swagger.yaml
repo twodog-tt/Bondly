@@ -1488,6 +1488,34 @@ paths:
       summary: 取消点赞
       tags:
       - 评论
+  /api/v1/comments/count:
+    get:
+      consumes:
+      - application/json
+      description: 获取指定内容的评论数量
+      parameters:
+      - description: 内容ID
+        in: query
+        name: post_id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            allOf:
+            - $ref: '#/definitions/response.ResponseAny'
+            - properties:
+                data:
+                  additionalProperties:
+                    type: integer
+                  type: object
+              type: object
+      summary: 获取评论数量
+      tags:
+      - 评论
   /api/v1/content:
     get:
       consumes:

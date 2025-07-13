@@ -93,6 +93,7 @@ func (s *Server) setupRoutes() {
 		comments := v1.Group("/comments")
 		{
 			comments.GET("", s.commentHandlers.ListComments)                                           // 获取评论列表
+			comments.GET("/count", s.commentHandlers.GetCommentCount)                                  // 获取评论数量
 			comments.POST("", middleware.AuthMiddleware(), s.commentHandlers.CreateComment)            // 创建评论
 			comments.GET("/:id", s.commentHandlers.GetComment)                                         // 获取评论详情
 			comments.DELETE("/:id", middleware.AuthMiddleware(), s.commentHandlers.DeleteComment)      // 删除评论

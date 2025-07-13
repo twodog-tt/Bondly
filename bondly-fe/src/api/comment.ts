@@ -62,6 +62,12 @@ export const getCommentById = async (id: number): Promise<Comment> => {
   return response;
 };
 
+// 获取评论数量
+export const getCommentCount = async (postId: number): Promise<number> => {
+  const response = await get<{count: number}>(`/api/v1/comments/count?post_id=${postId}`);
+  return response.count;
+};
+
 // 创建评论
 export const createComment = async (data: CreateCommentRequest): Promise<Comment> => {
   const response = await post<Comment>('/api/v1/comments', data);

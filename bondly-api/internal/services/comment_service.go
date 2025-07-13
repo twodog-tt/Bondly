@@ -50,3 +50,8 @@ func (s *CommentService) LikeComment(id int64) error {
 func (s *CommentService) UnlikeComment(id int64) error {
 	return s.repo.Unlike(id)
 }
+
+// GetCommentCount 获取指定内容的评论数量
+func (s *CommentService) GetCommentCount(postID int64) (int64, error) {
+	return s.repo.GetCommentCount(postID)
+}
