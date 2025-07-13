@@ -216,7 +216,14 @@ function renderDecorations(isMobile: boolean) {
 }
 
 function AppContent() {
-  const [page, setPage] = useState("home");
+  // 从URL参数初始化页面状态
+  const getInitialPage = () => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const pageParam = urlParams.get('page');
+    return pageParam || "home";
+  };
+
+  const [page, setPage] = useState(getInitialPage);
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // 监听窗口大小变化
@@ -230,10 +237,26 @@ function AppContent() {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  // 监听URL变化
+  useEffect(() => {
+    const handlePopState = () => {
+      const newPage = getInitialPage();
+      setPage(newPage);
+    };
+
+    window.addEventListener('popstate', handlePopState);
+    return () => window.removeEventListener('popstate', handlePopState);
+  }, []);
+
   // 页面切换动画
   const handlePageChange = (newPage: string) => {
     if (newPage !== page) {
       setPage(newPage);
+      
+      // 更新URL参数
+      const url = new URL(window.location.href);
+      url.searchParams.set('page', newPage);
+      window.history.pushState({}, '', url.toString());
     }
   };
 

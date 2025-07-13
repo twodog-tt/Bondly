@@ -143,6 +143,7 @@ func (h *ContentHandlers) ListContent(c *gin.Context) {
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
 	authorID := c.Query("author_id")
+	status := c.Query("status")
 
 	if page < 1 {
 		page = 1
@@ -164,7 +165,7 @@ func (h *ContentHandlers) ListContent(c *gin.Context) {
 			return
 		}
 	} else {
-		contents, total, err = h.contentService.ListContent(c.Request.Context(), page, limit)
+		contents, total, err = h.contentService.ListContent(c.Request.Context(), page, limit, status)
 	}
 
 	if err != nil {

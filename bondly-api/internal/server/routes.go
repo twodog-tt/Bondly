@@ -50,6 +50,7 @@ func (s *Server) setupRoutes() {
 
 		// 内容相关路由 - 完整的CRUD
 		content := v1.Group("/content")
+		content.Use(middleware.NoCache()) // 禁用缓存
 		{
 			content.GET("", s.contentHandlers.ListContent)                                                                        // 获取内容列表
 			content.POST("", middleware.AuthMiddleware(), s.contentHandlers.CreateContent)                                        // 创建内容

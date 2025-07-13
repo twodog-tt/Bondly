@@ -100,10 +100,10 @@ func (s *ContentService) DeleteContent(ctx context.Context, id int64) error {
 }
 
 // ListContent 获取内容列表
-func (s *ContentService) ListContent(ctx context.Context, page, limit int) ([]models.Content, int64, error) {
+func (s *ContentService) ListContent(ctx context.Context, page, limit int, status string) ([]models.Content, int64, error) {
 	offset := (page - 1) * limit
 
-	contents, err := s.contentRepo.List(offset, limit)
+	contents, err := s.contentRepo.ListWithStatus(offset, limit, status)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -119,7 +119,7 @@ func (s *ContentService) ListContent(ctx context.Context, page, limit int) ([]mo
 		contents[i].Dislikes = dislikes
 	}
 
-	total, err := s.contentRepo.Count()
+	total, err := s.contentRepo.CountWithStatus(status)
 	if err != nil {
 		return nil, 0, err
 	}

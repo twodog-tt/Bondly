@@ -18,6 +18,8 @@ REDIS_PORT=${REDIS_PORT:-"6379"}
 REDIS_PASSWORD=${REDIS_PASSWORD:-""}
 REDIS_DB=${REDIS_DB:-"0"}
 CACHE_PREFIX=${CACHE_PREFIX:-"bondly"}
+USE_DOCKER=${USE_DOCKER:-"false"}
+REDIS_CONTAINER=${REDIS_CONTAINER:-"bondly-redis"}
 
 # 显示帮助信息
 show_help() {
@@ -31,6 +33,8 @@ show_help() {
     echo "  -a, --password PASS    Redis密码 (默认: 无)"
     echo "  -d, --db DB            Redis数据库编号 (默认: 0)"
     echo "  -c, --prefix PREFIX    缓存前缀 (默认: bondly)"
+    echo "  --docker               通过Docker容器连接Redis"
+    echo "  --container NAME       Docker容器名称 (默认: bondly-redis)"
     echo "  --all-users            清除所有用户相关缓存"
     echo "  --sessions             只清除会话缓存"
     echo "  --tokens               只清除令牌缓存"
@@ -41,6 +45,7 @@ show_help() {
     echo "示例:"
     echo "  $0 --all-users                    # 清除所有用户相关缓存"
     echo "  $0 --sessions --dry-run           # 预览会话缓存"
+    echo "  $0 --docker --all-users           # 通过Docker清除所有缓存"
     echo "  $0 -h 192.168.1.100 -p 6380       # 连接到指定Redis服务器"
     echo ""
 }
@@ -49,20 +54,24 @@ show_help() {
 build_redis_cmd() {
     local cmd="redis-cli"
     
-    if [ -n "$REDIS_HOST" ]; then
-        cmd="$cmd -h $REDIS_HOST"
-    fi
-    
-    if [ -n "$REDIS_PORT" ]; then
-        cmd="$cmd -p $REDIS_PORT"
-    fi
-    
-    if [ -n "$REDIS_PASSWORD" ]; then
-        cmd="$cmd -a $REDIS_PASSWORD"
-    fi
-    
-    if [ -n "$REDIS_DB" ]; then
-        cmd="$cmd -n $REDIS_DB"
+    if [ "$USE_DOCKER" = "true" ]; then
+        cmd="docker exec $REDIS_CONTAINER redis-cli"
+    else
+        if [ -n "$REDIS_HOST" ]; then
+            cmd="$cmd -h $REDIS_HOST"
+        fi
+        
+        if [ -n "$REDIS_PORT" ]; then
+            cmd="$cmd -p $REDIS_PORT"
+        fi
+        
+        if [ -n "$REDIS_PASSWORD" ]; then
+            cmd="$cmd -a $REDIS_PASSWORD"
+        fi
+        
+        if [ -n "$REDIS_DB" ]; then
+            cmd="$cmd -n $REDIS_DB"
+        fi
     fi
     
     echo "$cmd"
@@ -73,13 +82,31 @@ check_redis_connection() {
     local redis_cmd=$(build_redis_cmd)
     echo -e "${BLUE}检查Redis连接...${NC}"
     
+    if [ "$USE_DOCKER" = "true" ]; then
+        echo -e "${BLUE}使用Docker容器: $REDIS_CONTAINER${NC}"
+        # 检查Docker容器是否运行
+        if ! docker ps | grep -q "$REDIS_CONTAINER"; then
+            echo -e "${RED}❌ Redis容器 $REDIS_CONTAINER 未运行${NC}"
+            echo "请先启动开发环境: make dev-up"
+            exit 1
+        fi
+    fi
+    
     if ! $redis_cmd ping > /dev/null 2>&1; then
         echo -e "${RED}❌ 无法连接到Redis服务器${NC}"
-        echo "请检查以下配置:"
-        echo "  - 主机: $REDIS_HOST"
-        echo "  - 端口: $REDIS_PORT"
-        echo "  - 密码: ${REDIS_PASSWORD:-"无"}"
-        echo "  - 数据库: $REDIS_DB"
+        if [ "$USE_DOCKER" = "true" ]; then
+            echo "请检查以下配置:"
+            echo "  - 容器名称: $REDIS_CONTAINER"
+            echo "  - 容器状态: $(docker ps | grep $REDIS_CONTAINER || echo '未找到')"
+        else
+            echo "请检查以下配置:"
+            echo "  - 主机: $REDIS_HOST"
+            echo "  - 端口: $REDIS_PORT"
+            echo "  - 密码: ${REDIS_PASSWORD:-"无"}"
+            echo "  - 数据库: $REDIS_DB"
+        fi
+        echo ""
+        echo "💡 提示: 如果使用Docker环境，请尝试: $0 --docker --all-users --dry-run"
         exit 1
     fi
     
@@ -215,6 +242,14 @@ main() {
                 ;;
             -c|--prefix)
                 CACHE_PREFIX="$2"
+                shift 2
+                ;;
+            --docker)
+                USE_DOCKER=true
+                shift
+                ;;
+            --container)
+                REDIS_CONTAINER="$2"
                 shift 2
                 ;;
             --all-users)

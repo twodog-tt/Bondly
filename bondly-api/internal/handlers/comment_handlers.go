@@ -67,7 +67,7 @@ func (h *CommentHandlers) ListComments(c *gin.Context) {
 		commentResponses = append(commentResponses, toCommentResponse(&comment))
 	}
 	resp := dto.CommentListResponse{
-		Comments:   commentResponses,
+		Comments:   commentResponses, // 确保返回空数组而不是null
 		Pagination: dto.PaginationData{Total: total, Page: page, Limit: limit, TotalPages: int((total + int64(limit) - 1) / int64(limit))},
 	}
 	response.OK(c, resp, "获取评论列表成功")

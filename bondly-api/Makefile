@@ -174,32 +174,32 @@ seed:
 # Redis用户信息清除
 redis-clear-users:
 	@echo "清除Redis中的用户信息..."
-	@./scripts/clear-redis-users.sh --all-users
+	@./scripts/clear-redis-users.sh --docker --all-users
 
 # Redis用户信息清除（预览模式）
 redis-clear-users-dry-run:
 	@echo "预览Redis中的用户信息（不实际删除）..."
-	@./scripts/clear-redis-users.sh --all-users --dry-run
+	@./scripts/clear-redis-users.sh --docker --all-users --dry-run
 
 # 清除Redis会话缓存
 redis-clear-sessions:
 	@echo "清除Redis中的会话缓存..."
-	@./scripts/clear-redis-users.sh --sessions
+	@./scripts/clear-redis-users.sh --docker --sessions
 
 # 清除Redis令牌缓存
 redis-clear-tokens:
 	@echo "清除Redis中的令牌缓存..."
-	@./scripts/clear-redis-users.sh --tokens
+	@./scripts/clear-redis-users.sh --docker --tokens
 
 # 清除Redis用户数据缓存
 redis-clear-user-data:
 	@echo "清除Redis中的用户数据缓存..."
-	@./scripts/clear-redis-users.sh --user-data
+	@./scripts/clear-redis-users.sh --docker --user-data
 
 # 显示Redis缓存状态
 redis-status:
 	@echo "显示Redis缓存状态..."
-	@./scripts/clear-redis-users.sh --dry-run
+	@./scripts/clear-redis-users.sh --docker --dry-run --all-users
 
 # 帮助信息
 help:

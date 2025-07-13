@@ -58,9 +58,19 @@ func CORS(cfg config.CORSConfig) gin.HandlerFunc {
 	corsConfig := cors.DefaultConfig()
 	corsConfig.AllowOrigins = cfg.AllowedOrigins
 	corsConfig.AllowMethods = []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"}
-	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization"}
+	corsConfig.AllowHeaders = []string{"Origin", "Content-Type", "Accept", "Authorization", "Cache-Control", "Pragma", "Expires"}
 	corsConfig.AllowCredentials = true
 	return cors.New(corsConfig)
+}
+
+// NoCache 禁用缓存中间件
+func NoCache() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Header("Cache-Control", "no-cache, no-store, must-revalidate")
+		c.Header("Pragma", "no-cache")
+		c.Header("Expires", "0")
+		c.Next()
+	}
 }
 
 // RequestID 请求ID中间件

@@ -48,10 +48,36 @@ func (r *ContentRepository) List(offset, limit int) ([]models.Content, error) {
 	return contents, err
 }
 
+// ListWithStatus 根据状态获取内容列表
+func (r *ContentRepository) ListWithStatus(offset, limit int, status string) ([]models.Content, error) {
+	var contents []models.Content
+	query := r.db.Preload("Author").Offset(offset).Limit(limit).Order("created_at DESC")
+
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	err := query.Find(&contents).Error
+	return contents, err
+}
+
 // Count 获取内容总数
 func (r *ContentRepository) Count() (int64, error) {
 	var count int64
 	err := r.db.Model(&models.Content{}).Count(&count).Error
+	return count, err
+}
+
+// CountWithStatus 根据状态获取内容总数
+func (r *ContentRepository) CountWithStatus(status string) (int64, error) {
+	var count int64
+	query := r.db.Model(&models.Content{})
+
+	if status != "" {
+		query = query.Where("status = ?", status)
+	}
+
+	err := query.Count(&count).Error
 	return count, err
 }
 

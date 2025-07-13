@@ -21,6 +21,9 @@ export const apiRequest = async <T>(
   const url = `${API_BASE_URL}${endpoint}`;
   
   const headers: Record<string, string> = {
+    'Cache-Control': 'no-cache, no-store, must-revalidate',
+    'Pragma': 'no-cache',
+    'Expires': '0',
     ...options.headers,
   };
 

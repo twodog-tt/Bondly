@@ -59,10 +59,11 @@ export default function CommentSection({
         page: 1,
         limit: 50
       });
-      setComments(response.comments);
+      setComments(response.comments || []);
     } catch (error) {
       console.error('加载评论失败:', error);
       notify('加载评论失败', 'error');
+      setComments([]); // 确保失败时设置为空数组而不是null
     } finally {
       setCommentLoading(false);
     }
