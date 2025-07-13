@@ -2,26 +2,16 @@ import React, { useState, useEffect } from "react";
 import { useNotification } from "./NotificationProvider";
 import ReportModal from "./ReportModal";
 import TipModal from "./TipModal";
-
-interface Comment {
-  id: string;
-  postId: string;
-  author: {
-    id: string;
-    name: string;
-    avatar: string;
-    reputation: number;
-    isVerified: boolean;
-  };
-  content: string;
-  parentId?: string;
-  replies: Comment[];
-  likes: number;
-  isLiked: boolean;
-  isAuthor: boolean;
-  createdAt: string;
-  status: "active" | "deleted" | "hidden";
-}
+import { 
+  getCommentList, 
+  createComment, 
+  deleteComment, 
+  likeComment, 
+  unlikeComment,
+  Comment,
+  CreateCommentRequest
+} from "../api/comment";
+import { useAuth } from "../contexts/AuthContext";
 
 interface CommentSectionProps {
   postId: string;
@@ -29,79 +19,20 @@ interface CommentSectionProps {
   onTipComment?: (commentId: string, authorName: string) => void;
 }
 
-// 模拟评论数据
-const mockComments: Comment[] = [
-  {
-    id: "1",
-    postId: "1",
-    author: {
-      id: "user1",
-      name: "Alice Chen",
-      avatar: "",
-      reputation: 89,
-      isVerified: true,
-    },
-    content: "这篇文章写得非常详细，Hook机制确实是Uniswap V4的一大创新！",
-    replies: [],
-    likes: 12,
-    isLiked: false,
-    isAuthor: false,
-    createdAt: "2024-01-15T10:30:00Z",
-    status: "active",
-  },
-  {
-    id: "2",
-    postId: "1",
-    author: {
-      id: "user2",
-      name: "Bob Zhang",
-      avatar: "",
-      reputation: 234,
-      isVerified: true,
-    },
-    content: "想请教一下，Hook机制对现有的DeFi协议会有什么影响？",
-    replies: [
-      {
-        id: "2-1",
-        postId: "1",
-        author: {
-          id: "user1",
-          name: "Alice Chen",
-          avatar: "",
-          reputation: 89,
-          isVerified: true,
-        },
-        content:
-          "@Bob Zhang 我认为主要影响是让协议更加灵活，开发者可以自定义更多逻辑。",
-        parentId: "2",
-        replies: [],
-        likes: 5,
-        isLiked: true,
-        isAuthor: true,
-        createdAt: "2024-01-15T11:00:00Z",
-        status: "active",
-      },
-    ],
-    likes: 8,
-    isLiked: false,
-    isAuthor: false,
-    createdAt: "2024-01-15T10:45:00Z",
-    status: "active",
-  },
-];
-
 export default function CommentSection({
   postId,
   isMobile,
   onTipComment,
 }: CommentSectionProps) {
   const { notify } = useNotification();
-  const [comments, setComments] = useState<Comment[]>(mockComments);
+  const { isLoggedIn, user } = useAuth();
+  const [comments, setComments] = useState<Comment[]>([]);
   const [newComment, setNewComment] = useState("");
-  const [replyTo, setReplyTo] = useState<string | null>(null);
+  const [replyTo, setReplyTo] = useState<number | null>(null);
   const [replyContent, setReplyContent] = useState("");
-  const [showReplyForm, setShowReplyForm] = useState<string | null>(null);
+  const [showReplyForm, setShowReplyForm] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
+  const [commentLoading, setCommentLoading] = useState(false);
   const [reportModal, setReportModal] = useState<{
     isOpen: boolean;
     targetId: string;
@@ -115,96 +46,157 @@ export default function CommentSection({
     authorName: "",
   });
 
+  // 加载评论列表
+  useEffect(() => {
+    loadComments();
+  }, [postId]);
+
+  const loadComments = async () => {
+    try {
+      setCommentLoading(true);
+      const response = await getCommentList({
+        post_id: parseInt(postId),
+        page: 1,
+        limit: 50
+      });
+      setComments(response.comments);
+    } catch (error) {
+      console.error('加载评论失败:', error);
+      notify('加载评论失败', 'error');
+    } finally {
+      setCommentLoading(false);
+    }
+  };
+
   // 处理发表评论
   const handleSubmitComment = async () => {
-    if (!newComment.trim() && !replyContent.trim()) return;
-    setLoading(true);
-    // TODO: 调用后端接口
-    // const response = await fetch('/api/comments', {
-    //   method: 'POST',
-    //   headers: { 'Content-Type': 'application/json' },
-    //   body: JSON.stringify({
-    //     postId,
-    //     content: newComment,
-    //     parentId: replyTo
-    //   })
-    // });
-
-    // 模拟添加新评论
-    const newCommentObj: Comment = {
-      id: Date.now().toString(),
-      postId,
-      author: {
-        id: "currentUser",
-        name: "Current User",
-        avatar: "",
-        reputation: 45,
-        isVerified: false,
-      },
-      content: replyTo ? replyContent : newComment,
-      parentId: replyTo || undefined,
-      replies: [],
-      likes: 0,
-      isLiked: false,
-      isAuthor: false,
-      createdAt: new Date().toISOString(),
-      status: "active",
-    };
-
-    if (replyTo) {
-      setComments((prev) =>
-        prev.map((comment) =>
-          comment.id === replyTo
-            ? { ...comment, replies: [...comment.replies, newCommentObj] }
-            : comment,
-        ),
-      );
-      setReplyTo(null);
-      setReplyContent("");
-      setShowReplyForm(null);
-      notify("回复成功", "success");
-    } else {
-      setComments((prev) => [newCommentObj, ...prev]);
-      setNewComment("");
-      notify("评论成功", "success");
+    if (!isLoggedIn) {
+      notify('请先登录', 'error');
+      return;
     }
-    setLoading(false);
+
+    if (!newComment.trim() && !replyContent.trim()) {
+      return;
+    }
+    
+    setLoading(true);
+    try {
+      const commentData: CreateCommentRequest = {
+        post_id: parseInt(postId),
+        content: replyTo ? replyContent : newComment,
+        parent_comment_id: replyTo || undefined
+      };
+
+      const newCommentObj = await createComment(commentData);
+
+      if (replyTo) {
+        // 将回复添加到对应评论的子评论中
+        setComments((prev) =>
+          prev.map((comment) =>
+            comment.id === replyTo
+              ? { 
+                  ...comment, 
+                  child_comments: [...(comment.child_comments || []), newCommentObj] 
+                }
+              : comment
+          )
+        );
+        setReplyTo(null);
+        setReplyContent("");
+        setShowReplyForm(null);
+        notify("回复成功", "success");
+      } else {
+        // 添加新评论到列表顶部
+        setComments((prev) => [newCommentObj, ...prev]);
+        setNewComment("");
+        notify("评论成功", "success");
+      }
+    } catch (error) {
+      console.error('发表评论失败:', error);
+      notify('发表评论失败', 'error');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // 处理点赞
-  const handleLike = async (commentId: string) => {
-    // TODO: 调用后端接口
-    setComments((prev) =>
-      prev.map((comment) => {
-        if (comment.id === commentId) {
-          notify(comment.isLiked ? "已取消点赞" : "点赞成功", "info");
-          return {
-            ...comment,
-            isLiked: !comment.isLiked,
-            likes: comment.isLiked ? comment.likes - 1 : comment.likes + 1,
-          };
+  const handleLike = async (commentId: number) => {
+    if (!isLoggedIn) {
+      notify('请先登录', 'error');
+      return;
+    }
+
+    try {
+      await likeComment(commentId);
+      
+      // 更新本地状态
+      setComments((prev) =>
+        prev.map((comment) => {
+          if (comment.id === commentId) {
+            return {
+              ...comment,
+              likes: comment.likes + 1
+            };
+          }
+          if (comment.child_comments) {
+            return {
+              ...comment,
+              child_comments: comment.child_comments.map((reply) =>
+                reply.id === commentId
+                  ? { ...reply, likes: reply.likes + 1 }
+                  : reply
+              )
+            };
+          }
+          return comment;
+        })
+      );
+      
+      notify("点赞成功", "success");
+    } catch (error) {
+      console.error('点赞失败:', error);
+      notify('点赞失败', 'error');
+    }
+  };
+
+  // 处理删除评论
+  const handleDeleteComment = async (commentId: number) => {
+    if (!isLoggedIn) {
+      notify('请先登录', 'error');
+      return;
+    }
+
+    try {
+      await deleteComment(commentId);
+      
+      // 从本地状态中移除评论
+      setComments((prev) => {
+        // 检查是否是主评论
+        const mainCommentIndex = prev.findIndex(c => c.id === commentId);
+        if (mainCommentIndex !== -1) {
+          return prev.filter((_, index) => index !== mainCommentIndex);
         }
-        if (comment.replies.some((reply) => reply.id === commentId)) {
-          return {
-            ...comment,
-            replies: comment.replies.map((reply) =>
-              reply.id === commentId
-                ? {
-                    ...reply,
-                    isLiked: !reply.isLiked,
-                    likes: reply.isLiked ? reply.likes - 1 : reply.likes + 1,
-                  }
-                : reply,
-            ),
-          };
-        }
-        return comment;
-      }),
-    );
+        
+        // 检查是否是回复
+        return prev.map(comment => ({
+          ...comment,
+          child_comments: comment.child_comments?.filter(reply => reply.id !== commentId) || []
+        }));
+      });
+      
+      notify("删除成功", "success");
+    } catch (error) {
+      console.error('删除评论失败:', error);
+      notify('删除评论失败', 'error');
+    }
   };
 
   // 处理回复
-  const handleReply = (commentId: string) => {
+  const handleReply = (commentId: number) => {
+    if (!isLoggedIn) {
+      notify('请先登录', 'error');
+      return;
+    }
     setReplyTo(commentId);
     setShowReplyForm(commentId);
     setReplyContent("");
@@ -212,13 +204,13 @@ export default function CommentSection({
 
   // 处理举报
   const handleReport = (
-    commentId: string,
+    commentId: number,
     content: string,
     authorName: string,
   ) => {
     setReportModal({
       isOpen: true,
-      targetId: commentId,
+      targetId: commentId.toString(),
       targetType: "comment",
       targetContent: content,
       authorName,
@@ -226,9 +218,9 @@ export default function CommentSection({
   };
 
   // 处理评论打赏
-  const handleTipComment = (commentId: string, authorName: string) => {
+  const handleTipComment = (commentId: number, authorName: string) => {
     if (onTipComment) {
-      onTipComment(commentId, authorName);
+      onTipComment(commentId.toString(), authorName);
     }
   };
 
@@ -248,464 +240,496 @@ export default function CommentSection({
     return date.toLocaleDateString();
   };
 
-  const containerStyle = {
-    marginTop: "32px",
-    padding: "24px",
-    background: "white",
-    borderRadius: "16px",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-    border: "1px solid rgba(0,0,0,0.05)",
+  // 检查是否是评论作者
+  const isCommentAuthor = (comment: Comment) => {
+    return user && comment.author_id === user.user_id;
   };
 
-  const mobileContainerStyle = {
-    ...containerStyle,
-    padding: "20px 16px",
-    borderRadius: "12px",
-  };
-
-  const titleStyle = {
-    fontSize: "24px",
-    fontWeight: "bold",
-    marginBottom: "24px",
-    color: "#2d3748",
-  };
-
-  const mobileTitleStyle = {
-    ...titleStyle,
-    fontSize: "20px",
-    marginBottom: "20px",
-  };
-
-  const commentFormStyle = {
-    marginBottom: "32px",
-  };
-
-  const textareaStyle = {
-    width: "100%",
-    minHeight: "100px",
-    padding: "16px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "12px",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    resize: "vertical" as const,
-    fontFamily: "inherit",
-  };
-
-  const mobileTextareaStyle = {
-    ...textareaStyle,
-    minHeight: "80px",
-    padding: "12px",
-  };
-
-  const buttonStyle = {
-    padding: "12px 24px",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    color: "white",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "14px",
-    fontWeight: "500",
-    cursor: "pointer",
-    transition: "all 0.3s ease",
-    marginTop: "12px",
-  };
-
-  const mobileButtonStyle = {
-    ...buttonStyle,
-    padding: "10px 20px",
-    fontSize: "13px",
-  };
-
-  const commentItemStyle = {
-    padding: "20px 0",
-    borderBottom: "1px solid #f1f5f9",
-  };
-
-  const commentHeaderStyle = {
-    display: "flex",
-    alignItems: "center",
-    marginBottom: "12px",
-    gap: "12px",
-  };
-
-  const avatarStyle = {
-    width: "40px",
-    height: "40px",
-    borderRadius: "50%",
-    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    color: "white",
-    fontSize: "16px",
-    fontWeight: "bold",
-    flexShrink: 0,
-  };
-
-  const authorInfoStyle = {
-    flex: 1,
-  };
-
-  const authorNameStyle = {
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-    marginBottom: "4px",
-  };
-
-  const authorNameTextStyle = {
-    fontWeight: "600",
-    fontSize: "14px",
-    color: "#2d3748",
-  };
-
-  const verifiedBadgeStyle = {
-    background: "#48bb78",
-    color: "white",
-    padding: "2px 6px",
-    borderRadius: "8px",
-    fontSize: "10px",
-    fontWeight: "bold",
-  };
-
-  const commentMetaStyle = {
-    fontSize: "12px",
-    color: "#718096",
-  };
-
-  const commentContentStyle = {
-    fontSize: "14px",
-    lineHeight: "1.6",
-    color: "#4a5568",
-    marginBottom: "12px",
-  };
-
-  const commentActionsStyle = {
-    display: "flex",
-    gap: "16px",
-    alignItems: "center",
-  };
-
-  const actionButtonStyle = {
-    background: "none",
-    border: "none",
-    color: "#718096",
-    fontSize: "12px",
-    cursor: "pointer",
-    padding: "4px 8px",
-    borderRadius: "4px",
-    transition: "all 0.2s ease",
-    display: "flex",
-    alignItems: "center",
-    gap: "4px",
-  };
-
-  const likeButtonStyle = (isLiked: boolean) => ({
-    ...actionButtonStyle,
-    color: isLiked ? "#667eea" : "#718096",
-  });
-
-  const replyFormStyle = {
-    marginTop: "16px",
-    padding: "16px",
-    background: "#f8fafc",
-    borderRadius: "8px",
-    border: "1px solid #e2e8f0",
-  };
-
-  const replyTextareaStyle = {
-    width: "100%",
-    minHeight: "60px",
-    padding: "12px",
-    border: "1px solid #e2e8f0",
-    borderRadius: "8px",
-    fontSize: "13px",
-    lineHeight: "1.5",
-    resize: "vertical" as const,
-    fontFamily: "inherit",
-    marginBottom: "12px",
-  };
-
-  const replyActionsStyle = {
-    display: "flex",
-    gap: "8px",
-    justifyContent: "flex-end",
-  };
-
-  const cancelButtonStyle = {
-    padding: "6px 12px",
-    background: "#f1f5f9",
-    color: "#64748b",
-    border: "1px solid #e2e8f0",
-    borderRadius: "6px",
-    fontSize: "12px",
-    cursor: "pointer",
-  };
-
-  const submitButtonStyle = {
-    padding: "6px 12px",
-    background: "#667eea",
-    color: "white",
-    border: "none",
-    borderRadius: "6px",
-    fontSize: "12px",
-    cursor: "pointer",
-  };
-
-  const repliesContainerStyle = {
-    marginLeft: "52px",
-    marginTop: "16px",
-    paddingLeft: "16px",
-    borderLeft: "2px solid #e2e8f0",
-  };
-
-  const mobileRepliesContainerStyle = {
-    ...repliesContainerStyle,
-    marginLeft: "32px",
-    paddingLeft: "12px",
-  };
-
-  return (
-    <div style={isMobile ? mobileContainerStyle : containerStyle}>
-      <h3 style={isMobile ? mobileTitleStyle : titleStyle}>
-        💬 Comments ({comments.length})
-      </h3>
-
-      {/* 发表评论 */}
-      <div style={commentFormStyle}>
-        <textarea
-          style={isMobile ? mobileTextareaStyle : textareaStyle}
-          placeholder={
-            replyTo
-              ? `Reply to ${comments.find((c) => c.id === replyTo)?.author.name}...`
-              : "Share your thoughts..."
-          }
-          value={replyTo ? replyContent : newComment}
-          onChange={(e) =>
-            replyTo
-              ? setReplyContent(e.target.value)
-              : setNewComment(e.target.value)
-          }
-          disabled={loading}
+  // 渲染单个评论
+  const renderComment = (comment: Comment, isReply = false) => (
+    <div 
+      key={comment.id}
+      style={{
+        marginBottom: isReply ? '12px' : '20px',
+        position: 'relative'
+      }}
+    >
+      {/* 评论卡片 */}
+      <div 
+        style={{
+          background: isReply 
+            ? 'rgba(26, 27, 46, 0.8)' 
+            : 'linear-gradient(135deg, #1a1b2e 0%, #23243a 100%)',
+          borderRadius: '12px',
+          padding: isReply ? '16px' : '20px',
+          border: `1px solid ${isReply ? 'rgba(102, 126, 234, 0.1)' : 'rgba(102, 126, 234, 0.2)'}`,
+          boxShadow: isReply ? '0 4px 16px rgba(0, 0, 0, 0.2)' : '0 8px 32px rgba(0, 0, 0, 0.3)',
+          position: 'relative',
+          overflow: 'hidden',
+          marginLeft: isReply ? '20px' : '0'
+        }}
+      >
+        {/* 装饰性边框 */}
+        <div 
+          style={{
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '2px',
+            background: 'linear-gradient(90deg, #667eea, #764ba2, #667eea)',
+            borderRadius: '12px 12px 0 0'
+          }}
         />
-        <button
-          style={isMobile ? mobileButtonStyle : buttonStyle}
-          onClick={handleSubmitComment}
-          disabled={
-            loading ||
-            (!replyTo && !newComment.trim()) ||
-            (!!replyTo && !replyContent.trim())
-          }
-        >
-          {loading ? "Sending..." : replyTo ? "Reply" : "Post Comment"}
-        </button>
-        {replyTo && (
+        
+        {/* 用户信息 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+          {/* 头像 */}
+          {comment.author?.avatar_url ? (
+            <div style={{
+              width: isReply ? 32 : 40,
+              height: isReply ? 32 : 40,
+              borderRadius: '50%',
+              background: `url(${comment.author.avatar_url}) center center / cover`,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: isReply ? 14 : 16,
+            }} />
+          ) : (
+            <div style={{
+              width: isReply ? 32 : 40,
+              height: isReply ? 32 : 40,
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'white',
+              fontWeight: 'bold',
+              fontSize: isReply ? 14 : 16,
+            }}>
+              {comment.author?.nickname?.charAt(0) || "U"}
+            </div>
+          )}
+          
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+              <span style={{ 
+                fontWeight: 600, 
+                color: 'white',
+                fontSize: isReply ? '14px' : '15px'
+              }}>
+                {comment.author?.nickname || "匿名用户"}
+              </span>
+              {comment.author?.reputation_score && comment.author.reputation_score > 100 && (
+                <span style={{
+                  background: 'linear-gradient(135deg, #10b981, #059669)',
+                  color: 'white',
+                  padding: '2px 6px',
+                  borderRadius: '8px',
+                  fontSize: '10px',
+                  fontWeight: 'bold'
+                }}>✓</span>
+              )}
+              {isCommentAuthor(comment) && (
+                <span style={{
+                  color: '#667eea',
+                  fontSize: '12px',
+                  fontWeight: '500'
+                }}>(作者)</span>
+              )}
+            </div>
+            <div style={{ 
+              fontSize: 12, 
+              color: 'rgb(156, 163, 175)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px'
+            }}>
+              <span>声望: {comment.author?.reputation_score || 0}</span>
+              <span>•</span>
+              <span>{formatTime(comment.created_at)}</span>
+            </div>
+          </div>
+        </div>
+        
+        {/* 评论内容 */}
+        <div style={{ 
+          lineHeight: 1.6, 
+          fontSize: isReply ? 14 : 16,
+          marginBottom: '12px',
+          color: 'rgb(209, 213, 219)',
+          whiteSpace: 'pre-wrap'
+        }}>
+          {comment.content}
+        </div>
+        
+        {/* 操作按钮 */}
+        <div style={{ 
+          display: 'flex', 
+          gap: '8px', 
+          flexWrap: 'wrap',
+          alignItems: 'center'
+        }}>
           <button
-            style={cancelButtonStyle}
-            onClick={() => {
-              setReplyTo(null);
-              setReplyContent("");
-              setShowReplyForm(null);
+            style={{
+              background: 'rgba(102, 126, 234, 0.1)',
+              color: '#667eea',
+              border: '1px solid rgba(102, 126, 234, 0.2)',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
             }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(102, 126, 234, 0.2)';
+              e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(102, 126, 234, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(102, 126, 234, 0.2)';
+            }}
+            onClick={() => handleLike(comment.id)}
           >
-            Cancel
+            🤍 {comment.likes}
           </button>
+          
+          {!isReply && (
+            <button
+              style={{
+                background: 'rgba(59, 130, 246, 0.1)',
+                color: '#3b82f6',
+                border: '1px solid rgba(59, 130, 246, 0.2)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(59, 130, 246, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(59, 130, 246, 0.2)';
+              }}
+              onClick={() => handleReply(comment.id)}
+            >
+              💬 回复
+            </button>
+          )}
+          
+          <button
+            style={{
+              background: 'rgba(236, 72, 153, 0.1)',
+              color: '#ec4899',
+              border: '1px solid rgba(236, 72, 153, 0.2)',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(236, 72, 153, 0.2)';
+              e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(236, 72, 153, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.2)';
+            }}
+            onClick={() => handleTipComment(comment.id, comment.author?.nickname || "匿名用户")}
+          >
+            💝 打赏
+          </button>
+          
+          {isCommentAuthor(comment) && (
+            <button
+              style={{
+                background: 'rgba(239, 68, 68, 0.1)',
+                color: '#ef4444',
+                border: '1px solid rgba(239, 68, 68, 0.2)',
+                padding: '4px 8px',
+                borderRadius: '6px',
+                fontSize: '11px',
+                fontWeight: '500',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)';
+                e.currentTarget.style.borderColor = 'rgba(239, 68, 68, 0.2)';
+              }}
+              onClick={() => handleDeleteComment(comment.id)}
+            >
+              🗑️ 删除
+            </button>
+          )}
+          
+          <button
+            style={{
+              background: 'rgba(245, 158, 11, 0.1)',
+              color: '#f59e0b',
+              border: '1px solid rgba(245, 158, 11, 0.2)',
+              padding: '4px 8px',
+              borderRadius: '6px',
+              fontSize: '11px',
+              fontWeight: '500',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.2)';
+              e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)';
+              e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
+            }}
+            onClick={() => handleReport(comment.id, comment.content, comment.author?.nickname || "匿名用户")}
+          >
+            ⚠️ 举报
+          </button>
+        </div>
+        
+        {/* 回复表单 */}
+        {showReplyForm === comment.id && (
+          <div style={{
+            marginTop: '12px',
+            padding: '12px',
+            background: 'rgba(26, 27, 46, 0.6)',
+            borderRadius: '8px',
+            border: '1px solid rgba(102, 126, 234, 0.2)'
+          }}>
+            <div style={{
+              fontSize: '12px',
+              color: '#667eea',
+              marginBottom: '8px',
+              fontWeight: '500'
+            }}>
+              回复 @{comment.author?.nickname || "匿名用户"}
+            </div>
+            <textarea
+              style={{
+                width: '100%',
+                minHeight: '60px',
+                padding: '8px',
+                border: '1px solid rgba(102, 126, 234, 0.3)',
+                borderRadius: '6px',
+                fontSize: '13px',
+                lineHeight: 1.4,
+                resize: 'vertical',
+                background: 'rgba(26, 27, 46, 0.8)',
+                color: 'white',
+                outline: 'none'
+              }}
+              placeholder={`回复 ${comment.author?.nickname || "匿名用户"}...`}
+              value={replyContent}
+              onChange={(e) => setReplyContent(e.target.value)}
+            />
+            <div style={{ 
+              display: 'flex', 
+              gap: '6px', 
+              marginTop: '8px',
+              justifyContent: 'flex-end'
+            }}>
+              <button
+                style={{
+                  padding: '6px 12px',
+                  background: 'rgba(75, 85, 99, 0.8)',
+                  color: '#d1d5db',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(75, 85, 99, 1)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(75, 85, 99, 0.8)'}
+                onClick={() => {
+                  setShowReplyForm(null);
+                  setReplyContent("");
+                  setReplyTo(null);
+                }}
+              >
+                取消
+              </button>
+              <button
+                style={{
+                  padding: '6px 12px',
+                  background: !replyContent.trim() 
+                    ? 'rgba(75, 85, 99, 0.5)' 
+                    : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  fontSize: '12px',
+                  cursor: !replyContent.trim() ? 'not-allowed' : 'pointer',
+                  transition: 'all 0.2s ease',
+                  opacity: !replyContent.trim() ? 0.6 : 1
+                }}
+                onClick={handleSubmitComment}
+                disabled={!replyContent.trim()}
+              >
+                回复
+              </button>
+            </div>
+          </div>
         )}
       </div>
-
-      {/* 评论列表 */}
-      <div>
-        {comments.map((comment) => (
-          <div key={comment.id} style={commentItemStyle}>
-            <div style={commentHeaderStyle}>
-              <div style={avatarStyle}>
-                {comment.author.avatar || comment.author.name.charAt(0)}
-              </div>
-              <div style={authorInfoStyle}>
-                <div style={authorNameStyle}>
-                  <span style={authorNameTextStyle}>{comment.author.name}</span>
-                  {comment.author.isVerified && (
-                    <span style={verifiedBadgeStyle}>✓</span>
-                  )}
-                  {comment.isAuthor && (
-                    <span style={{ fontSize: "12px", color: "#667eea" }}>
-                      (Author)
-                    </span>
-                  )}
-                </div>
-                <div style={commentMetaStyle}>
-                  <span>Reputation: {comment.author.reputation}</span>
-                  <span> • </span>
-                  <span>{formatTime(comment.createdAt)}</span>
-                </div>
-              </div>
-            </div>
-
-            <div style={commentContentStyle}>{comment.content}</div>
-
-            <div style={commentActionsStyle}>
-              <button
-                style={likeButtonStyle(comment.isLiked)}
-                onClick={() => handleLike(comment.id)}
-              >
-                {comment.isLiked ? "❤️" : "🤍"} {comment.likes}
-              </button>
-              <button
-                style={actionButtonStyle}
-                onClick={() => handleReply(comment.id)}
-              >
-                💬 Reply
-              </button>
-              <button
-                style={actionButtonStyle}
-                onClick={() =>
-                  handleTipComment(comment.id, comment.author.name)
-                }
-              >
-                💝 Tip
-              </button>
-              <button
-                style={actionButtonStyle}
-                onClick={() =>
-                  handleReport(comment.id, comment.content, comment.author.name)
-                }
-              >
-                ⚠️ Report
-              </button>
-            </div>
-
-            {/* 回复表单 */}
-            {showReplyForm === comment.id && (
-              <div style={replyFormStyle}>
-                <textarea
-                  style={replyTextareaStyle}
-                  placeholder={`Reply to ${comment.author.name}...`}
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                />
-                <div style={replyActionsStyle}>
-                  <button
-                    style={cancelButtonStyle}
-                    onClick={() => {
-                      setShowReplyForm(null);
-                      setReplyContent("");
-                      setReplyTo(null);
-                    }}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    style={submitButtonStyle}
-                    onClick={handleSubmitComment}
-                    disabled={!replyContent.trim()}
-                  >
-                    Reply
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* 回复列表 */}
-            {comment.replies.length > 0 && (
-              <div
-                style={
-                  isMobile ? mobileRepliesContainerStyle : repliesContainerStyle
-                }
-              >
-                {comment.replies.map((reply) => (
-                  <div key={reply.id} style={commentItemStyle}>
-                    <div style={commentHeaderStyle}>
-                      <div
-                        style={{
-                          ...avatarStyle,
-                          width: "32px",
-                          height: "32px",
-                          fontSize: "14px",
-                        }}
-                      >
-                        {reply.author.avatar || reply.author.name.charAt(0)}
-                      </div>
-                      <div style={authorInfoStyle}>
-                        <div style={authorNameStyle}>
-                          <span style={authorNameTextStyle}>
-                            {reply.author.name}
-                          </span>
-                          {reply.author.isVerified && (
-                            <span style={verifiedBadgeStyle}>✓</span>
-                          )}
-                          {reply.isAuthor && (
-                            <span
-                              style={{ fontSize: "12px", color: "#667eea" }}
-                            >
-                              (Author)
-                            </span>
-                          )}
-                        </div>
-                        <div style={commentMetaStyle}>
-                          <span>Reputation: {reply.author.reputation}</span>
-                          <span> • </span>
-                          <span>{formatTime(reply.createdAt)}</span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div style={commentContentStyle}>{reply.content}</div>
-
-                    <div style={commentActionsStyle}>
-                      <button
-                        style={likeButtonStyle(reply.isLiked)}
-                        onClick={() => handleLike(reply.id)}
-                      >
-                        {reply.isLiked ? "❤️" : "🤍"} {reply.likes}
-                      </button>
-                      <button
-                        style={actionButtonStyle}
-                        onClick={() =>
-                          handleTipComment(reply.id, reply.author.name)
-                        }
-                      >
-                        💝 Tip
-                      </button>
-                      <button
-                        style={actionButtonStyle}
-                        onClick={() =>
-                          handleReport(
-                            reply.id,
-                            reply.content,
-                            reply.author.name,
-                          )
-                        }
-                      >
-                        ⚠️ Report
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        ))}
-      </div>
-
-      {comments.length === 0 && (
-        <div
-          style={{
-            textAlign: "center",
-            padding: "40px 20px",
-            color: "#718096",
-          }}
-        >
-          <p>No comments yet</p>
+      
+      {/* 子评论 */}
+      {comment.child_comments && comment.child_comments.length > 0 && (
+        <div style={{ marginTop: '12px' }}>
+          {comment.child_comments
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .map((reply) => renderComment(reply, true))}
         </div>
       )}
+    </div>
+  );
 
+  return (
+    <div style={{
+      marginTop: '32px',
+      padding: '24px',
+      background: 'linear-gradient(135deg, #0f101f 0%, #1a1b2e 100%)',
+      borderRadius: '20px',
+      border: '1px solid rgba(102, 126, 234, 0.15)',
+      maxWidth: '800px',
+      margin: '32px auto 0',
+      boxShadow: '0 20px 60px rgba(0, 0, 0, 0.4)',
+      position: 'relative',
+      overflow: 'hidden'
+    }}>
+      {/* 装饰性背景 */}
+      <div style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '3px',
+        background: 'linear-gradient(90deg, #667eea, #764ba2, #667eea)',
+        borderRadius: '20px 20px 0 0'
+      }} />
+      
+      <h3 style={{
+        fontWeight: 'bold',
+        marginBottom: '24px',
+        color: 'white',
+        fontSize: '20px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: '8px'
+      }}>
+        <span>💬</span> 评论 <span style={{ color: '#667eea' }}>({comments.length})</span>
+      </h3>
+      
+      {/* 发表评论 */}
+      <div style={{ marginBottom: '32px' }}>
+        <textarea
+          style={{
+            width: '100%',
+            border: '1px solid rgba(102, 126, 234, 0.3)',
+            borderRadius: '12px',
+            fontSize: '16px',
+            lineHeight: 1.6,
+            resize: 'vertical',
+            fontFamily: 'inherit',
+            background: 'rgba(26, 27, 46, 0.8)',
+            color: 'white',
+            minHeight: '100px',
+            padding: '16px',
+            outline: 'none',
+            transition: 'border-color 0.2s ease'
+          }}
+          placeholder="分享你的想法..."
+          value={newComment}
+          onChange={(e) => setNewComment(e.target.value)}
+          disabled={loading}
+        />
+        <div style={{ display: 'flex', gap: '12px', marginTop: '16px' }}>
+          <button
+            style={{
+              background: 'rgb(37, 99, 235)',
+              color: 'white',
+              padding: '12px 24px',
+              borderRadius: '16px',
+              fontSize: '14px',
+              fontWeight: 600,
+              border: 'none',
+              cursor: !newComment.trim() ? 'not-allowed' : 'pointer',
+              transition: 'background 0.2s',
+              opacity: !newComment.trim() ? 0.6 : 1
+            }}
+            onClick={handleSubmitComment}
+            disabled={!newComment.trim() || loading}
+          >
+            {loading ? "发送中..." : "发表评论"}
+          </button>
+        </div>
+      </div>
+      
+      {/* 评论列表 */}
+      <div>
+        {commentLoading ? (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px 20px',
+            color: '#9ca3af'
+          }}>
+            <p>加载评论中...</p>
+          </div>
+        ) : comments.length > 0 ? (
+          comments
+            .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+            .map((comment) => renderComment(comment))
+        ) : (
+          <div style={{ 
+            textAlign: 'center', 
+            padding: '40px 20px',
+            color: '#9ca3af'
+          }}>
+            <p>暂无评论，成为第一个评论者吧！</p>
+          </div>
+        )}
+      </div>
+      
       {/* 举报模态框 */}
       <ReportModal
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
         onReport={(reason) => {
-      
+          // TODO: 实现举报功能
+          console.log('举报评论:', reportModal.targetId, reason);
+          notify('举报已提交', 'success');
           setReportModal((prev) => ({ ...prev, isOpen: false }));
         }}
       />

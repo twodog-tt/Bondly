@@ -445,17 +445,6 @@ function AppContent() {
     <div style={isMobile ? mobileContainerStyle : containerStyle}>
       <style>{keyframesStyle}</style>
 
-      {/* 背景装饰元素 */}
-      <div
-        style={
-          isMobile
-            ? { ...backgroundDecorations, opacity: 0.3 }
-            : backgroundDecorations
-        }
-      >
-        {renderDecorations(isMobile)}
-      </div>
-
       {/* 全局导航栏已移除 - 每个页面使用自己的导航栏 */}
 
       {/* 移动端菜单已移除 - 每个页面使用自己的导航栏 */}

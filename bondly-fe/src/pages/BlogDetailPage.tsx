@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import ContentInteraction from '../components/ContentInteraction';
+import CommentSection from '../components/CommentSection';
 import { getContentById, Content } from '../api/content';
 
 interface BlogDetailPageProps {
@@ -299,60 +300,15 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             }}
           />
           
-          <div style={{
-            background: "rgba(255, 255, 255, 0.05)",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            borderRadius: "12px",
-            padding: "20px"
-          }}>
-            <h3 style={{
-              fontSize: "18px",
-              fontWeight: "600",
-              marginBottom: "16px",
-              color: "white"
-            }}>
-              Comments (0)
-            </h3>
-            
-            <div style={{ marginBottom: "16px" }}>
-              <textarea
-                placeholder="Share your thoughts..."
-                style={{
-                  width: "100%",
-                  minHeight: "80px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  border: "1px solid rgba(255, 255, 255, 0.2)",
-                  borderRadius: "8px",
-                  padding: "12px",
-                  color: "white",
-                  fontSize: "14px",
-                  resize: "vertical"
-                }}
-              />
-              <button style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "6px",
-                fontSize: "14px",
-                cursor: "pointer",
-                marginTop: "8px"
-              }}>
-                Post Comment
-              </button>
-            </div>
-            
-            {/* 暂无评论 */}
-            <div style={{ 
-              color: "#9ca3af", 
-              textAlign: "center", 
-              padding: "40px 20px",
-              fontSize: "14px"
-            }}>
-              暂无评论，成为第一个评论者吧！
-            </div>
-          </div>
+          {/* 评论区域 */}
+          <CommentSection
+            postId={content.id.toString()}
+            isMobile={isMobile}
+            onTipComment={(commentId: string, authorName: string) => {
+              // TODO: 实现评论打赏功能
+              console.log('打赏评论:', commentId, authorName);
+            }}
+          />
         </div>
       </div>
     </div>
