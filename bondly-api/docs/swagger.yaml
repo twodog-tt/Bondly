@@ -125,23 +125,26 @@ definitions:
   dto.CreateContentRequest:
     properties:
       content:
-        example: This is the article content...
+        example: 文章内容
         type: string
       cover_image_url:
-        example: https://example.com/cover.jpg
+        example: https://example.com/image.jpg
         type: string
       status:
+        description: draft, published, archived
         example: draft
         type: string
       title:
-        example: My Article Title
+        example: 文章标题
         type: string
       type:
+        description: article, post, comment
         example: article
         type: string
     required:
     - content
     - title
+    - type
     type: object
   dto.CreateInteractionRequest:
     properties:
@@ -318,16 +321,16 @@ definitions:
   dto.UpdateContentRequest:
     properties:
       content:
-        example: Updated article content...
+        example: 更新后的内容
         type: string
       cover_image_url:
-        example: https://example.com/new-cover.jpg
+        example: https://example.com/new-image.jpg
         type: string
       status:
         example: published
         type: string
       title:
-        example: Updated Article Title
+        example: 更新后的标题
         type: string
       type:
         example: article

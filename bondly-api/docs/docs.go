@@ -3118,26 +3118,29 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "content",
-                "title"
+                "title",
+                "type"
             ],
             "properties": {
                 "content": {
                     "type": "string",
-                    "example": "This is the article content..."
+                    "example": "文章内容"
                 },
                 "cover_image_url": {
                     "type": "string",
-                    "example": "https://example.com/cover.jpg"
+                    "example": "https://example.com/image.jpg"
                 },
                 "status": {
+                    "description": "draft, published, archived",
                     "type": "string",
                     "example": "draft"
                 },
                 "title": {
                     "type": "string",
-                    "example": "My Article Title"
+                    "example": "文章标题"
                 },
                 "type": {
+                    "description": "article, post, comment",
                     "type": "string",
                     "example": "article"
                 }
@@ -3389,11 +3392,11 @@ const docTemplate = `{
             "properties": {
                 "content": {
                     "type": "string",
-                    "example": "Updated article content..."
+                    "example": "更新后的内容"
                 },
                 "cover_image_url": {
                     "type": "string",
-                    "example": "https://example.com/new-cover.jpg"
+                    "example": "https://example.com/new-image.jpg"
                 },
                 "status": {
                     "type": "string",
@@ -3401,7 +3404,7 @@ const docTemplate = `{
                 },
                 "title": {
                     "type": "string",
-                    "example": "Updated Article Title"
+                    "example": "更新后的标题"
                 },
                 "type": {
                     "type": "string",
