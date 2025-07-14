@@ -3,7 +3,7 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 /**
@@ -31,7 +31,7 @@ interface IBondlyRegistry {
  * @author Bondly Team
  * @custom:security-contact security@bondly.com
  */
-contract AchievementNFT is ERC721, ERC721Enumerable, AccessControl, Pausable {
+contract AchievementNFT is ERC721Enumerable, AccessControl, Pausable {
     // 角色定义
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     bytes32 public constant BURNER_ROLE = keccak256("BURNER_ROLE");
@@ -211,24 +211,25 @@ contract AchievementNFT is ERC721, ERC721Enumerable, AccessControl, Pausable {
     // ============ 支持 AccessControl ============
     
     /**
-     * @dev 解决 ERC721 和 ERC721Enumerable 多重继承 internal 函数冲突
+     * @dev 重写 _beforeTokenTransfer 以禁止转移（只允许 mint 和 burn）
      */
-    function _increaseBalance(address account, uint128 amount) internal override(ERC721, ERC721Enumerable) {
-        super._increaseBalance(account, amount);
-    }
-    function _update(address to, uint256 tokenId, address auth) internal override(ERC721, ERC721Enumerable) returns (address) {
-        address from = _ownerOf(tokenId);
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual override(ERC721Enumerable) {
         // 禁止 from 和 to 都非 0 的转移（只允许 mint 和 burn）
         if (from != address(0) && to != address(0)) {
             revert("Soulbound: non-transferable");
         }
-        return super._update(to, tokenId, auth);
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
     /**
      * @dev 支持 ERC165 接口检测
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721, ERC721Enumerable, AccessControl) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC721Enumerable, AccessControl) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 } 

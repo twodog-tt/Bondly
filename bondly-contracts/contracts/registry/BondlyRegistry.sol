@@ -33,7 +33,9 @@ contract BondlyRegistry is Ownable {
      *
      * @notice 部署时指定 owner，后续可转为多签/DAO
      */
-    constructor(address initialOwner) Ownable(initialOwner) {}
+    constructor(address initialOwner) Ownable() {
+        _transferOwnership(initialOwner);
+    }
 
     /// @dev 兼容旧接口：单版本注册表
     mapping(string => address) public registry;

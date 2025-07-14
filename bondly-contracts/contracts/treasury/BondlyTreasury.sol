@@ -4,7 +4,7 @@ pragma solidity ^0.8.19;
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 import "../registry/IBondlyRegistry.sol";
 import "../governance/IBondlyDAO.sol";
 import "./IBondlyTreasury.sol";
@@ -103,9 +103,10 @@ contract BondlyTreasury is IBondlyTreasury, Ownable, ReentrancyGuard {
      * @param initialOwner 初始所有者
      * @param registryAddress BondlyRegistry 合约地址
      */
-    constructor(address initialOwner, address registryAddress) Ownable(initialOwner) {
+    constructor(address initialOwner, address registryAddress) Ownable() {
         require(registryAddress != address(0), "Treasury: Invalid registry address");
         registry = IBondlyRegistry(registryAddress);
+        _transferOwnership(initialOwner);
         
         // 初始化参数
         minProposalAmount = 1 * 10**18;     // 1 BOND

@@ -2,7 +2,7 @@
 pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
-import "@openzeppelin/contracts/utils/Pausable.sol";
+import "@openzeppelin/contracts/security/Pausable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
@@ -286,13 +286,13 @@ contract GeneralStaking is AccessControl, Pausable, ReentrancyGuard {
      * @param user 用户地址
      * @return stakedAmount 质押金额
      * @return pendingReward 待领取奖励
-     * @return lastUpdateTime 最后更新时间
+     * @return userLastUpdateTime 最后更新时间
      */
-    function getUserInfo(address user) external view returns (uint256 stakedAmount, uint256 pendingReward, uint256 lastUpdateTime) {
+    function getUserInfo(address user) external view returns (uint256 stakedAmount, uint256 pendingReward, uint256 userLastUpdateTime) {
         UserStake storage userStake = userStakes[user];
         stakedAmount = userStake.stakedAmount;
         pendingReward = _calculateReward(user);
-        lastUpdateTime = userStake.lastUpdateTime;
+        userLastUpdateTime = userStake.lastUpdateTime;
     }
 
     /**

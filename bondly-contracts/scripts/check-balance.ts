@@ -12,7 +12,7 @@ async function main() {
   console.log("检查账户:", accountAddress);
 
   // 获取合约实例
-  const BondlyToken = await ethers.getContractFactory("BondlyToken");
+  const BondlyToken = await ethers.getContractFactory("BondlyTokenUpgradeable");
   const bondToken = BondlyToken.attach(contractAddress);
 
   try {

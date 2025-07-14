@@ -54,8 +54,9 @@ contract ReputationVault is Ownable {
      * @param registryAddress BondlyRegistry 合约地址
      * @param initialOwner 初始所有者地址
      */
-    constructor(address registryAddress, address initialOwner) Ownable(initialOwner) {
+    constructor(address registryAddress, address initialOwner) Ownable() {
         registry = registryAddress;
+        _transferOwnership(initialOwner);
     }
 
     /**
