@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useAccount } from 'wagmi';
+import { formatEther, parseEther } from 'viem';
 import CommonNavbar from '../components/CommonNavbar';
+import { getContractAddresses, GENERAL_STAKING_ABI, BOND_TOKEN_ABI } from '../config/contracts';
 
 interface StakePageProps {
   isMobile: boolean;
@@ -7,16 +10,22 @@ interface StakePageProps {
 }
 
 const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
+  const { address, isConnected, chain } = useAccount();
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // 模拟数据（实际应该从合约读取）
-  const mockBondBalance = '1000.0000';
-  const mockStakedAmount = '500.0000';
-  const mockRewardAmount = '25.5000';
+  // 实际数据状态
+  const [bondBalance, setBondBalance] = useState('0');
+  const [stakedAmount, setStakedAmount] = useState('0');
+  const [pendingReward, setPendingReward] = useState('0');
+  const [allowance, setAllowance] = useState('0');
+  const [totalStaked, setTotalStaked] = useState('0');
+
+  // 获取合约地址
+  const contracts = getContractAddresses(chain?.id || 11155111);
 
   // 处理质押
   const handleStake = async () => {
@@ -29,6 +38,11 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
       setIsLoading(true);
       setError('');
       setSuccess('');
+      
+      // TODO: 实现真实的质押逻辑
+      // 1. 检查授权额度
+      // 2. 如果授权不足，先授权
+      // 3. 调用质押合约
       
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 2000));
@@ -55,6 +69,8 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
       setError('');
       setSuccess('');
       
+      // TODO: 实现真实的解质押逻辑
+      
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 2000));
       
@@ -70,17 +86,24 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
 
   // 处理领取奖励
   const handleClaim = async () => {
+    if (parseFloat(pendingReward) <= 0) {
+      setError('暂无可领取的奖励');
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError('');
       setSuccess('');
+      
+      // TODO: 实现真实的领取奖励逻辑
       
       // 模拟API调用
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       setSuccess('奖励领取成功！');
     } catch (err) {
-      setError('领取奖励失败，请重试');
+      setError('奖励领取失败，请重试');
       console.error('Claim error:', err);
     } finally {
       setIsLoading(false);
@@ -90,6 +113,14 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
   const handleLoginClick = () => {
     console.log("Login clicked");
   };
+
+  // TODO: 添加获取合约数据的函数
+  useEffect(() => {
+    if (isConnected && address) {
+      // 这里添加获取合约数据的逻辑
+      // fetchStakingData();
+    }
+  }, [isConnected, address]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
@@ -106,330 +137,273 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
         currentPage="stake"
       />
       
-      <div style={{ padding: isMobile ? "20px" : "40px", maxWidth: "800px", margin: "0 auto" }}>
-        {/* 页面标题 */}
-        <div style={{ 
-          marginBottom: "40px",
-          textAlign: "center"
+      <div style={{ padding: isMobile ? "20px" : "40px", maxWidth: "1200px", margin: "0 auto" }}>
+        <div style={{
+          background: "rgba(255, 255, 255, 0.05)",
+          borderRadius: "16px",
+          padding: "32px",
+          marginBottom: "32px",
+          border: "1px solid rgba(255, 255, 255, 0.1)"
         }}>
-          <h1 style={{ 
-            fontSize: isMobile ? "28px" : "36px", 
+          <h1 style={{
+            fontSize: isMobile ? "24px" : "32px",
             fontWeight: "bold",
-            marginBottom: "16px",
+            marginBottom: "8px",
             background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
             WebkitBackgroundClip: "text",
             WebkitTextFillColor: "transparent",
             backgroundClip: "text"
           }}>
-            Stake & Earn
+            💰 BOND Token Staking
           </h1>
-          <p style={{ 
-            fontSize: "18px", 
-            color: "#9ca3af",
-            maxWidth: "600px",
-            margin: "0 auto"
-          }}>
-            Stake your BOND tokens and earn rewards
+          <p style={{ color: "#9ca3af", fontSize: "16px", marginBottom: "32px" }}>
+            Stake your BOND tokens to earn rewards and participate in platform governance
           </p>
-        </div>
 
-        {/* 用户信息卡片 */}
-        <div style={{
-          background: "#151728",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151",
-          marginBottom: "32px"
-        }}>
-          <h3 style={{ fontSize: "20px", marginBottom: "20px", color: "white" }}>
-            Your Staking Info
-          </h3>
+          {/* 统计信息 */}
           <div style={{
             display: "grid",
             gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-            gap: "20px"
+            gap: "24px",
+            marginBottom: "32px",
+            padding: "24px",
+            background: "#151728",
+            borderRadius: "12px",
+            border: "1px solid rgba(255, 255, 255, 0.1)"
           }}>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#667eea" }}>
-                {mockBondBalance} BOND
+                {bondBalance} BOND
               </div>
               <div style={{ fontSize: "14px", color: "#9ca3af" }}>Available Balance</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>
-                {mockStakedAmount} BOND
+                {stakedAmount} BOND
               </div>
               <div style={{ fontSize: "14px", color: "#9ca3af" }}>Staked Amount</div>
             </div>
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>
-                {mockRewardAmount} BOND
+                {pendingReward} BOND
               </div>
               <div style={{ fontSize: "14px", color: "#9ca3af" }}>Available Reward</div>
             </div>
           </div>
-        </div>
 
-        {/* 质押操作 */}
-        <div style={{
-          background: "#151728",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151",
-          marginBottom: "24px"
-        }}>
-          <h3 style={{ fontSize: "20px", marginBottom: "20px", color: "white" }}>
-            Stake BOND
-          </h3>
+          {/* 错误和成功消息 */}
+          {error && (
+            <div style={{
+              background: "rgba(239, 68, 68, 0.1)",
+              border: "1px solid rgba(239, 68, 68, 0.3)",
+              borderRadius: "8px",
+              padding: "12px",
+              marginBottom: "16px",
+              color: "#ef4444"
+            }}>
+              {error}
+            </div>
+          )}
+
+          {success && (
+            <div style={{
+              background: "rgba(16, 185, 129, 0.1)",
+              border: "1px solid rgba(16, 185, 129, 0.3)",
+              borderRadius: "8px",
+              padding: "12px",
+              marginBottom: "16px",
+              color: "#10b981"
+            }}>
+              {success}
+            </div>
+          )}
+
+          {/* 操作区域 */}
           <div style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            gap: "16px",
-            alignItems: "flex-end"
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+            gap: "32px"
           }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "#9ca3af" }}>
-                Amount (BOND)
-              </label>
+            {/* 质押区域 */}
+            <div style={{
+              background: "#151728",
+              borderRadius: "12px",
+              padding: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+                Stake BOND
+              </h3>
               <input
                 type="number"
+                placeholder="Enter amount to stake"
                 value={stakeAmount}
                 onChange={(e) => setStakeAmount(e.target.value)}
-                placeholder="Enter amount to stake"
                 style={{
                   width: "100%",
-                  padding: "12px 16px",
+                  padding: "12px",
                   background: "rgba(255, 255, 255, 0.1)",
-                  border: "1px solid #374151",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
                   borderRadius: "8px",
                   color: "white",
                   fontSize: "16px",
+                  marginBottom: "16px",
                   outline: "none"
                 }}
               />
+              <button
+                onClick={handleStake}
+                disabled={isLoading}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: "#667eea",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  opacity: isLoading ? 0.7 : 1,
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#5a67d8")}
+                onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "#667eea")}
+              >
+                {isLoading ? "Processing..." : "Stake BOND"}
+              </button>
             </div>
-            <button
-              onClick={handleStake}
-              disabled={isLoading}
-              style={{
-                padding: "12px 24px",
-                background: "#667eea",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                opacity: isLoading ? 0.6 : 1,
-                transition: "opacity 0.2s ease"
-              }}
-            >
-              {isLoading ? "Staking..." : "Stake"}
-            </button>
-          </div>
-        </div>
 
-        {/* 解除质押操作 */}
-        <div style={{
-          background: "#151728",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151",
-          marginBottom: "24px"
-        }}>
-          <h3 style={{ fontSize: "20px", marginBottom: "20px", color: "white" }}>
-            Unstake BOND
-          </h3>
-          <div style={{
-            display: "flex",
-            flexDirection: isMobile ? "column" : "row",
-            gap: "16px",
-            alignItems: "flex-end"
-          }}>
-            <div style={{ flex: 1 }}>
-              <label style={{ display: "block", marginBottom: "8px", fontSize: "14px", color: "#9ca3af" }}>
-                Amount (BOND)
-              </label>
+            {/* 解除质押区域 */}
+            <div style={{
+              background: "#151728",
+              borderRadius: "12px",
+              padding: "24px",
+              border: "1px solid rgba(255, 255, 255, 0.1)"
+            }}>
+              <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+                Unstake BOND
+              </h3>
               <input
                 type="number"
+                placeholder="Enter amount to unstake"
                 value={unstakeAmount}
                 onChange={(e) => setUnstakeAmount(e.target.value)}
-                placeholder="Enter amount to unstake"
                 style={{
                   width: "100%",
-                  padding: "12px 16px",
+                  padding: "12px",
                   background: "rgba(255, 255, 255, 0.1)",
-                  border: "1px solid #374151",
+                  border: "1px solid rgba(255, 255, 255, 0.2)",
                   borderRadius: "8px",
                   color: "white",
                   fontSize: "16px",
+                  marginBottom: "16px",
                   outline: "none"
                 }}
               />
+              <button
+                onClick={handleUnstake}
+                disabled={isLoading}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  background: "#ef4444",
+                  color: "white",
+                  border: "none",
+                  borderRadius: "8px",
+                  fontSize: "16px",
+                  fontWeight: "600",
+                  cursor: isLoading ? "not-allowed" : "pointer",
+                  opacity: isLoading ? 0.7 : 1,
+                  transition: "all 0.2s ease"
+                }}
+                onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#dc2626")}
+                onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "#ef4444")}
+              >
+                {isLoading ? "Processing..." : "Unstake BOND"}
+              </button>
             </div>
-            <button
-              onClick={handleUnstake}
-              disabled={isLoading}
-              style={{
-                padding: "12px 24px",
-                background: "#ef4444",
-                color: "white",
-                border: "none",
-                borderRadius: "8px",
-                fontSize: "16px",
-                fontWeight: "600",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                opacity: isLoading ? 0.6 : 1,
-                transition: "opacity 0.2s ease"
-              }}
-            >
-              {isLoading ? "Unstaking..." : "Unstake"}
-            </button>
           </div>
-        </div>
 
-        {/* 领取奖励操作 */}
-        <div style={{
-          background: "#151728",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151",
-          marginBottom: "24px"
-        }}>
-          <h3 style={{ fontSize: "20px", marginBottom: "20px", color: "white" }}>
-            Claim Rewards
-          </h3>
+          {/* 领取奖励区域 */}
           <div style={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center"
+            background: "#151728",
+            borderRadius: "12px",
+            padding: "24px",
+            marginTop: "32px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            textAlign: "center"
           }}>
-            <div>
-              <div style={{ fontSize: "16px", color: "#9ca3af", marginBottom: "4px" }}>
-                Available Reward
-              </div>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>
-                {mockRewardAmount} BOND
+            <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+              Claim Rewards
+            </h3>
+            <div style={{ marginBottom: "16px" }}>
+              <span style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>
+                {pendingReward} BOND
+              </span>
+              <div style={{ fontSize: "14px", color: "#9ca3af", marginTop: "4px" }}>
+                Available to claim
               </div>
             </div>
             <button
               onClick={handleClaim}
-              disabled={isLoading || parseFloat(mockRewardAmount) <= 0}
+              disabled={isLoading || parseFloat(pendingReward) <= 0}
               style={{
-                padding: "12px 24px",
-                background: "#f59e0b",
+                padding: "12px 32px",
+                background: parseFloat(pendingReward) > 0 ? "#f59e0b" : "rgba(255, 255, 255, 0.1)",
                 color: "white",
                 border: "none",
                 borderRadius: "8px",
                 fontSize: "16px",
                 fontWeight: "600",
-                cursor: isLoading || parseFloat(mockRewardAmount) <= 0 ? "not-allowed" : "pointer",
-                opacity: isLoading || parseFloat(mockRewardAmount) <= 0 ? 0.6 : 1,
-                transition: "opacity 0.2s ease"
+                cursor: (isLoading || parseFloat(pendingReward) <= 0) ? "not-allowed" : "pointer",
+                opacity: (isLoading || parseFloat(pendingReward) <= 0) ? 0.7 : 1,
+                transition: "all 0.2s ease"
+              }}
+              onMouseEnter={(e) => {
+                if (!isLoading && parseFloat(pendingReward) > 0) {
+                  e.currentTarget.style.background = "#d97706";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isLoading && parseFloat(pendingReward) > 0) {
+                  e.currentTarget.style.background = "#f59e0b";
+                }
               }}
             >
-              {isLoading ? "Claiming..." : "Claim"}
+              {isLoading ? "Processing..." : "Claim Rewards"}
             </button>
           </div>
-        </div>
 
-        {/* 错误提示 */}
-        {error && (
+          {/* 质押信息 */}
           <div style={{
-            background: "#dc2626",
-            color: "white",
-            padding: "16px",
-            borderRadius: "8px",
-            marginBottom: "24px",
-            fontSize: "14px"
+            background: "#151728",
+            borderRadius: "12px",
+            padding: "24px",
+            marginTop: "32px",
+            border: "1px solid rgba(255, 255, 255, 0.1)"
           }}>
-            {error}
-          </div>
-        )}
-
-        {/* 成功提示 */}
-        {success && (
-          <div style={{
-            background: "#10b981",
-            color: "white",
-            padding: "16px",
-            borderRadius: "8px",
-            marginBottom: "24px",
-            fontSize: "14px"
-          }}>
-            {success}
-          </div>
-        )}
-
-        {/* 功能说明 */}
-        <div style={{
-          background: "#151728",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151"
-        }}>
-          <h3 style={{ fontSize: "20px", marginBottom: "20px", color: "white" }}>
-            How Staking Works
-          </h3>
-          <div style={{
-            display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "repeat(auto-fit, minmax(250px, 1fr))",
-            gap: "20px"
-          }}>
-            <div>
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🔒</div>
-              <h4 style={{ fontSize: "16px", marginBottom: "8px", color: "white" }}>Stake BOND</h4>
-              <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
-                Lock your BOND tokens to earn rewards over time
-              </p>
+            <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+              Staking Information
+            </h3>
+            <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "16px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>Total Staked:</span>
+                <span style={{ color: "white", fontWeight: "500" }}>{totalStaked} BOND</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>APY:</span>
+                <span style={{ color: "#10b981", fontWeight: "500" }}>12.5%</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>Lock Period:</span>
+                <span style={{ color: "white", fontWeight: "500" }}>No Lock</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>Reward Distribution:</span>
+                <span style={{ color: "white", fontWeight: "500" }}>Daily</span>
+              </div>
             </div>
-            <div>
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>💰</div>
-              <h4 style={{ fontSize: "16px", marginBottom: "8px", color: "white" }}>Earn Rewards</h4>
-              <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
-                Accumulate rewards based on your staked amount and time
-              </p>
-            </div>
-            <div>
-              <div style={{ fontSize: "24px", marginBottom: "12px" }}>🎯</div>
-              <h4 style={{ fontSize: "16px", marginBottom: "8px", color: "white" }}>Claim Anytime</h4>
-              <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.5" }}>
-                Withdraw your rewards or unstake your tokens at any time
-              </p>
-            </div>
-          </div>
-        </div>
-
-        {/* 开发说明 */}
-        <div style={{
-          background: "#1f2937",
-          borderRadius: "16px",
-          padding: "24px",
-          border: "1px solid #374151",
-          marginTop: "24px"
-        }}>
-          <h3 style={{ fontSize: "18px", marginBottom: "16px", color: "#f59e0b" }}>
-            🚧 Development Status
-          </h3>
-          <div style={{ fontSize: "14px", color: "#9ca3af", lineHeight: "1.6" }}>
-            <p style={{ marginBottom: "12px" }}>
-              <strong>✅ Completed:</strong>
-            </p>
-            <ul style={{ marginLeft: "20px", marginBottom: "12px" }}>
-              <li>UI界面设计和布局</li>
-              <li>质押、解除质押、领取奖励的输入框和按钮</li>
-              <li>用户信息显示（余额、质押数量、可领取奖励）</li>
-              <li>响应式设计支持移动端</li>
-            </ul>
-            <p style={{ marginBottom: "12px" }}>
-              <strong>🔧 Next Steps:</strong>
-            </p>
-            <ul style={{ marginLeft: "20px" }}>
-              <li>集成GeneralStaking智能合约</li>
-              <li>连接钱包并读取真实数据</li>
-              <li>实现实际的质押、解除质押、领取奖励功能</li>
-              <li>添加交易状态和错误处理</li>
-            </ul>
           </div>
         </div>
       </div>
