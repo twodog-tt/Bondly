@@ -4,7 +4,7 @@
 
 - **数据库名**: bondly_db
 - **数据库类型**: PostgreSQL 15+
-- **总表数**: 9个表
+- **总表数**: 10个表
 - **字符集**: UTF-8
 - **时区**: Asia/Shanghai
 
@@ -19,33 +19,33 @@ CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
     wallet_address VARCHAR(42) UNIQUE,
     email VARCHAR(255) UNIQUE,
-    nickname VARCHAR(255) NOT NULL DEFAULT 'Anonymous',
+    nickname VARCHAR(64) NOT NULL DEFAULT 'Anonymous',
     avatar_url TEXT,
     bio TEXT,
-    role VARCHAR(255) NOT NULL DEFAULT 'user',
+    role VARCHAR(32) NOT NULL DEFAULT 'user',
     reputation_score BIGINT NOT NULL DEFAULT 0,
+    custody_wallet_address VARCHAR(42),
+    encrypted_private_key TEXT,
     last_login_at TIMESTAMP,
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    custody_wallet_address VARCHAR(42),
-    encrypted_private_key TEXT
+    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 ```
 
 **字段说明**:
 - `id`: 用户唯一标识，自增主键
-- `wallet_address`: 用户绑定的钱包地址，42位以太坊地址格式
-- `email`: 用户邮箱地址，用于邮箱登录
+- `wallet_address`: 用户绑定的钱包地址，42位以太坊地址格式，可选
+- `email`: 用户邮箱地址，用于邮箱登录，可选
 - `nickname`: 用户昵称，不能为空，默认"Anonymous"
-- `avatar_url`: 用户头像链接
-- `bio`: 用户个人简介
+- `avatar_url`: 用户头像链接，可为空
+- `bio`: 用户个人简介，可为空
 - `role`: 用户角色，默认"user"，可选值：user/admin/moderator
 - `reputation_score`: 声誉积分，默认0，用于治理投票权重
+- `custody_wallet_address`: 托管钱包地址，可为空
+- `encrypted_private_key`: 加密的私钥，可为空
 - `last_login_at`: 最后登录时间
 - `created_at`: 账户创建时间
 - `updated_at`: 信息更新时间
-- `custody_wallet_address`: 托管钱包地址
-- `encrypted_private_key`: 加密的私钥
 
 **约束**:
 ```sql
@@ -89,8 +89,8 @@ CREATE TABLE posts (
 - `author_id`: 作者ID，关联users表
 - `title`: 文章标题，不能为空
 - `content`: 文章内容，不能为空
-- `cover_image_url`: 封面图片链接
-- `tags`: 文章标签，数组类型
+- `cover_image_url`: 封面图片链接，可选
+- `tags`: 文章标签，数组类型，默认空数组
 - `likes`: 点赞数，默认0
 - `views`: 浏览量，默认0
 - `is_published`: 是否发布，默认true
@@ -137,7 +137,7 @@ CREATE TABLE comments (
 - `post_id`: 所属文章ID，关联posts表
 - `author_id`: 评论作者ID，关联users表
 - `content`: 评论内容，不能为空
-- `parent_comment_id`: 父评论ID，用于嵌套评论
+- `parent_comment_id`: 父评论ID，用于嵌套评论，可为空
 - `likes`: 点赞数，默认0
 - `created_at`: 创建时间
 - `updated_at`: 更新时间
@@ -224,9 +224,9 @@ INDEX idx_wallet_bindings_user_id (user_id)
 INDEX idx_wallet_bindings_wallet_address (wallet_address)
 ```
 
-### 6. **contents 表** (内容表 - 旧版)
+### 6. **contents 表** (内容表 - 兼容旧版)
 
-**表描述**: 旧版内容表，已废弃，建议使用posts表
+**表描述**: 旧版内容表，用于兼容性，建议新功能使用posts表
 
 ```sql
 CREATE TABLE contents (
@@ -236,6 +236,7 @@ CREATE TABLE contents (
     content TEXT,
     type TEXT,
     status TEXT DEFAULT 'draft',
+    cover_image_url TEXT,
     likes BIGINT DEFAULT 0,
     dislikes BIGINT DEFAULT 0,
     views BIGINT DEFAULT 0,
@@ -246,12 +247,64 @@ CREATE TABLE contents (
 );
 ```
 
+**字段说明**:
+- `id`: 内容唯一标识，自增主键
+- `author_id`: 作者ID，关联users表
+- `title`: 内容标题，可为空
+- `content`: 内容正文，可为空
+- `type`: 内容类型，如article、post、note等
+- `status`: 内容状态，默认"draft"
+- `cover_image_url`: 封面图片URL，可为空
+- `likes`: 点赞数，默认0
+- `dislikes`: 点踩数，默认0
+- `views`: 浏览量，默认0
+- `created_at`: 创建时间
+- `updated_at`: 更新时间
+- `deleted_at`: 软删除时间
+
 **索引**:
 ```sql
 INDEX idx_contents_deleted_at (deleted_at)
 ```
 
-### 7. **proposals 表** (提案表)
+### 7. **content_interactions 表** (内容互动表)
+
+**表描述**: 存储用户对内容的互动行为
+
+```sql
+CREATE TABLE content_interactions (
+    id BIGSERIAL PRIMARY KEY,
+    content_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    interaction_type VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (content_id, user_id, interaction_type)
+);
+```
+
+**字段说明**:
+- `id`: 互动记录唯一标识，自增主键
+- `content_id`: 内容ID，关联contents表
+- `user_id`: 用户ID，关联users表
+- `interaction_type`: 互动类型，如like、dislike、bookmark、share
+- `created_at`: 创建时间
+- `updated_at`: 更新时间
+
+**约束**:
+```sql
+CHECK (interaction_type IN ('like', 'dislike', 'bookmark', 'share'))
+UNIQUE (content_id, user_id, interaction_type)  -- 每个用户对每个内容的每种互动只能有一次
+```
+
+**索引**:
+```sql
+INDEX idx_content_interactions_content_id (content_id)
+INDEX idx_content_interactions_user_id (user_id)
+INDEX idx_content_interactions_type (interaction_type)
+```
+
+### 8. **proposals 表** (提案表)
 
 **表描述**: 存储治理提案信息
 
@@ -276,7 +329,7 @@ CREATE TABLE proposals (
 **字段说明**:
 - `id`: 提案唯一标识，自增主键
 - `title`: 提案标题
-- `description`: 提案描述
+- `description`: 提案详细描述
 - `proposer_id`: 提案人ID，关联users表
 - `status`: 提案状态，默认"active"
 - `votes_for`: 赞成票数，默认0
@@ -292,7 +345,7 @@ CREATE TABLE proposals (
 INDEX idx_proposals_deleted_at (deleted_at)
 ```
 
-### 8. **votes 表** (投票表)
+### 9. **votes 表** (投票表)
 
 **表描述**: 存储用户对提案的投票记录
 
@@ -326,7 +379,7 @@ CREATE TABLE votes (
 INDEX idx_votes_deleted_at (deleted_at)
 ```
 
-### 9. **transactions 表** (交易表)
+### 10. **transactions 表** (交易表)
 
 **表描述**: 存储区块链交易记录
 
@@ -352,10 +405,10 @@ CREATE TABLE transactions (
 - `hash`: 交易哈希，唯一索引
 - `from_address`: 发送方地址
 - `to_address`: 接收方地址
-- `value`: 交易金额
+- `value`: 交易金额（wei格式字符串）
 - `gas_used`: 消耗的gas
-- `gas_price`: gas价格
-- `status`: 交易状态
+- `gas_price`: gas价格（wei格式字符串）
+- `status`: 交易状态，如success、failed、pending
 - `block_number`: 区块号
 - `created_at`: 记录创建时间
 - `updated_at`: 记录更新时间
@@ -373,6 +426,8 @@ INDEX idx_transactions_deleted_at (deleted_at)
 users (用户表)
 ├── 1:N posts (文章表) - author_id
 ├── 1:N comments (评论表) - author_id
+├── 1:N contents (内容表) - author_id
+├── 1:N content_interactions (内容互动表) - user_id
 ├── 1:N proposals (提案表) - proposer_id
 ├── 1:N votes (投票表) - voter_id
 ├── 1:N wallet_bindings (钱包绑定表) - user_id
@@ -384,6 +439,9 @@ posts (文章表)
 
 comments (评论表)
 └── 1:N comments (嵌套评论) - parent_comment_id
+
+contents (内容表)
+└── 1:N content_interactions (内容互动表) - content_id
 
 proposals (提案表)
 └── 1:N votes (投票表) - proposal_id
@@ -398,27 +456,32 @@ transactions (交易表) - 独立表，记录区块链交易
 - 用户关注机制
 - 声誉积分系统
 - 角色权限管理
+- 托管钱包支持
 
 ### 2. **内容管理**
-- 文章发布和管理
+- 文章发布和管理（posts表）
+- 兼容旧版内容系统（contents表）
 - 评论系统（支持嵌套评论）
+- 内容互动（点赞、收藏、分享）
 - 标签系统
-- 内容审核
 
 ### 3. **钱包管理**
 - 多网络钱包绑定
+- 支持以太坊、Polygon、Arbitrum、Optimism、BSC
 - 托管钱包支持
 - 私钥加密存储
 
 ### 4. **治理系统**
 - 提案创建和管理
 - 投票机制
-- 权重计算
+- 权重计算（基于声誉积分）
+- 软删除支持
 
 ### 5. **区块链集成**
 - 交易记录和状态跟踪
 - 多网络支持
 - Gas费用记录
+- 区块高度追踪
 
 ## 🛠️ 数据库工具
 
@@ -432,6 +495,12 @@ go run cmd/read-schema/main.go
 ```bash
 # 运行数据库迁移
 go run cmd/migrate/main.go
+```
+
+### 数据填充
+```bash
+# 填充测试数据
+make seed
 ```
 
 ### 备份和恢复
@@ -458,4 +527,8 @@ psql -h localhost -U postgres bondly_db < backup.sql
 ### 数据维护
 - 定期清理软删除数据
 - 监控表大小和增长趋势
-- 定期更新统计信息 
+- 定期更新统计信息
+
+---
+
+**文档版本**: v2.0 | **最后更新**: 2024年7月 | **数据库版本**: PostgreSQL 15+ 

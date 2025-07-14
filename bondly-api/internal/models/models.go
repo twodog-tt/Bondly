@@ -21,7 +21,23 @@ type User struct {
 	UpdatedAt            time.Time  `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"更新时间，建议配合触发器实现自动更新时间戳"`
 }
 
-// Content 内容模型
+// Post 文章模型（新版）
+type Post struct {
+	ID            int64     `json:"id" gorm:"primaryKey;autoIncrement" comment:"文章唯一标识，自增主键"`
+	AuthorID      int64     `json:"author_id" gorm:"not null" comment:"文章作者的用户 ID，外键关联 users 表"`
+	Title         string    `json:"title" gorm:"type:text;not null;check:char_length(title) > 0" comment:"文章标题，不能为空"`
+	Content       string    `json:"content" gorm:"type:text;not null;check:char_length(content) > 0" comment:"文章正文内容，支持富文本格式"`
+	CoverImageURL *string   `json:"cover_image_url" gorm:"type:text" comment:"文章封面图片的 URL，可选"`
+	Tags          []string  `json:"tags" gorm:"type:text[];default:'{}'" comment:"文章标签列表，使用 TEXT 数组存储"`
+	Likes         int       `json:"likes" gorm:"default:0;not null;check:likes >= 0" comment:"文章点赞数量，默认值为 0"`
+	Views         int       `json:"views" gorm:"default:0;not null;check:views >= 0" comment:"文章浏览次数，默认值为 0"`
+	IsPublished   bool      `json:"is_published" gorm:"default:true;not null" comment:"文章是否公开发布，true 为已发布，false 为草稿或隐藏"`
+	CreatedAt     time.Time `json:"created_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"文章创建时间，默认为当前时间"`
+	UpdatedAt     time.Time `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"文章最后修改时间，默认为当前时间"`
+	Author        User      `json:"author" gorm:"foreignKey:AuthorID"`
+}
+
+// Content 内容模型（兼容旧版）
 type Content struct {
 	ID            int64     `json:"id" gorm:"primaryKey"`
 	AuthorID      int64     `json:"author_id"`
@@ -93,7 +109,7 @@ type Comment struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	Author          User      `json:"author" gorm:"foreignKey:AuthorID"`
-	Post            Content   `json:"post" gorm:"foreignKey:PostID"`
+	Post            Post      `json:"post" gorm:"foreignKey:PostID"`
 	ParentComment   *Comment  `json:"parent_comment,omitempty" gorm:"foreignKey:ParentCommentID"`
 	ChildComments   []Comment `json:"child_comments,omitempty" gorm:"foreignKey:ParentCommentID"`
 }
