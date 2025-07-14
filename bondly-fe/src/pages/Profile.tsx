@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
+import { useAccount, useDisconnect, useBalance } from 'wagmi';
 import CommonNavbar from '../components/CommonNavbar';
 import EditProfileModal from '../components/EditProfileModal';
 import FollowButton from '../components/FollowButton';
 import { useAuth } from '../contexts/AuthContext';
-import { getFollowers, getFollowing } from '../api/follow';
 
 interface ProfileProps {
   isMobile: boolean;
@@ -12,6 +12,9 @@ interface ProfileProps {
 
 const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
   const { user: currentUser, checkAuthStatus, isLoggedIn, loading } = useAuth();
+  const { address, isConnected, connector, chain } = useAccount();
+  const { disconnect } = useDisconnect();
+  const { data: balance } = useBalance({ address: address });
   
   console.log('Profile component - AuthContext state:', { currentUser, isLoggedIn, loading });
   const [showEditModal, setShowEditModal] = useState(false);
@@ -27,6 +30,29 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
 
   const handleLoginClick = () => {
     console.log("Login clicked");
+  };
+
+  // 格式化钱包地址
+  const formatAddress = (addr: string) => {
+    if (!addr) return '';
+    return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // 复制地址到剪贴板
+  const copyAddress = async (addr: string) => {
+    if (addr) {
+      try {
+        await navigator.clipboard.writeText(addr);
+        alert('Address copied to clipboard!');
+      } catch (err) {
+        console.error('Failed to copy:', err);
+      }
+    }
+  };
+
+  // 断开钱包连接
+  const handleDisconnectWallet = () => {
+    disconnect();
   };
 
   // 获取用户详细信息
@@ -75,17 +101,13 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
     }
   };
 
-  // 获取关注统计
+  // 获取关注统计 - 暂时使用模拟数据
   const fetchFollowStats = async (userId: number) => {
     try {
-      const [followersResponse, followingResponse] = await Promise.all([
-        getFollowers(userId, 1, 1), // 只获取第一页，用于统计总数
-        getFollowing(userId, 1, 1),
-      ]);
-      
+      // 模拟关注统计数据
       setFollowStats({
-        followers: followersResponse.pagination.total,
-        following: followingResponse.pagination.total,
+        followers: 128,
+        following: 56,
       });
     } catch (error) {
       console.error('Failed to fetch follow stats:', error);
@@ -387,30 +409,14 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
               }}>
                 {/* 粉丝统计卡片 */}
                 <div 
-                  className="group cursor-pointer"
                   style={{
                     background: "rgba(255, 255, 255, 0.05)",
                     padding: "20px",
                     borderRadius: "12px",
                     textAlign: "center",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
-                    transition: "all 0.3s ease",
                     position: "relative",
                     overflow: "hidden"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                  onClick={() => {
-                    window.history.pushState({}, '', `/follow/${currentUser?.user_id}/followers`);
-                    onPageChange?.(`follow/${currentUser?.user_id}/followers`);
                   }}
                 >
                   <div style={{
@@ -437,44 +443,18 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   }}>
                     粉丝
                   </div>
-                  <div style={{
-                    position: "absolute",
-                    bottom: "0",
-                    left: "0",
-                    right: "0",
-                    height: "2px",
-                    background: "linear-gradient(90deg, #667eea, #764ba2)",
-                    transform: "scaleX(0)",
-                    transition: "transform 0.3s ease"
-                  }} className="group-hover:scale-x-100"></div>
                 </div>
 
                 {/* 关注统计卡片 */}
                 <div 
-                  className="group cursor-pointer"
                   style={{
                     background: "rgba(255, 255, 255, 0.05)",
                     padding: "20px",
                     borderRadius: "12px",
                     textAlign: "center",
                     border: "1px solid rgba(255, 255, 255, 0.1)",
-                    transition: "all 0.3s ease",
                     position: "relative",
                     overflow: "hidden"
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.08)";
-                    e.currentTarget.style.transform = "translateY(-2px)";
-                    e.currentTarget.style.boxShadow = "0 8px 25px rgba(0, 0, 0, 0.3)";
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = "rgba(255, 255, 255, 0.05)";
-                    e.currentTarget.style.transform = "translateY(0)";
-                    e.currentTarget.style.boxShadow = "none";
-                  }}
-                  onClick={() => {
-                    window.history.pushState({}, '', `/follow/${currentUser?.user_id}/following`);
-                    onPageChange?.(`follow/${currentUser?.user_id}/following`);
                   }}
                 >
                   <div style={{
@@ -501,16 +481,6 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   }}>
                     关注
                   </div>
-                  <div style={{
-                    position: "absolute",
-                    bottom: "0",
-                    left: "0",
-                    right: "0",
-                    height: "2px",
-                    background: "linear-gradient(90deg, #667eea, #764ba2)",
-                    transform: "scaleX(0)",
-                    transition: "transform 0.3s ease"
-                  }} className="group-hover:scale-x-100"></div>
                 </div>
 
                 {/* 声誉积分卡片 */}
@@ -609,7 +579,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                   onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
                   onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
                 >
-                  {isSaving ? '保存中...' : '编辑资料'}
+                  {isSaving ? 'Saving...' : 'Edit Profile'}
                 </button>
                 
                 {/* 关注按钮 - 只在查看其他用户资料时显示 */}
@@ -646,7 +616,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
                 onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
                 >
-                  分享资料
+                  Share Profile
                 </button>
               </div>
             </div>
@@ -931,76 +901,202 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                 Wallet Management
               </h2>
               
-              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  borderRadius: "8px"
-                }}>
-                  <span style={{ color: "#9ca3af" }}>Current Wallet</span>
-                  <span style={{ color: "white", fontSize: "14px" }}>0x1234...5678</span>
-                </div>
-                
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  borderRadius: "8px"
-                }}>
-                  <span style={{ color: "#9ca3af" }}>Network</span>
-                  <span style={{ color: "white", fontSize: "14px" }}>Ethereum Mainnet</span>
-                </div>
-                
-                <div style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  padding: "12px",
-                  background: "rgba(255, 255, 255, 0.05)",
-                  borderRadius: "8px"
-                }}>
-                  <span style={{ color: "#9ca3af" }}>Connection Status</span>
-                  <span style={{ 
-                    color: "#10b981", 
-                    fontSize: "14px",
+              {isConnected && address ? (
+                <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                  {/* 当前钱包地址 */}
+                  <div style={{
                     display: "flex",
+                    justifyContent: "space-between",
                     alignItems: "center",
-                    gap: "4px"
+                    padding: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px"
                   }}>
+                    <span style={{ color: "#9ca3af" }}>Current Wallet</span>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                      <span style={{ 
+                        color: "white", 
+                        fontSize: "14px",
+                        fontFamily: "monospace"
+                      }}>
+                        {formatAddress(address)}
+                      </span>
+                      <button
+                        onClick={() => copyAddress(address)}
+                        style={{
+                          background: "transparent",
+                          border: "none",
+                          color: "#667eea",
+                          cursor: "pointer",
+                          fontSize: "12px",
+                          padding: "2px 4px"
+                        }}
+                        title="Copy full address"
+                      >
+                        📋
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* 余额 */}
+                  {balance && (
                     <div style={{
-                      width: "8px",
-                      height: "8px",
-                      borderRadius: "50%",
-                      background: "#10b981"
-                    }}></div>
-                    Connected
-                  </span>
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      borderRadius: "8px"
+                    }}>
+                      <span style={{ color: "#9ca3af" }}>Balance</span>
+                      <span style={{ color: "white", fontSize: "14px" }}>
+                        {parseFloat(balance.formatted).toFixed(4)} {balance.symbol}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* 网络 */}
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px"
+                  }}>
+                    <span style={{ color: "#9ca3af" }}>Network</span>
+                    <span style={{ color: "white", fontSize: "14px" }}>
+                      {chain?.name || 'Unknown Network'}
+                    </span>
+                  </div>
+                  
+                  {/* 连接器 */}
+                  {connector && (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      borderRadius: "8px"
+                    }}>
+                      <span style={{ color: "#9ca3af" }}>Wallet Type</span>
+                      <span style={{ color: "white", fontSize: "14px" }}>
+                        {connector.name}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* 连接状态 */}
+                  <div style={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                    padding: "12px",
+                    background: "rgba(255, 255, 255, 0.05)",
+                    borderRadius: "8px"
+                  }}>
+                    <span style={{ color: "#9ca3af" }}>Connection Status</span>
+                    <span style={{ 
+                      color: "#10b981", 
+                      fontSize: "14px",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: "4px"
+                    }}>
+                      <div style={{
+                        width: "8px",
+                        height: "8px",
+                        borderRadius: "50%",
+                        background: "#10b981"
+                      }}></div>
+                      Connected
+                    </span>
+                  </div>
+                  
+                  {/* 断开连接按钮 */}
+                  <button 
+                    onClick={handleDisconnectWallet}
+                    style={{
+                      background: "rgba(239, 68, 68, 0.1)",
+                      border: "1px solid rgba(239, 68, 68, 0.3)",
+                      color: "#ef4444",
+                      padding: "10px 20px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                      cursor: "pointer",
+                      transition: "all 0.2s ease",
+                      width: "100%",
+                      marginTop: "8px"
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = "rgba(239, 68, 68, 0.2)";
+                      e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = "rgba(239, 68, 68, 0.1)";
+                      e.currentTarget.style.borderColor = "rgba(239, 68, 68, 0.3)";
+                    }}
+                  >
+                    Disconnect Wallet
+                  </button>
                 </div>
-              </div>
-              
-              <button style={{
-                background: "rgba(255, 255, 255, 0.1)",
-                border: "1px solid rgba(255, 255, 255, 0.2)",
-                color: "white",
-                padding: "10px 20px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                fontWeight: "500",
-                cursor: "pointer",
-                transition: "all 0.2s ease",
-                width: "100%",
-                marginTop: "16px"
-              }}
-              onMouseEnter={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.2)"}
-              onMouseLeave={(e) => e.currentTarget.style.background = "rgba(255, 255, 255, 0.1)"}
-              >
-                Disconnect Wallet
-              </button>
+              ) : (
+                /* 未连接钱包时的显示 */
+                <div style={{
+                  textAlign: "center",
+                  padding: "40px 20px",
+                  color: "#9ca3af"
+                }}>
+                  <div style={{
+                    fontSize: "48px",
+                    marginBottom: "16px",
+                    opacity: "0.5"
+                  }}>
+                    👛
+                  </div>
+                  <p style={{
+                    fontSize: "16px",
+                    marginBottom: "8px",
+                    color: "white"
+                  }}>
+                    No Wallet Connected
+                  </p>
+                  <p style={{
+                    fontSize: "14px",
+                    marginBottom: "20px"
+                  }}>
+                    Connect your wallet to view details and manage your assets
+                  </p>
+                  
+                  {/* 显示托管钱包信息（如果有） */}
+                  {currentUser?.custody_wallet_address && (
+                    <div style={{
+                      background: "rgba(102, 126, 234, 0.1)",
+                      border: "1px solid rgba(102, 126, 234, 0.3)",
+                      borderRadius: "8px",
+                      padding: "12px",
+                      marginTop: "16px"
+                    }}>
+                      <div style={{
+                        fontSize: "14px",
+                        color: "#667eea",
+                        marginBottom: "4px"
+                      }}>
+                        Custody Wallet
+                      </div>
+                      <div style={{
+                        fontSize: "12px",
+                        color: "#9ca3af",
+                        fontFamily: "monospace"
+                      }}>
+                        {formatAddress(currentUser.custody_wallet_address)}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>

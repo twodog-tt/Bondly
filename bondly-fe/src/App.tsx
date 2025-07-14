@@ -15,7 +15,6 @@ import BlogListPage from "./pages/BlogListPage";
 import BlogDetailPage from "./pages/BlogDetailPage";
 import DaoPage from "./pages/DaoPage";
 import UserPublicProfilePage from "./pages/UserPublicProfilePage";
-import FollowListPage from "./pages/FollowListPage";
 import StakePage from "./pages/StakePage";
 
 // 工具函数：渲染装饰元素
@@ -492,6 +491,10 @@ function AppContent() {
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page === "drafts"
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === 'fans-list'
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === 'follow-list'
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page.startsWith("user-profile-")
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : isMobile ? mobileContentStyle : contentStyle
@@ -506,7 +509,6 @@ function AppContent() {
           {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "stake" && <StakePage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page.startsWith("user-profile-") && <UserPublicProfilePage isMobile={isMobile} onPageChange={handlePageChange} />}
-          {page.startsWith("follow/") && <FollowListPage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>
     </div>
