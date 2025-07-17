@@ -13,18 +13,16 @@ import (
 )
 
 type AirdropService struct {
-	ethClient   *blockchain.EthereumClient
-	userRepo    *repositories.UserRepository
-	config      *config.Config
-	businessLog *logger.BusinessLogger
+	ethClient *blockchain.EthereumClient
+	userRepo  *repositories.UserRepository
+	config    *config.Config
 }
 
 func NewAirdropService(ethClient *blockchain.EthereumClient, userRepo *repositories.UserRepository, cfg *config.Config) *AirdropService {
 	return &AirdropService{
-		ethClient:   ethClient,
-		userRepo:    userRepo,
-		config:      cfg,
-		businessLog: logger.NewBusinessLogger(context.Background()),
+		ethClient: ethClient,
+		userRepo:  userRepo,
+		config:    cfg,
 	}
 }
 

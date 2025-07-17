@@ -50,10 +50,11 @@ type RedisConfig struct {
 }
 
 type EthereumConfig struct {
-	RPCURL          string
-	PrivateKey      string
-	ContractAddress string
-	RelayWalletKey  string // 中转钱包私钥
+	RPCURL                 string
+	PrivateKey             string
+	ContractAddress        string
+	RelayWalletKey         string // 中转钱包私钥
+	ReputationVaultAddress string // ReputationVault合约地址
 }
 
 type KafkaConfig struct {
@@ -117,10 +118,11 @@ func Load() (*Config, error) {
 			WriteTimeout: getEnvAsInt("REDIS_WRITE_TIMEOUT", 3),
 		},
 		Ethereum: EthereumConfig{
-			RPCURL:          getEnv("ETH_RPC_URL", "http://localhost:8545"),
-			PrivateKey:      getEnv("ETH_PRIVATE_KEY", ""),
-			ContractAddress: getEnv("ETH_CONTRACT_ADDRESS", ""),
-			RelayWalletKey:  getEnv("ETH_RELAY_WALLET_KEY", ""),
+			RPCURL:                 getEnv("ETH_RPC_URL", "http://localhost:8545"),
+			PrivateKey:             getEnv("ETH_PRIVATE_KEY", ""),
+			ContractAddress:        getEnv("ETH_CONTRACT_ADDRESS", ""),
+			RelayWalletKey:         getEnv("ETH_RELAY_WALLET_KEY", ""),
+			ReputationVaultAddress: getEnv("ETH_REPUTATION_VAULT_ADDRESS", ""),
 		},
 		Kafka: KafkaConfig{
 			Brokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),

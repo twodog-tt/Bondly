@@ -60,18 +60,22 @@ func NewAuthError(err error, code int) *AuthError {
 // 注意：错误码和错误消息已统一在 response/error_code.go 中管理
 
 type AuthService struct {
-	redisClient  *redis.RedisClient
-	userRepo     *repositories.UserRepository
-	jwtUtil      *utils.JWTUtil
-	emailService *EmailService
+	redisClient    *redis.RedisClient
+	userRepo       *repositories.UserRepository
+	jwtUtil        *utils.JWTUtil
+	emailService   *EmailService
+	airdropService *AirdropService
+	walletService  *WalletService
 }
 
-func NewAuthService(redisClient *redis.RedisClient, userRepo *repositories.UserRepository, jwtSecret string, emailService *EmailService) *AuthService {
+func NewAuthService(redisClient *redis.RedisClient, userRepo *repositories.UserRepository, jwtSecret string, emailService *EmailService, airdropService *AirdropService, walletService *WalletService) *AuthService {
 	return &AuthService{
-		redisClient:  redisClient,
-		userRepo:     userRepo,
-		jwtUtil:      utils.NewJWTUtil(jwtSecret, 24*time.Hour), // JWT token有效期24小时
-		emailService: emailService,
+		redisClient:    redisClient,
+		userRepo:       userRepo,
+		jwtUtil:        utils.NewJWTUtil(jwtSecret, 24*time.Hour), // JWT token有效期24小时
+		emailService:   emailService,
+		airdropService: airdropService,
+		walletService:  walletService,
 	}
 }
 
@@ -269,6 +273,34 @@ func (s *AuthService) WalletLoginIn(ctx context.Context, walletAddress string) (
 				"user":          user,
 			}).Info("用户创建成功")
 			isNewUser = true
+
+			// 异步空投到用户钱包（钱包登录时用户已有钱包地址）
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.WithFields(logrus.Fields{
+							"user_id":        user.ID,
+							"wallet_address": walletAddress,
+							"panic":          r,
+						}).Error("钱包登录空投goroutine发生panic")
+					}
+				}()
+
+				if s.airdropService != nil {
+					if err := s.airdropService.AirdropToNewUser(ctx, user.ID, walletAddress); err != nil {
+						log.WithFields(logrus.Fields{
+							"user_id":        user.ID,
+							"wallet_address": walletAddress,
+							"error":          err.Error(),
+						}).Error("钱包登录新用户空投失败")
+					} else {
+						log.WithFields(logrus.Fields{
+							"user_id":        user.ID,
+							"wallet_address": walletAddress,
+						}).Info("钱包登录新用户空投成功")
+					}
+				}
+			}()
 		}
 	}
 	if err == nil && user.ID > 0 {
@@ -383,6 +415,61 @@ func (s *AuthService) LoginIn(ctx context.Context, email, nickname string, image
 				"email":    email,
 				"nickname": nickname,
 			}).Info("新用户创建成功")
+
+			// 异步生成托管钱包并空投（邮箱登录时用户没有钱包地址）
+			go func() {
+				defer func() {
+					if r := recover(); r != nil {
+						log.WithFields(logrus.Fields{
+							"user_id": user.ID,
+							"panic":   r,
+						}).Error("邮箱登录空投goroutine发生panic")
+					}
+				}()
+
+				if s.airdropService != nil && s.walletService != nil {
+					// 1. 生成托管钱包
+					walletInfo, err := s.walletService.GenerateCustodyWallet(ctx)
+					if err != nil {
+						log.WithFields(logrus.Fields{
+							"user_id": user.ID,
+							"error":   err.Error(),
+						}).Error("邮箱登录新用户生成托管钱包失败")
+						return
+					}
+
+					// 2. 更新用户的托管钱包信息
+					user.CustodyWalletAddress = &walletInfo.Address
+					user.EncryptedPrivateKey = &walletInfo.EncryptedKey
+
+					if err := s.userRepo.Update(user); err != nil {
+						log.WithFields(logrus.Fields{
+							"user_id": user.ID,
+							"error":   err.Error(),
+						}).Error("邮箱登录新用户更新托管钱包信息失败")
+						return
+					}
+
+					log.WithFields(logrus.Fields{
+						"user_id":                user.ID,
+						"custody_wallet_address": walletInfo.Address,
+					}).Info("邮箱登录新用户生成托管钱包成功")
+
+					// 3. 空投到托管钱包
+					if err := s.airdropService.AirdropToCustodyWallet(ctx, user.ID, walletInfo.Address); err != nil {
+						log.WithFields(logrus.Fields{
+							"user_id":                user.ID,
+							"custody_wallet_address": walletInfo.Address,
+							"error":                  err.Error(),
+						}).Error("邮箱登录新用户托管钱包空投失败")
+					} else {
+						log.WithFields(logrus.Fields{
+							"user_id":                user.ID,
+							"custody_wallet_address": walletInfo.Address,
+						}).Info("邮箱登录新用户托管钱包空投成功")
+					}
+				}
+			}()
 		} else {
 			log.WithFields(logrus.Fields{
 				"email": email,

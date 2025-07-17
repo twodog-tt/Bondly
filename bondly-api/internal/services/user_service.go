@@ -92,6 +92,15 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	if user.WalletAddress != nil && *user.WalletAddress != "" {
 		// 用户注册时已经有钱包地址，直接空投到用户钱包
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					bizLog.BusinessLogic("用户注册空投goroutine发生panic", map[string]interface{}{
+						"user_id": user.ID,
+						"panic":   r,
+					})
+				}
+			}()
+
 			if err := s.airdropService.AirdropToNewUser(ctx, user.ID, *user.WalletAddress); err != nil {
 				bizLog.BusinessLogic("新用户钱包空投失败", map[string]interface{}{
 					"user_id":        user.ID,
@@ -108,6 +117,15 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	} else {
 		// 用户没有钱包地址，生成托管钱包并空投
 		go func() {
+			defer func() {
+				if r := recover(); r != nil {
+					bizLog.BusinessLogic("用户注册托管钱包空投goroutine发生panic", map[string]interface{}{
+						"user_id": user.ID,
+						"panic":   r,
+					})
+				}
+			}()
+
 			// 1. 生成托管钱包
 			walletInfo, err := s.walletService.GenerateCustodyWallet(ctx)
 			if err != nil {

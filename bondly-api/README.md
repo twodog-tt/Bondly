@@ -286,6 +286,7 @@ transactions (交易表) - 独立表，记录区块链交易
 3. **钱包管理**: 多网络钱包绑定，托管钱包支持
 4. **治理系统**: 提案投票机制
 5. **区块链集成**: 交易记录和状态跟踪
+6. **声誉系统**: 链上声誉管理，治理资格验证，声誉排行榜
 
 ## 📚 Swagger 文档使用
 
@@ -310,6 +311,7 @@ transactions (交易表) - 独立表，记录区块链交易
 - **⛓️ 区块链**: 状态查询、合约信息
 - **📄 内容管理**: 内容CRUD操作
 - **🏛️ 治理管理**: 提案、投票系统
+- **🏆 声誉系统**: 声誉查询、排行榜、治理资格
 - **🔍 系统监控**: 健康检查、状态监控
 
 ## 📁 项目结构
@@ -320,15 +322,21 @@ bondly-api/
 ├── config/                 # 配置管理
 ├── internal/
 │   ├── handlers/          # HTTP 处理器
+│   │   └── reputation_handlers.go # 声誉系统处理器
 │   ├── services/          # 业务逻辑层
+│   │   └── reputation_service.go  # 声誉系统服务
 │   ├── repositories/      # 数据访问层
 │   ├── models/            # 数据模型
+│   ├── dto/               # 数据传输对象
+│   │   └── reputation.go  # 声誉系统DTO
 │   ├── middleware/        # 中间件
 │   ├── database/          # 数据库配置
 │   ├── redis/             # Redis 客户端
 │   ├── blockchain/        # 区块链集成
+│   │   └── reputation.go  # 声誉合约集成
 │   └── utils/             # 工具函数
 ├── docs/                   # Swagger 文档
+├── test_reputation_api.sh  # 声誉系统API测试脚本
 └── docker-compose.dev.yml  # 开发环境配置
 ```
 
@@ -351,7 +359,7 @@ bondly-api/
 ### 用户管理
 - 用户信息 CRUD
 - 余额查询
-- 声誉系统
+- 用户关注系统
 
 ### 区块链集成
 - 智能合约交互
@@ -367,6 +375,12 @@ bondly-api/
 - DAO 提案管理
 - 投票机制
 - 治理统计
+
+### 声誉系统
+- 链上声誉数据同步
+- 声誉排行榜查询
+- 治理资格验证（≥100声誉分）
+- 管理员声誉调整
 
 ## 🔗 主要 API 端点
 
@@ -393,6 +407,12 @@ bondly-api/
 - `POST /api/v1/governance/proposals` - 创建提案
 - `POST /api/v1/governance/vote` - 投票
 
+### 声誉系统
+- `GET /api/v1/reputation/user/:id` - 获取用户声誉
+- `GET /api/v1/reputation/address/:address` - 按钱包地址查询声誉
+- `GET /api/v1/reputation/ranking` - 声誉排行榜
+- `GET /api/v1/reputation/governance/eligible/:id` - 检查治理资格
+
 ## ⚙️ 环境变量配置
 
 ```bash
@@ -416,6 +436,7 @@ REDIS_DB=0
 # 区块链配置
 ETH_RPC_URL=https://mainnet.infura.io/v3/YOUR_KEY
 ETH_CONTRACT_ADDRESS=0x...
+ETH_REPUTATION_VAULT_ADDRESS=0x...
 
 # Kafka 配置
 KAFKA_BROKERS=localhost:9092
@@ -566,6 +587,12 @@ curl "http://localhost:8080/api/v1/blockchain/status"
 
 # 治理提案列表
 curl "http://localhost:8080/api/v1/governance/proposals"
+
+# 声誉系统测试
+curl "http://localhost:8080/api/v1/reputation/user/1"
+curl "http://localhost:8080/api/v1/reputation/address/0x1234567890abcdef1234567890abcdef12345678"
+curl "http://localhost:8080/api/v1/reputation/ranking"
+curl "http://localhost:8080/api/v1/reputation/governance/eligible/1"
 ```
 
 ## 📖 开发指南

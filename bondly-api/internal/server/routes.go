@@ -149,6 +149,18 @@ func (s *Server) setupRoutes() {
 			wallets.POST("/bind", s.walletHandlers.BindUserWallet)                 // 绑定用户钱包
 		}
 
+		// 声誉系统相关路由
+		reputation := v1.Group("/reputation")
+		{
+			reputation.GET("/user/:id", s.reputationHandlers.GetUserReputation)                                // 获取用户声誉分数
+			reputation.GET("/address/:address", s.reputationHandlers.GetUserReputationByAddress)               // 根据钱包地址获取声誉分数
+			reputation.GET("/ranking", s.reputationHandlers.GetTopUsersByReputation)                           // 获取声誉排行榜
+			reputation.GET("/governance/eligible/:id", s.reputationHandlers.IsEligibleForGovernance)           // 检查治理资格
+			reputation.POST("/add", middleware.AuthMiddleware(), s.reputationHandlers.AddReputation)           // 增加声誉分数（需要权限）
+			reputation.POST("/subtract", middleware.AuthMiddleware(), s.reputationHandlers.SubtractReputation) // 减少声誉分数（需要权限）
+			reputation.POST("/sync/:id", s.reputationHandlers.SyncReputationFromChain)                         // 从链上同步声誉分数
+		}
+
 		// 统计信息路由
 		v1.GET("/stats", handlers.GetStats)
 

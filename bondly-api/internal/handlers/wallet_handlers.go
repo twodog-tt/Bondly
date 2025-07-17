@@ -331,6 +331,16 @@ func (h *WalletHandlers) BindUserWallet(c *gin.Context) {
 
 	// 异步进行钱包绑定空投
 	go func() {
+		defer func() {
+			if r := recover(); r != nil {
+				bizLog.BusinessLogic("钱包绑定空投goroutine发生panic", map[string]interface{}{
+					"user_id":        req.UserID,
+					"wallet_address": req.WalletAddress,
+					"panic":          r,
+				})
+			}
+		}()
+
 		if err := h.userService.ProcessWalletBindingAirdrop(c.Request.Context(), req.UserID, req.WalletAddress); err != nil {
 			bizLog.BusinessLogic("钱包绑定空投失败", map[string]interface{}{
 				"user_id":        req.UserID,

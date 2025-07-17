@@ -525,6 +525,7 @@ func (s *DataSeeder) clearData() {
 	s.db.Exec("DELETE FROM user_followers")
 	s.db.Exec("DELETE FROM wallet_bindings")
 	s.db.Exec("DELETE FROM transactions")
+	s.db.Exec("DELETE FROM airdrop_records") // 添加空投记录表清理
 	s.db.Exec("DELETE FROM users")
 }
 
@@ -536,16 +537,17 @@ func (s *DataSeeder) seedUsers() []int64 {
 		userData["created_at"] = time.Now().AddDate(0, 0, -rand.Intn(365)) // 随机过去一年内
 		userData["updated_at"] = time.Now()
 		userData["last_login_at"] = time.Now().Add(-time.Duration(rand.Intn(72)) * time.Hour) // 随机过去3天内
+		userData["has_received_airdrop"] = false                                              // 添加空投字段
 
 		// 插入用户
 		result := s.db.Exec(`
 			INSERT INTO users (
 				wallet_address, email, nickname, avatar_url, bio, role, 
-				reputation_score, last_login_at, created_at, updated_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+				reputation_score, has_received_airdrop, last_login_at, created_at, updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
 		`, userData["wallet_address"], userData["email"], userData["nickname"],
 			userData["avatar_url"], userData["bio"], userData["role"],
-			userData["reputation_score"], userData["last_login_at"],
+			userData["reputation_score"], userData["has_received_airdrop"], userData["last_login_at"],
 			userData["created_at"], userData["updated_at"])
 
 		if result.Error != nil {

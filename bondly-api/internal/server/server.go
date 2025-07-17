@@ -40,6 +40,7 @@ type Server struct {
 	commentHandlers            *handlers.CommentHandlers
 	userFollowHandlers         *handlers.UserFollowHandlers
 	walletBindingHandlers      *handlers.WalletBindingHandlers
+	reputationHandlers         *handlers.ReputationHandlers
 }
 
 func NewServer(cfg *config.Config, db *gorm.DB) *Server {
@@ -102,7 +103,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	utils.InitJWTUtil(cfg.JWT.Secret, cfg.JWT.ExpiresIn)
 
 	// 初始化认证服务
-	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret, emailService)
+	authService := services.NewAuthService(redisClient, userRepo, cfg.JWT.Secret, emailService, airdropService, walletService)
 	authHandlers := handlers.NewAuthHandlers(authService)
 
 	// 初始化上传服务
@@ -125,6 +126,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	commentService := services.NewCommentService(commentRepo)
 	userFollowService := services.NewUserFollowService(userFollowRepo)
 	walletBindingService := services.NewWalletBindingService(walletBindingRepo)
+	reputationService := services.NewReputationService(userRepo, cfg.Ethereum)
 
 	// 初始化新的handlers
 	contentHandlers := handlers.NewContentHandlers(contentService)
@@ -134,6 +136,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	commentHandlers := handlers.NewCommentHandlers(commentService)
 	userFollowHandlers := handlers.NewUserFollowHandlers(userFollowService)
 	walletBindingHandlers := handlers.NewWalletBindingHandlers(walletBindingService)
+	reputationHandlers := handlers.NewReputationHandlers(reputationService)
 
 	server := &Server{
 		config:                     cfg,
@@ -152,6 +155,7 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 		commentHandlers:            commentHandlers,
 		userFollowHandlers:         userFollowHandlers,
 		walletBindingHandlers:      walletBindingHandlers,
+		reputationHandlers:         reputationHandlers,
 	}
 
 	// 设置路由
