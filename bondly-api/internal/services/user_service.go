@@ -88,25 +88,74 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 	// 清除缓存
 	s.clearUserCache(ctx, user.ID)
 
-	// 如果用户有钱包地址，尝试空投BOND代币
+	// 处理用户钱包和空投逻辑
 	if user.WalletAddress != nil && *user.WalletAddress != "" {
+		// 用户注册时已经有钱包地址，直接空投到用户钱包
 		go func() {
 			if err := s.airdropService.AirdropToNewUser(ctx, user.ID, *user.WalletAddress); err != nil {
-				bizLog.BusinessLogic("新用户空投失败", map[string]interface{}{
+				bizLog.BusinessLogic("新用户钱包空投失败", map[string]interface{}{
 					"user_id":        user.ID,
 					"wallet_address": *user.WalletAddress,
 					"error":          err.Error(),
 				})
 			} else {
-				bizLog.BusinessLogic("新用户空投成功", map[string]interface{}{
+				bizLog.BusinessLogic("新用户钱包空投成功", map[string]interface{}{
 					"user_id":        user.ID,
 					"wallet_address": *user.WalletAddress,
 				})
 			}
 		}()
+	} else {
+		// 用户没有钱包地址，生成托管钱包并空投
+		go func() {
+			// 1. 生成托管钱包
+			walletInfo, err := s.walletService.GenerateCustodyWallet(ctx)
+			if err != nil {
+				bizLog.BusinessLogic("生成托管钱包失败", map[string]interface{}{
+					"user_id": user.ID,
+					"error":   err.Error(),
+				})
+				return
+			}
+
+			// 2. 更新用户的托管钱包信息
+			user.CustodyWalletAddress = &walletInfo.Address
+			user.EncryptedPrivateKey = &walletInfo.EncryptedKey
+
+			if err := s.userRepo.Update(user); err != nil {
+				bizLog.BusinessLogic("更新用户托管钱包信息失败", map[string]interface{}{
+					"user_id": user.ID,
+					"error":   err.Error(),
+				})
+				return
+			}
+
+			bizLog.BusinessLogic("为新用户生成托管钱包成功", map[string]interface{}{
+				"user_id":                user.ID,
+				"custody_wallet_address": walletInfo.Address,
+			})
+
+			// 3. 空投到托管钱包
+			if err := s.airdropService.AirdropToCustodyWallet(ctx, user.ID, walletInfo.Address); err != nil {
+				bizLog.BusinessLogic("新用户托管钱包空投失败", map[string]interface{}{
+					"user_id":                user.ID,
+					"custody_wallet_address": walletInfo.Address,
+					"error":                  err.Error(),
+				})
+			} else {
+				bizLog.BusinessLogic("新用户托管钱包空投成功", map[string]interface{}{
+					"user_id":                user.ID,
+					"custody_wallet_address": walletInfo.Address,
+				})
+			}
+		}()
 	}
 
-	bizLog.UserCreated(user.ID, *user.Email, *user.WalletAddress)
+	walletAddr := ""
+	if user.WalletAddress != nil {
+		walletAddr = *user.WalletAddress
+	}
+	bizLog.UserCreated(user.ID, *user.Email, walletAddr)
 	return nil
 }
 
@@ -394,6 +443,33 @@ func (s *UserService) UpdateWalletAddress(ctx context.Context, userID int64, wal
 		"用户ID": userID,
 		"钱包地址": walletAddress,
 	}).Info("钱包绑定 - 更新钱包地址成功")
+
+	return nil
+}
+
+// ProcessWalletBindingAirdrop 处理钱包绑定时的空投
+func (s *UserService) ProcessWalletBindingAirdrop(ctx context.Context, userID int64, walletAddress string) error {
+	bizLog := loggerpkg.NewBusinessLogger(ctx)
+
+	bizLog.BusinessLogic("开始处理钱包绑定空投", map[string]interface{}{
+		"user_id":        userID,
+		"wallet_address": walletAddress,
+	})
+
+	// 调用空投服务进行钱包绑定空投
+	if err := s.airdropService.AirdropToUserWallet(ctx, userID, walletAddress); err != nil {
+		bizLog.BusinessLogic("钱包绑定空投失败", map[string]interface{}{
+			"user_id":        userID,
+			"wallet_address": walletAddress,
+			"error":          err.Error(),
+		})
+		return err
+	}
+
+	bizLog.BusinessLogic("钱包绑定空投成功", map[string]interface{}{
+		"user_id":        userID,
+		"wallet_address": walletAddress,
+	})
 
 	return nil
 }

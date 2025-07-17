@@ -157,3 +157,13 @@ func (r *UserRepository) GetAirdropRecords(offset, limit int) ([]models.AirdropR
 	err := r.db.Preload("User").Order("created_at DESC").Offset(offset).Limit(limit).Find(&records).Error
 	return records, err
 }
+
+// HasUserReceivedWalletAirdrop 检查用户是否已获得过钱包绑定空投
+func (r *UserRepository) HasUserReceivedWalletAirdrop(userID int64) (bool, error) {
+	var count int64
+	err := r.db.Model(&models.AirdropRecord{}).Where("user_id = ? AND wallet_address != ''", userID).Count(&count).Error
+	if err != nil {
+		return false, err
+	}
+	return count > 0, nil
+}

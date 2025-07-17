@@ -76,8 +76,11 @@ func (e *EthereumClient) GetTokenBalance(tokenAddress, walletAddress string) (*b
 	// 构建balanceOf函数调用
 	data := []byte{0x70, 0xa0, 0x82, 0x31} // balanceOf(address) 的函数选择器
 	addr := common.HexToAddress(walletAddress)
-	data = append(data, make([]byte, 32)...)
-	copy(data[4:], addr.Bytes())
+
+	// 正确填充地址到32字节（左填充零）
+	addressData := make([]byte, 32)
+	copy(addressData[12:], addr.Bytes()) // 地址占后20字节，前12字节为零
+	data = append(data, addressData...)
 
 	// 调用合约
 	tokenAddr := common.HexToAddress(tokenAddress)
