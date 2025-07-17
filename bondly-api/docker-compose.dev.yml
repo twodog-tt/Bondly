@@ -55,6 +55,16 @@ services:
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      # 添加清理配置，防止节点冲突
+      KAFKA_DELETE_TOPIC_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_RETENTION_BYTES: -1
+      KAFKA_LOG_CLEANUP_POLICY: "delete"
+      # 添加会话超时配置
+      KAFKA_ZOOKEEPER_SESSION_TIMEOUT_MS: 18000
+      KAFKA_ZOOKEEPER_CONNECTION_TIMEOUT_MS: 18000
+    volumes:
+      - kafka_data:/var/lib/kafka/data
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics --bootstrap-server localhost:9092 --list"]
       interval: 30s
@@ -122,4 +132,5 @@ services:
 
 volumes:
   postgres_data:
-  redis_data: 
+  redis_data:
+  kafka_data: 

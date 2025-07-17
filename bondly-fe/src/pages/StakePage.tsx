@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import CommonNavbar from '../components/CommonNavbar';
-import { getContractAddresses, GENERAL_STAKING_ABI, BOND_TOKEN_ABI } from '../config/contracts';
+import { getContractAddress, getContractABI } from '../config/contracts';
 
 interface StakePageProps {
   isMobile: boolean;
@@ -25,7 +25,7 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
   const [totalStaked, setTotalStaked] = useState('0');
 
   // 获取合约地址
-  const contracts = getContractAddresses(chain?.id || 11155111);
+  const bondTokenAddress = getContractAddress('BOND_TOKEN');
 
   // 处理质押
   const handleStake = async () => {

@@ -4,6 +4,7 @@ import CommonNavbar from '../components/CommonNavbar';
 import EditProfileModal from '../components/EditProfileModal';
 import FollowButton from '../components/FollowButton';
 import { useAuth } from '../contexts/AuthContext';
+import { useBondBalance } from '../hooks/useBondBalance';
 
 interface ProfileProps {
   isMobile: boolean;
@@ -15,6 +16,7 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
   const { address, isConnected, connector, chain } = useAccount();
   const { disconnect } = useDisconnect();
   const { data: balance } = useBalance({ address: address });
+  const { formatted: bondFormatted, symbol: bondSymbol, isLoading: bondLoading, error: bondError } = useBondBalance();
   
   console.log('Profile component - AuthContext state:', { currentUser, isLoggedIn, loading });
   const [showEditModal, setShowEditModal] = useState(false);
@@ -951,6 +953,25 @@ const Profile: React.FC<ProfileProps> = ({ isMobile, onPageChange }) => {
                       <span style={{ color: "#9ca3af" }}>Balance</span>
                       <span style={{ color: "white", fontSize: "14px" }}>
                         {parseFloat(balance.formatted).toFixed(4)} {balance.symbol}
+                      </span>
+                    </div>
+                  )}
+                  
+                  {/* BOND余额 */}
+                  {bondError ? (
+                    <div style={{ color: '#ef4444', fontSize: '14px', padding: '8px 0' }}>{bondError}</div>
+                  ) : (
+                    <div style={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center",
+                      padding: "12px",
+                      background: "rgba(255, 255, 255, 0.05)",
+                      borderRadius: "8px"
+                    }}>
+                      <span style={{ color: "#9ca3af" }}>BOND Balance</span>
+                      <span style={{ color: "white", fontSize: "14px" }}>
+                        {bondLoading ? 'Loading...' : bondSymbol === '0x...' ? '请配置BOND合约地址' : `${bondFormatted} ${bondSymbol}`}
                       </span>
                     </div>
                   )}
