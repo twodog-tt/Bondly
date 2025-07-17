@@ -15,6 +15,22 @@ export default defineConfig({
       "@config": resolve(__dirname, "./src/config"),
     },
   },
+  optimizeDeps: {
+    // 强制预构建这些依赖
+    include: [
+      'react',
+      'react-dom',
+      'wagmi',
+      'viem',
+      '@rainbow-me/rainbowkit',
+      '@tanstack/react-query',
+      'react-router-dom'
+    ],
+    // 排除这些依赖的预构建（通常不需要）
+    exclude: [],
+    // 强制重新构建
+    force: false
+  },
   server: {
     port: 5173,
     host: true,

@@ -3,6 +3,8 @@ import { useAccount } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import CommonNavbar from '../components/CommonNavbar';
 import { getContractAddress, getContractABI } from '../config/contracts';
+import { useBondBalance } from '../hooks/useBondBalance';
+import { useStaking } from '../hooks/useStaking';
 
 interface StakePageProps {
   isMobile: boolean;
@@ -11,102 +13,109 @@ interface StakePageProps {
 
 const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
   const { address, isConnected, chain } = useAccount();
+  const { formatted: bondBalance, isLoading: bondLoading, error: bondError, refetch: refetchBalance } = useBondBalance();
   const [stakeAmount, setStakeAmount] = useState('');
   const [unstakeAmount, setUnstakeAmount] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // 实际数据状态
-  const [bondBalance, setBondBalance] = useState('0');
-  const [stakedAmount, setStakedAmount] = useState('0');
-  const [pendingReward, setPendingReward] = useState('0');
-  const [allowance, setAllowance] = useState('0');
-  const [totalStaked, setTotalStaked] = useState('0');
+  // 使用质押hook
+  const {
+    stakedAmount,
+    pendingReward,
+    allowance,
+    totalStaked,
+    apy,
+    rewardPoolBalance,
+    isLoading,
+    error: stakingError,
+    stake,
+    unstake,
+    claimReward,
+    approve,
+    refreshAllData
+  } = useStaking();
 
-  // 获取合约地址
-  const bondTokenAddress = getContractAddress('BOND_TOKEN');
-
-  // 处理质押
+  // Staking handler
   const handleStake = async () => {
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
-      setError('请输入有效的质押数量');
+      setError('Please enter a valid staking amount');
       return;
     }
 
     try {
-      setIsLoading(true);
       setError('');
       setSuccess('');
       
-      // TODO: 实现真实的质押逻辑
-      // 1. 检查授权额度
-      // 2. 如果授权不足，先授权
-      // 3. 调用质押合约
+      const stakeAmountNum = parseFloat(stakeAmount);
+      const currentAllowance = parseFloat(allowance);
       
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Check allowance
+      if (currentAllowance < stakeAmountNum) {
+        // Approve first
+        await approve(stakeAmount);
+        setSuccess('Approval successful, please confirm the transaction in your wallet');
+        return;
+      }
       
-      setSuccess('质押成功！');
+      // Execute staking
+      await stake(stakeAmount);
+      setSuccess('Please confirm the staking transaction in your wallet');
       setStakeAmount('');
     } catch (err) {
-      setError('质押失败，请重试');
+      setError('Staking failed, please try again');
       console.error('Stake error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // 处理解除质押
+  // Unstake handler
   const handleUnstake = async () => {
     if (!unstakeAmount || parseFloat(unstakeAmount) <= 0) {
-      setError('请输入有效的解除质押数量');
+      setError('Please enter a valid unstake amount');
       return;
     }
 
     try {
-      setIsLoading(true);
       setError('');
       setSuccess('');
-      
-      // TODO: 实现真实的解质押逻辑
-      
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSuccess('解除质押成功！');
+      await unstake(unstakeAmount);
+      setSuccess('Please confirm the unstake transaction in your wallet');
       setUnstakeAmount('');
     } catch (err) {
-      setError('解除质押失败，请重试');
+      setError('Unstake failed, please try again');
       console.error('Unstake error:', err);
-    } finally {
-      setIsLoading(false);
     }
   };
 
-  // 处理领取奖励
+  // Claim reward handler
   const handleClaim = async () => {
     if (parseFloat(pendingReward) <= 0) {
-      setError('暂无可领取的奖励');
+      setError('No rewards available to claim');
       return;
     }
 
     try {
-      setIsLoading(true);
       setError('');
       setSuccess('');
-      
-      // TODO: 实现真实的领取奖励逻辑
-      
-      // 模拟API调用
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      setSuccess('奖励领取成功！');
+      await claimReward();
+      setSuccess('Please confirm the reward claim transaction in your wallet');
     } catch (err) {
-      setError('奖励领取失败，请重试');
+      setError('Claiming rewards failed, please try again');
       console.error('Claim error:', err);
-    } finally {
-      setIsLoading(false);
+    }
+  };
+
+  // Manual refresh handler
+  const handleRefresh = async () => {
+    try {
+      await Promise.all([
+        refreshAllData(),
+        refetchBalance()
+      ]);
+      setSuccess('Data refreshed successfully!');
+    } catch (err) {
+      setError('Refresh failed, please try again');
+      console.error('Refresh error:', err);
     }
   };
 
@@ -121,6 +130,17 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
       // fetchStakingData();
     }
   }, [isConnected, address]);
+
+  // 自动消失成功提示
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 2000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [success]);
 
   return (
     <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
@@ -163,8 +183,8 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
           {/* 统计信息 */}
           <div style={{
             display: "grid",
-            gridTemplateColumns: isMobile ? "1fr" : "repeat(3, 1fr)",
-            gap: "24px",
+            gridTemplateColumns: isMobile ? "repeat(3, 1fr)" : "repeat(5, 1fr)",
+            gap: isMobile ? "16px" : "20px",
             marginBottom: "32px",
             padding: "24px",
             background: "#151728",
@@ -172,22 +192,71 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
             border: "1px solid rgba(255, 255, 255, 0.1)"
           }}>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#667eea" }}>
-                {bondBalance} BOND
+              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#667eea" }}>
+                {bondLoading ? "Loading..." : bondError ? "Error" : bondBalance} BOND
               </div>
-              <div style={{ fontSize: "14px", color: "#9ca3af" }}>Available Balance</div>
+              <div style={{ fontSize: isMobile ? "10px" : "12px", color: "#9ca3af" }}>
+                {bondLoading ? "Loading balance..." : bondError ? "Failed to load" : "Available Balance"}
+              </div>
+              {bondError && (
+                <div style={{ fontSize: "8px", color: "#ef4444", marginTop: "4px" }}>
+                  {bondError}
+                </div>
+              )}
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#10b981" }}>
+              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#10b981" }}>
                 {stakedAmount} BOND
               </div>
-              <div style={{ fontSize: "14px", color: "#9ca3af" }}>Staked Amount</div>
+              <div style={{ fontSize: isMobile ? "10px" : "12px", color: "#9ca3af" }}>Staked Amount</div>
             </div>
             <div style={{ textAlign: "center" }}>
-              <div style={{ fontSize: "24px", fontWeight: "bold", color: "#f59e0b" }}>
+              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#f59e0b" }}>
                 {pendingReward} BOND
               </div>
-              <div style={{ fontSize: "14px", color: "#9ca3af" }}>Available Reward</div>
+              <div style={{ fontSize: isMobile ? "10px" : "12px", color: "#9ca3af" }}>Available Reward</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#8b5cf6" }}>
+                {rewardPoolBalance} BOND
+              </div>
+              <div style={{ fontSize: isMobile ? "10px" : "12px", color: "#9ca3af" }}>Reward Pool Balance</div>
+            </div>
+            <div style={{ textAlign: "center" }}>
+              <div style={{ fontSize: isMobile ? "16px" : "20px", fontWeight: "bold", color: "#ec4899" }}>
+                {allowance} BOND
+              </div>
+              <div style={{ fontSize: isMobile ? "10px" : "12px", color: "#9ca3af" }}>Contract Allowance</div>
+            </div>
+          </div>
+
+          {/* 刷新按钮 */}
+          <div style={{ textAlign: "center", marginBottom: "24px" }}>
+            <button
+              onClick={handleRefresh}
+              disabled={isLoading}
+              style={{
+                padding: "8px 16px",
+                background: "rgba(102, 126, 234, 0.1)",
+                color: "#667eea",
+                border: "1px solid rgba(102, 126, 234, 0.3)",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "500",
+                cursor: isLoading ? "not-allowed" : "pointer",
+                opacity: isLoading ? 0.7 : 1,
+                transition: "all 0.2s ease",
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "8px"
+              }}
+              onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "rgba(102, 126, 234, 0.2)")}
+              onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "rgba(102, 126, 234, 0.1)")}
+            >
+              🔄 {isLoading ? "Refreshing..." : "Refresh Data"}
+            </button>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "8px" }}>
+              Data refreshes automatically every 10 seconds and when new blocks are mined
             </div>
           </div>
 
@@ -234,6 +303,22 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
               <h3 style={{ fontSize: "20px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
                 Stake BOND
               </h3>
+              
+              {/* 授权提示 */}
+              {parseFloat(allowance) === 0 && (
+                <div style={{
+                  background: "rgba(236, 72, 153, 0.1)",
+                  border: "1px solid rgba(236, 72, 153, 0.3)",
+                  borderRadius: "8px",
+                  padding: "12px",
+                  marginBottom: "16px",
+                  color: "#ec4899",
+                  fontSize: "14px"
+                }}>
+                  ⚠️ Contract allowance is 0. Please approve first to enable staking.
+                </div>
+              )}
+              
               <input
                 type="number"
                 placeholder="Enter amount to stake"
@@ -251,26 +336,61 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
                   outline: "none"
                 }}
               />
+              
+              {/* 授权按钮 */}
+              {parseFloat(allowance) === 0 && (
+                <button
+                  onClick={() => approve(stakeAmount || '1000')}
+                  disabled={isLoading}
+                  style={{
+                    width: "100%",
+                    padding: "12px",
+                    background: "#ec4899",
+                    color: "white",
+                    border: "none",
+                    borderRadius: "8px",
+                    fontSize: "16px",
+                    fontWeight: "600",
+                    cursor: isLoading ? "not-allowed" : "pointer",
+                    opacity: isLoading ? 0.7 : 1,
+                    transition: "all 0.2s ease",
+                    marginBottom: "12px"
+                  }}
+                  onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#db2777")}
+                  onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "#ec4899")}
+                >
+                  {isLoading ? "Waiting for wallet confirmation..." : "Approve BOND"}
+                </button>
+              )}
+              
               <button
                 onClick={handleStake}
-                disabled={isLoading}
+                disabled={isLoading || parseFloat(allowance) === 0}
                 style={{
                   width: "100%",
                   padding: "12px",
-                  background: "#667eea",
+                  background: parseFloat(allowance) === 0 ? "rgba(255, 255, 255, 0.1)" : "#667eea",
                   color: "white",
                   border: "none",
                   borderRadius: "8px",
                   fontSize: "16px",
                   fontWeight: "600",
-                  cursor: isLoading ? "not-allowed" : "pointer",
-                  opacity: isLoading ? 0.7 : 1,
+                  cursor: (isLoading || parseFloat(allowance) === 0) ? "not-allowed" : "pointer",
+                  opacity: (isLoading || parseFloat(allowance) === 0) ? 0.7 : 1,
                   transition: "all 0.2s ease"
                 }}
-                onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#5a67d8")}
-                onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "#667eea")}
+                onMouseEnter={(e) => {
+                  if (!isLoading && parseFloat(allowance) > 0) {
+                    e.currentTarget.style.background = "#5a67d8";
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!isLoading && parseFloat(allowance) > 0) {
+                    e.currentTarget.style.background = "#667eea";
+                  }
+                }}
               >
-                {isLoading ? "Processing..." : "Stake BOND"}
+                {isLoading ? "Waiting for wallet confirmation..." : parseFloat(allowance) === 0 ? "Approve First" : "Stake BOND"}
               </button>
             </div>
 
@@ -320,7 +440,7 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
                 onMouseEnter={(e) => !isLoading && (e.currentTarget.style.background = "#dc2626")}
                 onMouseLeave={(e) => !isLoading && (e.currentTarget.style.background = "#ef4444")}
               >
-                {isLoading ? "Processing..." : "Unstake BOND"}
+                {isLoading ? "Waiting for wallet confirmation..." : "Unstake BOND"}
               </button>
             </div>
           </div>
@@ -371,7 +491,7 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
                 }
               }}
             >
-              {isLoading ? "Processing..." : "Claim Rewards"}
+              {isLoading ? "Waiting for wallet confirmation..." : "Claim Rewards"}
             </button>
           </div>
 
@@ -392,16 +512,16 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
                 <span style={{ color: "white", fontWeight: "500" }}>{totalStaked} BOND</span>
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>Your Staked:</span>
+                <span style={{ color: "white", fontWeight: "500" }}>{stakedAmount} BOND</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <span style={{ color: "#9ca3af" }}>Allowance:</span>
+                <span style={{ color: "white", fontWeight: "500" }}>{allowance} BOND</span>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                 <span style={{ color: "#9ca3af" }}>APY:</span>
-                <span style={{ color: "#10b981", fontWeight: "500" }}>12.5%</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "#9ca3af" }}>Lock Period:</span>
-                <span style={{ color: "white", fontWeight: "500" }}>No Lock</span>
-              </div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span style={{ color: "#9ca3af" }}>Reward Distribution:</span>
-                <span style={{ color: "white", fontWeight: "500" }}>Daily</span>
+                <span style={{ color: "#10b981", fontWeight: "500" }}>{apy}%</span>
               </div>
             </div>
           </div>
