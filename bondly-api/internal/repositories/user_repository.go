@@ -115,3 +115,45 @@ func (r *UserRepository) GetTopUsersByReputation(limit int) ([]models.User, erro
 	err := r.db.Order("reputation_score DESC").Limit(limit).Find(&users).Error
 	return users, err
 }
+
+// HasUserReceivedAirdrop 检查用户是否已获得空投
+func (r *UserRepository) HasUserReceivedAirdrop(userID int64) (bool, error) {
+	var user models.User
+	err := r.db.Select("has_received_airdrop").Where("id = ?", userID).First(&user).Error
+	if err != nil {
+		return false, err
+	}
+	return user.HasReceivedAirdrop, nil
+}
+
+// MarkUserReceivedAirdrop 标记用户已获得空投
+func (r *UserRepository) MarkUserReceivedAirdrop(userID int64) error {
+	return r.db.Model(&models.User{}).Where("id = ?", userID).Update("has_received_airdrop", true).Error
+}
+
+// CreateAirdropRecord 创建空投记录
+func (r *UserRepository) CreateAirdropRecord(record *models.AirdropRecord) error {
+	return r.db.Create(record).Error
+}
+
+// GetAirdropRecordByUserID 根据用户ID获取空投记录
+func (r *UserRepository) GetAirdropRecordByUserID(userID int64) (*models.AirdropRecord, error) {
+	var record models.AirdropRecord
+	err := r.db.Where("user_id = ?", userID).First(&record).Error
+	if err != nil {
+		return nil, err
+	}
+	return &record, nil
+}
+
+// UpdateAirdropRecordStatus 更新空投记录状态
+func (r *UserRepository) UpdateAirdropRecordStatus(recordID int64, status string) error {
+	return r.db.Model(&models.AirdropRecord{}).Where("id = ?", recordID).Update("status", status).Error
+}
+
+// GetAirdropRecords 获取空投记录列表
+func (r *UserRepository) GetAirdropRecords(offset, limit int) ([]models.AirdropRecord, error) {
+	var records []models.AirdropRecord
+	err := r.db.Preload("User").Order("created_at DESC").Offset(offset).Limit(limit).Find(&records).Error
+	return records, err
+}

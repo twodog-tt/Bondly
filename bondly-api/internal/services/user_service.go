@@ -17,16 +17,18 @@ import (
 )
 
 type UserService struct {
-	userRepo      *repositories.UserRepository
-	cacheService  cache.CacheService
-	walletService *WalletService
+	userRepo       *repositories.UserRepository
+	cacheService   cache.CacheService
+	walletService  *WalletService
+	airdropService *AirdropService
 }
 
-func NewUserService(userRepo *repositories.UserRepository, cacheService cache.CacheService, walletService *WalletService) *UserService {
+func NewUserService(userRepo *repositories.UserRepository, cacheService cache.CacheService, walletService *WalletService, airdropService *AirdropService) *UserService {
 	return &UserService{
-		userRepo:      userRepo,
-		cacheService:  cacheService,
-		walletService: walletService,
+		userRepo:       userRepo,
+		cacheService:   cacheService,
+		walletService:  walletService,
+		airdropService: airdropService,
 	}
 }
 
@@ -85,6 +87,24 @@ func (s *UserService) CreateUser(ctx context.Context, user *models.User) error {
 
 	// 清除缓存
 	s.clearUserCache(ctx, user.ID)
+
+	// 如果用户有钱包地址，尝试空投BOND代币
+	if user.WalletAddress != nil && *user.WalletAddress != "" {
+		go func() {
+			if err := s.airdropService.AirdropToNewUser(ctx, user.ID, *user.WalletAddress); err != nil {
+				bizLog.BusinessLogic("新用户空投失败", map[string]interface{}{
+					"user_id":        user.ID,
+					"wallet_address": *user.WalletAddress,
+					"error":          err.Error(),
+				})
+			} else {
+				bizLog.BusinessLogic("新用户空投成功", map[string]interface{}{
+					"user_id":        user.ID,
+					"wallet_address": *user.WalletAddress,
+				})
+			}
+		}()
+	}
 
 	bizLog.UserCreated(user.ID, *user.Email, *user.WalletAddress)
 	return nil

@@ -2,6 +2,7 @@ package server
 
 import (
 	"bondly-api/config"
+	"bondly-api/internal/blockchain"
 	"bondly-api/internal/cache"
 	"bondly-api/internal/email"
 	"bondly-api/internal/handlers"
@@ -84,7 +85,16 @@ func NewServer(cfg *config.Config, db *gorm.DB) *Server {
 	// 初始化依赖
 	userRepo := repositories.NewUserRepository(db)
 	walletService := services.NewWalletService(cfg)
-	userService := services.NewUserService(userRepo, cacheService, walletService)
+
+	// 初始化以太坊客户端和空投服务
+	ethClient, err := blockchain.NewEthereumClient(cfg.Ethereum)
+	if err != nil {
+		loggerpkg.Log.Warnf("Failed to initialize ethereum client: %v, airdrop service will be disabled", err)
+		ethClient = nil
+	}
+	airdropService := services.NewAirdropService(ethClient, userRepo, cfg)
+
+	userService := services.NewUserService(userRepo, cacheService, walletService, airdropService)
 	userHandlers := handlers.NewUserHandlers(userService)
 	walletHandlers := handlers.NewWalletHandlers(walletService, userService)
 

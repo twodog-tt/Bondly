@@ -53,6 +53,7 @@ type EthereumConfig struct {
 	RPCURL          string
 	PrivateKey      string
 	ContractAddress string
+	RelayWalletKey  string // 中转钱包私钥
 }
 
 type KafkaConfig struct {
@@ -119,6 +120,7 @@ func Load() (*Config, error) {
 			RPCURL:          getEnv("ETH_RPC_URL", "http://localhost:8545"),
 			PrivateKey:      getEnv("ETH_PRIVATE_KEY", ""),
 			ContractAddress: getEnv("ETH_CONTRACT_ADDRESS", ""),
+			RelayWalletKey:  getEnv("ETH_RELAY_WALLET_KEY", ""),
 		},
 		Kafka: KafkaConfig{
 			Brokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),

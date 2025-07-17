@@ -16,6 +16,7 @@ type User struct {
 	ReputationScore      int        `json:"reputation_score" gorm:"default:0;not null;check:reputation_score >= 0" comment:"声誉积分，默认 0，用于表示用户活跃度、贡献度、治理投票权等"`
 	CustodyWalletAddress *string    `json:"custody_wallet_address" gorm:"size:42;check:char_length(custody_wallet_address) = 42" comment:"托管钱包地址，用于平台托管用户资产，允许为空"`
 	EncryptedPrivateKey  *string    `json:"encrypted_private_key" gorm:"type:text" comment:"加密的私钥，用于托管钱包操作，允许为空"`
+	HasReceivedAirdrop   bool       `json:"has_received_airdrop" gorm:"default:false;not null" comment:"是否已获得新用户空投"`
 	LastLoginAt          *time.Time `json:"last_login_at" gorm:"comment:用户最后一次登录时间，用于后台管理和活跃度分析"`
 	CreatedAt            time.Time  `json:"created_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"注册时间，自动填充为当前时间"`
 	UpdatedAt            time.Time  `json:"updated_at" gorm:"default:CURRENT_TIMESTAMP;not null" comment:"更新时间，建议配合触发器实现自动更新时间戳"`
@@ -143,4 +144,17 @@ type ContentInteraction struct {
 	UpdatedAt       time.Time `json:"updated_at"`
 	Content         Content   `json:"content" gorm:"foreignKey:ContentID"`
 	User            User      `json:"user" gorm:"foreignKey:UserID"`
+}
+
+// AirdropRecord 空投记录模型
+type AirdropRecord struct {
+	ID            int64     `json:"id" gorm:"primaryKey"`
+	UserID        int64     `json:"user_id" gorm:"not null"`
+	WalletAddress string    `json:"wallet_address" gorm:"not null"`
+	Amount        string    `json:"amount" gorm:"not null"`
+	TxHash        string    `json:"tx_hash" gorm:"not null"`
+	Status        string    `json:"status" gorm:"default:pending"` // pending, success, failed
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
+	User          User      `json:"user" gorm:"foreignKey:UserID"`
 }
