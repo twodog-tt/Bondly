@@ -413,40 +413,84 @@ Bondly proves that Web3 can be both powerful and user-friendly! ✨`,
 // 评论数据
 var comments = []map[string]interface{}{
 	{
-		"content": "Great article! I've been following the development of decentralized social media platforms and it's exciting to see the progress being made.",
-		"likes":   12,
+		"content": "This is exactly what the Web3 social media space needs! The content-as-NFT concept is revolutionary. Can't wait to mint my first article! 🚀",
+		"likes":   45,
 	},
 	{
-		"content": "The point about user ownership is crucial. Traditional platforms treat users as products, but Web3 social media puts users first.",
-		"likes":   8,
+		"content": "The interactive staking mechanism is brilliant! It creates a real incentive for quality engagement. This could change how we think about content creation.",
+		"likes":   32,
 	},
 	{
-		"content": "I'm curious about how content moderation will work in a truly decentralized environment. Any thoughts on that?",
-		"likes":   15,
+		"content": "Finally, a platform that puts creators first! The BOND token economy looks well-designed. How does the reputation system work exactly?",
+		"likes":   28,
 	},
 	{
-		"content": "Yield farming has been my main source of income for the past year. This guide is spot on!",
+		"content": "The multi-chain support is a game-changer. Being able to use Polygon for low-cost interactions while keeping high-value content on Ethereum is perfect.",
+		"likes":   41,
+	},
+	{
+		"content": "I love how Bondly combines the best of traditional social media with Web3 innovation. The user experience looks seamless!",
 		"likes":   23,
 	},
 	{
-		"content": "Remember to always DYOR (Do Your Own Research) before jumping into any DeFi protocol!",
-		"likes":   19,
+		"content": "The token distribution model is fair and sustainable. 1,000 BOND initial airdrop is generous for new users. When can we start earning rewards?",
+		"likes":   37,
 	},
 	{
-		"content": "NFTs in gaming are going to be huge. I can't wait to see how this develops!",
+		"content": "This addresses the biggest problem with current social media - users don't own their data or get rewarded for their contributions. Bondly fixes both!",
+		"likes":   52,
+	},
+	{
+		"content": "The reputation system is sophisticated. It's not just about quantity but quality of engagement. This will encourage meaningful interactions.",
+		"likes":   29,
+	},
+	{
+		"content": "Governance rights for token holders is a great addition. Community-driven development is the future of social platforms.",
+		"likes":   34,
+	},
+	{
+		"content": "The technical architecture looks solid. Backend infrastructure with blockchain integration - this is what we need for mass adoption.",
+		"likes":   26,
+	},
+	{
+		"content": "Content monetization through NFTs is genius! Creators can finally capture the full value of their work. This is the future! 💎",
+		"likes":   48,
+	},
+	{
+		"content": "I'm excited about the staking rewards. Earning BOND tokens for meaningful interactions creates a positive feedback loop.",
 		"likes":   31,
 	},
 	{
-		"content": "The real estate NFT concept is fascinating. It could democratize property investment globally.",
-		"likes":   14,
+		"content": "The circular economy design is well thought out. Everyone benefits as the platform grows. This could be the next big thing in Web3!",
+		"likes":   39,
 	},
 	{
-		"content": "DAO governance is the future of organizational management. Great breakdown!",
+		"content": "Multi-chain support means accessibility for everyone. Whether you're on Ethereum, Polygon, or BSC, you can participate. Brilliant!",
+		"likes":   25,
+	},
+	{
+		"content": "The reputation scoring system will help surface quality content. No more algorithm manipulation - just genuine community curation.",
+		"likes":   36,
+	},
+	{
+		"content": "This is the social media platform I've been waiting for! Decentralized, user-owned, and creator-friendly. Count me in! 🌟",
+		"likes":   44,
+	},
+	{
+		"content": "The BOND token utility is comprehensive. Staking, governance, rewards - it's a complete ecosystem token. Well designed!",
 		"likes":   27,
 	},
 	{
-		"content": "Layer 2 solutions are essential for Ethereum's success. Great overview of the different approaches.",
-		"likes":   18,
+		"content": "Content-as-NFTs will revolutionize how we think about digital ownership. This is bigger than just social media - it's a paradigm shift.",
+		"likes":   50,
+	},
+	{
+		"content": "The interactive staking feature is innovative. Users can show support for creators while earning rewards themselves. Win-win!",
+		"likes":   33,
+	},
+	{
+		"content": "I appreciate the focus on user experience. Web3 platforms often sacrifice UX for decentralization, but Bondly seems to balance both perfectly.",
+		"likes":   30,
 	},
 }
 
