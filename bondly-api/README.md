@@ -1,52 +1,52 @@
 # Bondly API
 
-> **基于 Go + Gin + GORM 构建的后端 API 服务**
+> **Backend API service built with Go + Gin + GORM**
 
-## 🚀 快速开始
+## 🚀 Quick Start
 
-### 环境要求
+### Environment Requirements
 - Go 1.21+
 - PostgreSQL 12+
 - Redis 6+
-- Docker (推荐)
+- Docker (Recommended)
 
-### 本地开发
+### Local Development
 
 ```bash
-# 1. 克隆项目
+# 1. Clone project
 git clone <repository>
 cd bondly-api
 
-# 2. 配置环境变量
+# 2. Configure environment variables
 cp env.example .env
-# 编辑 .env 文件设置数据库和Redis连接
+# Edit .env file to set database and Redis connections
 
-# 3. 安装依赖
+# 3. Install dependencies
 go mod download
 
-# 4. 使用 Docker 启动依赖服务
+# 4. Start dependency services with Docker
 docker-compose -f docker-compose.dev.yml up -d
 
-# 5. 运行应用
+# 5. Run application
 go run main.go
 ```
 
-### API 文档
-启动后访问 Swagger UI：`http://localhost:8080/swagger/index.html`
+### API Documentation
+After starting, visit Swagger UI: `http://localhost:8080/swagger/index.html`
 
-### 数据库文档
-详细的数据库表结构说明：[DATABASE_SCHEMA.md](./docs/DATABASE_SCHEMA.md)
+### Database Documentation
+Detailed database table structure description: [DATABASE_SCHEMA.md](./docs/DATABASE_SCHEMA.md)
 
-## 📊 数据库表结构
+## 📊 Database Table Structure
 
-### 数据库概览
-- **数据库名**: bondly_db
-- **总表数**: 9个表
-- **数据库类型**: PostgreSQL
+### Database Overview
+- **Database Name**: bondly_db
+- **Total Tables**: 9 tables
+- **Database Type**: PostgreSQL
 
-### 表结构详情
+### Table Structure Details
 
-#### 1. **users 表** (用户表)
+#### 1. **users Table** (User Table)
 ```sql
 CREATE TABLE users (
     id BIGSERIAL PRIMARY KEY,
@@ -64,7 +64,7 @@ CREATE TABLE users (
     encrypted_private_key TEXT
 );
 
--- 约束
+-- Constraints
 CHECK (char_length(wallet_address) = 42)
 CHECK (char_length(custody_wallet_address) = 42)
 CHECK (position('@' in email) > 1)
@@ -72,12 +72,12 @@ CHECK (char_length(nickname) > 0)
 CHECK (role IN ('user', 'admin', 'moderator'))
 CHECK (reputation_score >= 0)
 
--- 索引
+-- Indexes
 UNIQUE INDEX idx_users_wallet_address (wallet_address)
 UNIQUE INDEX idx_users_email (email)
 ```
 
-#### 2. **posts 表** (文章表)
+#### 2. **posts Table** (Article Table)
 ```sql
 CREATE TABLE posts (
     id BIGSERIAL PRIMARY KEY,
@@ -94,19 +94,19 @@ CREATE TABLE posts (
     FOREIGN KEY (author_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
--- 约束
+-- Constraints
 CHECK (char_length(title) > 0)
 CHECK (char_length(content) > 0)
 CHECK (likes >= 0)
 CHECK (views >= 0)
 
--- 索引
+-- Indexes
 INDEX idx_posts_author (author_id)
 INDEX idx_posts_created_at (created_at)
 INDEX idx_posts_is_published (is_published)
 ```
 
-#### 3. **comments 表** (评论表)
+#### 3. **comments Table** (Comment Table)
 ```sql
 CREATE TABLE comments (
     id BIGSERIAL PRIMARY KEY,
@@ -122,17 +122,17 @@ CREATE TABLE comments (
     FOREIGN KEY (parent_comment_id) REFERENCES comments(id)
 );
 
--- 约束
+-- Constraints
 CHECK (char_length(content) > 0)
 CHECK (likes >= 0)
 
--- 索引
+-- Indexes
 INDEX idx_comments_post (post_id)
 INDEX idx_comments_author (author_id)
 INDEX idx_comments_parent (parent_comment_id)
 ```
 
-#### 4. **user_followers 表** (用户关注关系表)
+#### 4. **user_followers Table** (User Follow Relationship Table)
 ```sql
 CREATE TABLE user_followers (
     follower_id BIGINT NOT NULL,
@@ -144,12 +144,12 @@ CREATE TABLE user_followers (
     CHECK (follower_id <> followed_id)
 );
 
--- 索引
+-- Indexes
 INDEX idx_user_followers_follower_id (follower_id)
 INDEX idx_user_followers_followed_id (followed_id)
 ```
 
-#### 5. **wallet_bindings 表** (钱包绑定表)
+#### 5. **wallet_bindings Table** (Wallet Binding Table)
 ```sql
 CREATE TABLE wallet_bindings (
     id BIGSERIAL PRIMARY KEY,
@@ -161,16 +161,16 @@ CREATE TABLE wallet_bindings (
     UNIQUE (user_id, wallet_address)
 );
 
--- 约束
+-- Constraints
 CHECK (char_length(wallet_address) = 42)
 CHECK (network IN ('ethereum', 'polygon', 'arbitrum', 'optimism', 'bsc'))
 
--- 索引
+-- Indexes
 INDEX idx_wallet_bindings_user_id (user_id)
 INDEX idx_wallet_bindings_wallet_address (wallet_address)
 ```
 
-#### 6. **contents 表** (内容表 - 旧版)
+#### 6. **contents Table** (Content Table - Legacy)
 ```sql
 CREATE TABLE contents (
     id BIGSERIAL PRIMARY KEY,
@@ -188,11 +188,11 @@ CREATE TABLE contents (
     FOREIGN KEY (author_id) REFERENCES users(id)
 );
 
--- 索引
+-- Indexes
 INDEX idx_contents_deleted_at (deleted_at)
 ```
 
-#### 7. **proposals 表** (提案表)
+#### 7. **proposals Table** (Proposal Table)
 ```sql
 CREATE TABLE proposals (
     id BIGSERIAL PRIMARY KEY,
@@ -210,11 +210,11 @@ CREATE TABLE proposals (
     FOREIGN KEY (proposer_id) REFERENCES users(id)
 );
 
--- 索引
+-- Indexes
 INDEX idx_proposals_deleted_at (deleted_at)
 ```
 
-#### 8. **votes 表** (投票表)
+#### 8. **votes Table** (Vote Table)
 ```sql
 CREATE TABLE votes (
     id BIGSERIAL PRIMARY KEY,
@@ -229,11 +229,11 @@ CREATE TABLE votes (
     FOREIGN KEY (voter_id) REFERENCES users(id)
 );
 
--- 索引
+-- Indexes
 INDEX idx_votes_deleted_at (deleted_at)
 ```
 
-#### 9. **transactions 表** (交易表)
+#### 9. **transactions Table** (Transaction Table)
 ```sql
 CREATE TABLE transactions (
     id BIGSERIAL PRIMARY KEY,
@@ -250,323 +250,323 @@ CREATE TABLE transactions (
     deleted_at TIMESTAMP
 );
 
--- 索引
+-- Indexes
 INDEX idx_transactions_hash (hash) UNIQUE
 INDEX idx_transactions_deleted_at (deleted_at)
 ```
 
-### 表关系图
+### Table Relationship Diagram
 
 ```
-users (用户表)
-├── 1:N posts (文章表) - author_id
-├── 1:N comments (评论表) - author_id
-├── 1:N proposals (提案表) - proposer_id
-├── 1:N votes (投票表) - voter_id
-├── 1:N wallet_bindings (钱包绑定表) - user_id
-├── 1:N user_followers (关注关系表) - follower_id
-└── 1:N user_followers (关注关系表) - followed_id
+users (User Table)
+├── 1:N posts (Article Table) - author_id
+├── 1:N comments (Comment Table) - author_id
+├── 1:N proposals (Proposal Table) - proposer_id
+├── 1:N votes (Vote Table) - voter_id
+├── 1:N wallet_bindings (Wallet Binding Table) - user_id
+├── 1:N user_followers (Follow Relationship Table) - follower_id
+└── 1:N user_followers (Follow Relationship Table) - followed_id
 
-posts (文章表)
-└── 1:N comments (评论表) - post_id
+posts (Article Table)
+└── 1:N comments (Comment Table) - post_id
 
-comments (评论表)
-└── 1:N comments (嵌套评论) - parent_comment_id
+comments (Comment Table)
+└── 1:N comments (Nested Comments) - parent_comment_id
 
-proposals (提案表)
-└── 1:N votes (投票表) - proposal_id
+proposals (Proposal Table)
+└── 1:N votes (Vote Table) - proposal_id
 
-transactions (交易表) - 独立表，记录区块链交易
+transactions (Transaction Table) - Independent table, records blockchain transactions
 ```
 
-### 核心功能模块
+### Core Function Modules
 
-1. **用户系统**: 支持邮箱和钱包双重登录，用户关注机制
-2. **内容管理**: 文章发布、评论系统（支持嵌套评论）
-3. **钱包管理**: 多网络钱包绑定，托管钱包支持
-4. **治理系统**: 提案投票机制
-5. **区块链集成**: 交易记录和状态跟踪
-6. **声誉系统**: 链上声誉管理，治理资格验证，声誉排行榜
+1. **User System**: Supports both email and wallet login, user follow mechanism
+2. **Content Management**: Article publishing, comment system (supports nested comments)
+3. **Wallet Management**: Multi-network wallet binding, hosted wallet support
+4. **Governance System**: Proposal voting mechanism
+5. **Blockchain Integration**: Transaction recording and status tracking
+6. **Reputation System**: On-chain reputation management, governance qualification verification, reputation leaderboard
 
-## 📚 Swagger 文档使用
+## 📚 Swagger Documentation Usage
 
-### 功能特性
-- **完整接口文档**: 21个API接口，涵盖6个功能模块
-- **自动生成 curl**: 每个接口都会自动生成 curl 命令
-- **交互式测试**: 支持在线测试API接口
-- **详细参数说明**: 包含请求参数、响应格式、错误码说明
+### Features
+- **Complete API Documentation**: 21 API endpoints covering 6 functional modules
+- **Auto-generated curl**: Each endpoint automatically generates curl commands
+- **Interactive Testing**: Supports online API testing
+- **Detailed Parameter Documentation**: Includes request parameters, response format, error code descriptions
 
-### 使用方法
+### Usage Guide
 
-#### 1. 查看 curl 示例
-1. 打开任意 API 接口展开详情
-2. 点击右上角 **"Try it out"** 按钮
-3. 填写必要参数（会自动填入示例值）
-4. 在参数区域下方查看生成的 curl 命令
-5. 点击 **"Execute"** 执行请求并查看结果
+#### 1. View curl Examples
+1. Open any API endpoint to expand details
+2. Click the **"Try it out"** button in the top right
+3. Fill in required parameters (example values will be auto-filled)
+4. View the generated curl command below the parameter area
+5. Click **"Execute"** to execute the request and view results
 
-#### 2. API 分组概览
-- **🔐 认证管理**: 邮箱验证码、登录验证
-- **👤 用户管理**: 用户信息、余额、声誉
-- **⛓️ 区块链**: 状态查询、合约信息
-- **📄 内容管理**: 内容CRUD操作
-- **🏛️ 治理管理**: 提案、投票系统
-- **🏆 声誉系统**: 声誉查询、排行榜、治理资格
-- **🔍 系统监控**: 健康检查、状态监控
+#### 2. API Group Overview
+- **🔐 Authentication Management**: Email verification codes, login verification
+- **👤 User Management**: User information, balance, reputation
+- **⛓️ Blockchain**: Status queries, contract information
+- **📄 Content Management**: Content CRUD operations
+- **🏛️ Governance Management**: Proposals, voting system
+- **🏆 Reputation System**: Reputation queries, leaderboard, governance qualification
+- **🔍 System Monitoring**: Health checks, status monitoring
 
-## 📁 项目结构
+## 📁 Project Structure
 
 ```
 bondly-api/
-├── main.go                 # 应用入口
-├── config/                 # 配置管理
+├── main.go                 # Application entry point
+├── config/                 # Configuration management
 ├── internal/
-│   ├── handlers/          # HTTP 处理器
-│   │   └── reputation_handlers.go # 声誉系统处理器
-│   ├── services/          # 业务逻辑层
-│   │   └── reputation_service.go  # 声誉系统服务
-│   ├── repositories/      # 数据访问层
-│   ├── models/            # 数据模型
-│   ├── dto/               # 数据传输对象
-│   │   └── reputation.go  # 声誉系统DTO
-│   ├── middleware/        # 中间件
-│   ├── database/          # 数据库配置
-│   ├── redis/             # Redis 客户端
-│   ├── blockchain/        # 区块链集成
-│   │   └── reputation.go  # 声誉合约集成
-│   └── utils/             # 工具函数
-├── docs/                   # Swagger 文档
-├── test_reputation_api.sh  # 声誉系统API测试脚本
-└── docker-compose.dev.yml  # 开发环境配置
+│   ├── handlers/          # HTTP handlers
+│   │   └── reputation_handlers.go # Reputation system handlers
+│   ├── services/          # Business logic layer
+│   │   └── reputation_service.go  # Reputation system service
+│   ├── repositories/      # Data access layer
+│   ├── models/            # Data models
+│   ├── dto/               # Data transfer objects
+│   │   └── reputation.go  # Reputation system DTO
+│   ├── middleware/        # Middleware
+│   ├── database/          # Database configuration
+│   ├── redis/             # Redis client
+│   ├── blockchain/        # Blockchain integration
+│   │   └── reputation.go  # Reputation contract integration
+│   └── utils/             # Utility functions
+├── docs/                   # Swagger documentation
+├── test_reputation_api.sh  # Reputation system API test script
+└── docker-compose.dev.yml  # Development environment configuration
 ```
 
-## 🔧 技术栈
+## 🔧 Tech Stack
 
-- **语言**: Go 1.21+
-- **框架**: Gin Web Framework
-- **数据库**: PostgreSQL + Redis
-- **消息队列**: Apache Kafka
-- **区块链**: Ethereum (go-ethereum)
-- **文档**: Swagger/OpenAPI
+- **Language**: Go 1.21+
+- **Framework**: Gin Web Framework
+- **Database**: PostgreSQL + Redis
+- **Message Queue**: Apache Kafka
+- **Blockchain**: Ethereum (go-ethereum)
+- **Documentation**: Swagger/OpenAPI
 
-## 📚 核心功能
+## 📚 Core Features
 
-### 认证管理
-- 邮箱验证码登录
-- JWT 令牌认证
-- 会话管理
+### Authentication Management
+- Email verification code login
+- JWT token authentication
+- Session management
 
-### 用户管理
-- 用户信息 CRUD
-- 余额查询
-- 用户关注系统
+### User Management
+- User information CRUD
+- Balance queries
+- User follow system
 
-### 区块链集成
-- 智能合约交互
-- 代币质押操作
-- 交易状态查询
+### Blockchain Integration
+- Smart contract interaction
+- Token staking operations
+- Transaction status queries
 
-### 内容管理
-- 文章/帖子管理
-- 评论系统
-- 内容审核
+### Content Management
+- Article/post management
+- Comment system
+- Content moderation
 
-### 治理系统
-- DAO 提案管理
-- 投票机制
-- 治理统计
+### Governance System
+- DAO proposal management
+- Voting mechanism
+- Governance statistics
 
-### 声誉系统
-- 链上声誉数据同步
-- 声誉排行榜查询
-- 治理资格验证（≥100声誉分）
-- 管理员声誉调整
+### Reputation System
+- On-chain reputation data synchronization
+- Reputation leaderboard queries
+- Governance qualification verification (≥100 reputation points)
+- Admin reputation adjustments
 
-## 🔗 主要 API 端点
+## 🔗 Main API Endpoints
 
-### 健康检查
-- `GET /health` - 服务状态
-- `GET /health/redis` - Redis 状态
+### Health Check
+- `GET /health` - Service status
+- `GET /health/redis` - Redis status
 
-### 认证相关
-- `POST /api/v1/auth/send-code` - 发送验证码
-- `POST /api/v1/auth/verify-code` - 验证登录
+### Authentication
+- `POST /api/v1/auth/send-code` - Send verification code
+- `POST /api/v1/auth/verify-code` - Verify login
 
-### 用户相关
-- `GET /api/v1/users/:address` - 获取用户信息
-- `POST /api/v1/users/profile` - 更新用户资料
-- `GET /api/v1/users/:address/balance` - 查询余额
+### User Management
+- `GET /api/v1/users/:address` - Get user information
+- `POST /api/v1/users/profile` - Update user profile
+- `GET /api/v1/users/:address/balance` - Query balance
 
-### 区块链相关
-- `GET /api/v1/blockchain/status` - 区块链状态
-- `POST /api/v1/blockchain/stake` - 质押代币
-- `GET /api/v1/blockchain/transactions/:address` - 交易记录
+### Blockchain
+- `GET /api/v1/blockchain/status` - Blockchain status
+- `POST /api/v1/blockchain/stake` - Stake tokens
+- `GET /api/v1/blockchain/transactions/:address` - Transaction records
 
-### 治理相关
-- `GET /api/v1/governance/proposals` - 提案列表
-- `POST /api/v1/governance/proposals` - 创建提案
-- `POST /api/v1/governance/vote` - 投票
+### Governance
+- `GET /api/v1/governance/proposals` - Proposal list
+- `POST /api/v1/governance/proposals` - Create proposal
+- `POST /api/v1/governance/vote` - Vote
 
-### 声誉系统
-- `GET /api/v1/reputation/user/:id` - 获取用户声誉
-- `GET /api/v1/reputation/address/:address` - 按钱包地址查询声誉
-- `GET /api/v1/reputation/ranking` - 声誉排行榜
-- `GET /api/v1/reputation/governance/eligible/:id` - 检查治理资格
+### Reputation System
+- `GET /api/v1/reputation/user/:id` - Get user reputation
+- `GET /api/v1/reputation/address/:address` - Query reputation by wallet address
+- `GET /api/v1/reputation/ranking` - Reputation leaderboard
+- `GET /api/v1/reputation/governance/eligible/:id` - Check governance eligibility
 
-## ⚙️ 环境变量配置
+## ⚙️ Environment Variable Configuration
 
 ```bash
-# 服务器配置
+# Server configuration
 SERVER_HOST=0.0.0.0
 SERVER_PORT=8080
 
-# 数据库配置
+# Database configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=bondly
 DB_PASSWORD=password
 DB_NAME=bondly_db
 
-# Redis 配置
+# Redis configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
 
-# 区块链配置
+# Blockchain configuration
 ETH_RPC_URL=https://mainnet.infura.io/v3/YOUR_KEY
 ETH_CONTRACT_ADDRESS=0x...
 ETH_REPUTATION_VAULT_ADDRESS=0x...
 
-# Kafka 配置
+# Kafka configuration
 KAFKA_BROKERS=localhost:9092
 KAFKA_TOPIC_BONDLY_EVENTS=bondly_events
 
-# 日志配置
+# Logging configuration
 LOG_LEVEL=info
 LOG_FORMAT=json
 
-# CORS 配置
+# CORS configuration
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 
-# JWT 配置
+# JWT configuration
 JWT_SECRET=your-secret-key
 
-# 钱包配置
+# Wallet configuration
 WALLET_SECRET_KEY=your-wallet-secret-key
 
-# 邮件配置
+# Email configuration
 EMAIL_PROVIDER=mock
 RESEND_API_KEY=your-resend-api-key
 EMAIL_FROM=Bondly <noreply@yourdomain.com>
 ```
 
-## 🛠️ 开发工具
+## 🛠️ Development Tools
 
-### 数据库表结构查看
+### Database Table Structure Viewer
 ```bash
-# 查看实际数据库表结构
+# View actual database table structure
 go run cmd/read-schema/main.go
 ```
 
-### 数据库迁移
+### Database Migration
 ```bash
-# 运行数据库迁移
+# Run database migration
 go run cmd/migrate/main.go
 ```
 
-### 生成 Swagger 文档
+### Generate Swagger Documentation
 ```bash
-# 生成 API 文档
+# Generate API documentation
 swag init -g main.go
 ```
 
-## 📊 统一响应格式
+## 📊 Unified Response Format
 
-### 成功响应
+### Success Response
 ```json
 {
   "code": 200,
   "message": "success",
   "data": {
-    // 实际数据
+    // Actual data
   }
 }
 ```
 
-### 错误响应
+### Error Response
 ```json
 {
   "code": 400,
-  "message": "错误信息",
+  "message": "Error message",
   "data": null
 }
 ```
 
-## 🧪 开发工具
+## 🧪 Development Tools
 
 ```bash
-# 格式化代码
+# Format code
 make fmt
 
-# 代码检查
+# Code checking
 make lint
 
-# 运行测试
+# Run tests
 make test
 
-# 构建应用
+# Build application
 make build
 
-# 数据库迁移
+# Database migration
 make migrate
 ```
 
-## 🐳 Docker 部署
+## 🐳 Docker Deployment
 
 ```bash
-# 构建并启动开发环境
+# Build and start development environment
 docker-compose -f docker-compose.dev.yml up -d
 
-# 查看服务状态
+# Check service status
 docker ps
 
-# 查看日志
+# View logs
 docker logs bondly-api
 
-# 停止服务
+# Stop services
 docker-compose -f docker-compose.dev.yml down
 ```
 
-## 🧪 API 测试示例
+## 🧪 API Testing Examples
 
-### 认证接口测试
+### Authentication Interface Testing
 
 ```bash
-# 发送验证码
+# Send verification code
 curl -X POST "http://localhost:8080/api/v1/auth/send-code" \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com"}'
 
-# 验证登录
+# Verify login
 curl -X POST "http://localhost:8080/api/v1/auth/verify-code" \
   -H "Content-Type: application/json" \
   -d '{"email": "test@example.com", "code": "123456"}'
 
-# 查询验证码状态
+# Query verification code status
 curl "http://localhost:8080/api/v1/auth/code-status?email=test@example.com"
 ```
 
-### 用户接口测试
+### User Interface Testing
 
 ```bash
-# 获取用户信息
+# Get user information
 curl "http://localhost:8080/api/v1/users/0x1234567890abcdef1234567890abcdef12345678"
 
-# 查询用户余额
+# Query user balance
 curl "http://localhost:8080/api/v1/users/0x1234567890abcdef1234567890abcdef12345678/balance"
 
-# 创建新用户
+# Create new user
 curl -X POST "http://localhost:8080/api/v1/users" \
   -H "Content-Type: application/json" \
   -d '{
@@ -576,80 +576,80 @@ curl -X POST "http://localhost:8080/api/v1/users" \
   }'
 ```
 
-### 系统接口测试
+### System Interface Testing
 
 ```bash
-# 健康检查
+# Health check
 curl "http://localhost:8080/health"
 
-# 区块链状态
+# Blockchain status
 curl "http://localhost:8080/api/v1/blockchain/status"
 
-# 治理提案列表
+# Governance proposal list
 curl "http://localhost:8080/api/v1/governance/proposals"
 
-# 声誉系统测试
+# Reputation system testing
 curl "http://localhost:8080/api/v1/reputation/user/1"
 curl "http://localhost:8080/api/v1/reputation/address/0x1234567890abcdef1234567890abcdef12345678"
 curl "http://localhost:8080/api/v1/reputation/ranking"
 curl "http://localhost:8080/api/v1/reputation/governance/eligible/1"
 ```
 
-## 📖 开发指南
+## 📖 Development Guide
 
-### 添加新功能模块
+### Adding New Feature Modules
 
-1. **创建模型** (`internal/models/`)
-2. **创建仓库** (`internal/repositories/`)
-3. **创建服务** (`internal/services/`)
-4. **创建处理器** (`internal/handlers/`)
-5. **注册路由** (`internal/server/`)
-6. **添加 Swagger 注释**
-7. **编写测试用例**
+1. **Create Model** (`internal/models/`)
+2. **Create Repository** (`internal/repositories/`)
+3. **Create Service** (`internal/services/`)
+4. **Create Handler** (`internal/handlers/`)
+5. **Register Routes** (`internal/server/`)
+6. **Add Swagger Comments**
+7. **Write Test Cases**
 
-### 最佳实践
+### Best Practices
 
-- 使用分层架构模式
-- 遵循 RESTful API 设计
-- 统一错误处理和日志记录
-- 为所有接口添加 Swagger 文档
-- 编写单元测试和集成测试
-- 使用依赖注入提高可测试性
+- Use layered architecture pattern
+- Follow RESTful API design
+- Unified error handling and logging
+- Add Swagger documentation for all interfaces
+- Write unit tests and integration tests
+- Use dependency injection to improve testability
 
 ---
 
-**文档版本**: v1.0 | **最后更新**: 2024年 
+**Document Version**: v1.0 | **Last Updated**: 2024
 
-## 🌱 数据库模拟数据填充（Seed）
+## 🌱 Database Mock Data Seeding (Seed)
 
-为了便于开发、联调和前端演示，Bondly 提供了一套一键生成类真实社交数据的数据库填充工具。
+To facilitate development, integration, and frontend demonstrations, Bondly provides a one-click database seeding tool that generates realistic social data.
 
-### 功能简介
-- 自动生成用户、文章、评论、关注关系、钱包绑定、提案、投票、链上交易等多种数据
-- 数据内容贴合 Web3 社交博客场景，包含丰富的链上与链下交互
-- 支持多次重置，便于开发环境反复测试
+### Feature Overview
+- Automatically generates users, articles, comments, follow relationships, wallet bindings, proposals, votes, on-chain transactions, and other data
+- Data content fits Web3 social blogging scenarios, includes rich on-chain and off-chain interactions
+- Supports multiple resets for repeated testing in development environment
 
-### 使用方法
+### Usage Guide
 
-1. **确保数据库已初始化并可连接**（建议先执行 `make migrate` 完成表结构迁移）
-2. 在 bondly-api 目录下执行：
+1. **Ensure database is initialized and connectable** (recommend running `make migrate` first to complete table structure migration)
+2. Execute in the bondly-api directory:
 
 ```bash
 make seed
 ```
 
-3. 运行成功后，数据库将自动填充一批模拟数据，可直接通过前端或数据库工具查看。
+3. After successful execution, the database will automatically populate with mock data that can be viewed directly through the frontend or database tools.
 
-### 数据类型说明
-- **用户**：包含钱包地址、邮箱、昵称、头像、角色、声誉分等
-- **文章**：多主题内容，带标签、封面、浏览量、点赞数
-- **评论**：分布在不同文章下，内容多样
-- **关注关系**：模拟真实社交网络结构
-- **钱包绑定**：每个用户可绑定多个链钱包，支持多链
-- **提案/投票**：DAO 治理场景下的提案与投票
-- **链上交易**：模拟真实的链上转账、状态
+### Data Type Description
+- **Users**: Includes wallet addresses, emails, nicknames, avatars, roles, reputation scores, etc.
+- **Articles**: Multi-topic content with tags, covers, view counts, like counts
+- **Comments**: Distributed across different articles with diverse content
+- **Follow Relationships**: Simulates real social network structure
+- **Wallet Bindings**: Each user can bind multiple chain wallets, supports multi-chain
+- **Proposals/Votes**: Proposals and votes in DAO governance scenarios
+- **On-chain Transactions**: Simulates real on-chain transfers and status
 
-### 注意事项
-- 每次执行 `make seed` 会清空相关表并重新生成数据（开发环境专用，勿在生产环境运行）
-- 如需自定义数据量或内容，可修改 `cmd/seed-data/main.go`
-- 该工具仅用于开发、测试和演示，不建议用于生产环境 
+### Important Notes
+- Each execution of `make seed` will clear related tables and regenerate data (development environment only, do not run in production)
+- To customize data volume or content, modify `cmd/seed-data/main.go`
+- This tool is only for development, testing, and demonstration, not recommended for production environment 

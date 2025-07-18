@@ -1,407 +1,407 @@
-# Bondly 智能合约系统指南
+# Bondly Smart Contract System Guide
 
-## 📋 目录
+## 📋 Table of Contents
 
-- [系统架构总览](#系统架构总览)
-- [合约部署指南](#合约部署指南)
-- [测试指南](#测试指南)
-- [脚本工具](#脚本工具)
-- [各模块详细文档](#各模块详细文档)
+- [System Architecture Overview](#system-architecture-overview)
+- [Contract Deployment Guide](#contract-deployment-guide)
+- [Testing Guide](#testing-guide)
+- [Script Tools](#script-tools)
+- [Module Detailed Documentation](#module-detailed-documentation)
 
 ---
 
-## 🏗️ 系统架构总览
+## 🏗️ System Architecture Overview
 
-Bondly 是一个完整的去中心化内容创作平台智能合约系统，支持内容资产化、社区治理、互动激励、声誉建设、成就徽章等核心功能。所有模块通过统一的注册表系统进行管理，支持灵活升级与去中心化治理。
+Bondly is a complete decentralized content creation platform smart contract system that supports core features such as content assetization, community governance, interaction incentives, reputation building, and achievement badges. All modules are managed through a unified registry system, supporting flexible upgrades and decentralized governance.
 
-### 核心模块
+### Core Modules
 
-#### 🪙 代币系统 (Token)
-- **BondlyTokenV2**: 平台原生代币，支持 ERC20、Permit、Votes、UUPS 升级、角色权限管理
-- **BondlyToken**: 代币初始版本，提供基础代币功能
+#### 🪙 Token System (Token)
+- **BondlyTokenV2**: Platform native token, supports ERC20, Permit, Votes, UUPS upgrade, role permission management
+- **BondlyToken**: Initial token version, provides basic token functionality
 
-#### 🖼️ NFT 系统 (NFT)
-- **ContentNFT**: 内容资产化 NFT，支持创作者追踪、独立元数据、IPFS 存储
-- **AchievementNFT**: 成就徽章 SBT，不可转让，记录用户荣誉和贡献
+#### 🖼️ NFT System (NFT)
+- **ContentNFT**: Content assetization NFT, supports creator tracking, independent metadata, IPFS storage
+- **AchievementNFT**: Achievement badge SBT, non-transferable, records user honors and contributions
 
-#### 🏆 声誉系统 (Reputation)
-- **ReputationVault**: 声誉分数管理，支持快照和治理权重计算
-- **InteractionStaking**: 互动质押机制，用户互动需质押 BOND，奖励归创作者
-- **RewardDistributor**: 基于声誉的奖励分配系统
-- **GeneralStaking**: 通用质押合约，支持多种质押场景
-- **ETHStaking**: ETH 质押合约，用户质押 ETH 获得 BOND 奖励
-- **MixedTokenReputationStrategy**: 混合权重策略，结合代币和声誉计算投票权重
+#### 🏆 Reputation System (Reputation)
+- **ReputationVault**: Reputation score management, supports snapshots and governance weight calculation
+- **InteractionStaking**: Interaction staking mechanism, user interactions require BOND staking, rewards go to creators
+- **RewardDistributor**: Reputation-based reward distribution system
+- **GeneralStaking**: General staking contract, supports multiple staking scenarios
+- **ETHStaking**: ETH staking contract, users stake ETH to earn BOND rewards
+- **MixedTokenReputationStrategy**: Mixed weight strategy, combines token and reputation for voting weight calculation
 
-#### 🏛️ 治理系统 (Governance)
-- **BondlyDAO**: 去中心化治理合约，支持提案创建、投票、执行
-- **BondlyVoting**: 投票机制，支持多种权重计算方式
+#### 🏛️ Governance System (Governance)
+- **BondlyDAO**: Decentralized governance contract, supports proposal creation, voting, execution
+- **BondlyVoting**: Voting mechanism, supports multiple weight calculation methods
 
-#### 💰 资金库系统 (Treasury)
-- **BondlyTreasury**: 多币种资金管理，支持 ETH 和 BOND 代币，集成 DAO 治理
+#### 💰 Treasury System (Treasury)
+- **BondlyTreasury**: Multi-currency fund management, supports ETH and BOND tokens, integrated with DAO governance
 
-#### 📋 注册表系统 (Registry)
-- **BondlyRegistry**: 统一合约地址管理，支持版本控制和升级
+#### 📋 Registry System (Registry)
+- **BondlyRegistry**: Unified contract address management, supports version control and upgrades
 
-### 合约目录结构
+### Contract Directory Structure
 
 ```
 contracts/
-├── token/                    # 代币系统
-│   ├── BondlyToken.sol      # 主代币合约 (ERC20 + UUPS)
-│   └── BondlyTokenV2.sol    # 代币升级版本 (支持多重铸币权限)
-├── nft/                     # NFT 系统
-│   ├── ContentNFT.sol       # 内容 NFT (创作者追踪 + IPFS)
-│   └── AchievementNFT.sol   # 成就 SBT (不可转让)
-├── reputation/              # 声誉系统
-│   ├── ReputationVault.sol  # 声誉分数管理
-│   ├── RewardDistributor.sol # 奖励分配器
-│   ├── InteractionStaking.sol # 互动质押 (点赞/评论/收藏)
-│   ├── GeneralStaking.sol   # 通用质押合约
-│   ├── ETHStaking.sol       # ETH 质押合约
-│   ├── MixedTokenReputationStrategy.sol # 混合权重策略
-│   └── IReputationVault.sol # 声誉库接口
-├── governance/              # 治理系统
-│   ├── BondlyDAO.sol        # DAO 治理合约 (提案管理)
-│   ├── BondlyVoting.sol     # 投票机制 (多种权重)
-│   ├── IBondlyDAO.sol       # DAO 接口
-│   └── IBondlyVoting.sol    # 投票接口
-├── treasury/                # 资金管理
-│   ├── BondlyTreasury.sol   # 资金库合约 (多币种管理)
-│   └── IBondlyTreasury.sol  # 资金库接口
-└── registry/                # 注册表系统
-    ├── BondlyRegistry.sol   # 注册表合约 (统一寻址)
-    └── IBondlyRegistry.sol  # 注册表接口
+├── token/                    # Token System
+│   ├── BondlyToken.sol      # Main Token Contract (ERC20 + UUPS)
+│   └── BondlyTokenV2.sol    # Token Upgrade Version (supports multiple minting permissions)
+├── nft/                     # NFT System
+│   ├── ContentNFT.sol       # Content NFT (Creator Tracking + IPFS)
+│   └── AchievementNFT.sol   # Achievement SBT (Non-transferable)
+├── reputation/              # Reputation System
+│   ├── ReputationVault.sol  # Reputation Score Management
+│   ├── RewardDistributor.sol # Reward Distributor
+│   ├── InteractionStaking.sol # Interaction Staking (Like/Comment/Collect)
+│   ├── GeneralStaking.sol   # General Staking Contract
+│   ├── ETHStaking.sol       # ETH Staking Contract
+│   ├── MixedTokenReputationStrategy.sol # Mixed Weight Strategy
+│   └── IReputationVault.sol # Reputation Vault Interface
+├── governance/              # Governance System
+│   ├── BondlyDAO.sol        # DAO Governance Contract (Proposal Management)
+│   ├── BondlyVoting.sol     # Voting Mechanism (Multiple Weights)
+│   ├── IBondlyDAO.sol       # DAO Interface
+│   └── IBondlyVoting.sol    # Voting Interface
+├── treasury/                # Fund Management
+│   ├── BondlyTreasury.sol   # Treasury Contract (Multi-currency Management)
+│   └── IBondlyTreasury.sol  # Treasury Interface
+└── registry/                # Registry System
+    ├── BondlyRegistry.sol   # Registry Contract (Unified Addressing)
+    └── IBondlyRegistry.sol  # Registry Interface
 ```
 
 ---
 
-## 🚀 合约部署指南
+## 🚀 Contract Deployment Guide
 
-### 环境准备
+### Environment Preparation
 
-#### 1. 安装依赖
+#### 1. Install Dependencies
 ```bash
 npm install
 ```
 
-#### 2. 配置环境变量
-复制环境变量模板：
+#### 2. Configure Environment Variables
+Copy environment variable template:
 ```bash
 cp env.example .env
 ```
 
-配置必要的环境变量：
+Configure necessary environment variables:
 ```env
-# 网络配置
+# Network configuration
 NETWORK=sepolia
 PRIVATE_KEY=your-private-key
 
-# 部署配置
+# Deployment configuration
 BOND_TOKEN_ADDRESS=0x...
 REGISTRY_ADDRESS=0x...
 ```
 
-### 部署流程
+### Deployment Process
 
-#### 1. 完整部署
+#### 1. Complete Deployment
 ```bash
-# 部署所有合约
+# Deploy all contracts
 npx hardhat run scripts/deploy/deploy.ts --network sepolia
 ```
 
-#### 2. 分步部署
+#### 2. Step-by-step Deployment
 ```bash
-# 部署代币合约
+# Deploy token contract
 npx hardhat run scripts/deploy/token.ts --network sepolia
 
-# 部署注册表
+# Deploy registry
 npx hardhat run scripts/deploy/registry.ts --network sepolia
 
-# 部署治理系统
+# Deploy governance system
 npx hardhat run scripts/deploy/governance.ts --network sepolia
 ```
 
-#### 3. 质押系统部署
+#### 3. Staking System Deployment
 ```bash
-# 部署ETH质押合约
+# Deploy ETH staking contract
 npx hardhat run scripts/deploy-staking-only.ts --network sepolia
 
-# 部署互动质押合约
+# Deploy interaction staking contract
 npx hardhat run scripts/deploy-interaction-staking.ts --network sepolia
 ```
 
-### 部署验证
+### Deployment Verification
 
-#### 1. 检查部署状态
+#### 1. Check Deployment Status
 ```bash
-# 检查已部署的合约
+# Check deployed contracts
 npx hardhat run scripts/check-deployed-contracts.ts --network sepolia
 ```
 
-#### 2. 验证合约
+#### 2. Verify Contracts
 ```bash
-# 验证合约代码
+# Verify contract code
 npx hardhat run scripts/utils/verify.ts --network sepolia
 ```
 
-### 部署后配置
+### Post-deployment Configuration
 
-#### 1. 设置权限
+#### 1. Set Permissions
 ```bash
-# 检查管理员权限
+# Check admin permissions
 npx hardhat run scripts/check-admin-permissions.ts --network sepolia
 ```
 
-#### 2. 初始化质押奖励
+#### 2. Initialize Staking Rewards
 ```bash
-# 设置质押奖励
+# Set staking rewards
 npx hardhat run scripts/setup-staking-with-rewards.ts --network sepolia
 ```
 
 ---
 
-## 🧪 测试指南
+## 🧪 Testing Guide
 
-### 测试覆盖率
+### Test Coverage
 
-#### 总体覆盖率
-- **总体覆盖率**: 46.53%
-- **语句覆盖率**: 46.53%
-- **分支覆盖率**: 41.4%
-- **函数覆盖率**: 69.65%
-- **行覆盖率**: 50.18%
+#### Overall Coverage
+- **Overall Coverage**: 46.53%
+- **Statement Coverage**: 46.53%
+- **Branch Coverage**: 41.4%
+- **Function Coverage**: 69.65%
+- **Line Coverage**: 50.18%
 
-#### 各模块覆盖率
-- **NFT模块**: 96.15% (优秀)
-- **代币模块**: 98.48% (优秀)
-- **注册表模块**: 93.1% (优秀)
-- **声誉模块**: 66.13% (中等)
-- **治理模块**: 14.24% (需要集成测试)
-- **资金库模块**: 43.37% (中等)
+#### Module Coverage
+- **NFT Module**: 96.15% (Excellent)
+- **Token Module**: 98.48% (Excellent)
+- **Registry Module**: 93.1% (Excellent)
+- **Reputation Module**: 66.13% (Medium)
+- **Governance Module**: 14.24% (Needs integration testing)
+- **Treasury Module**: 43.37% (Medium)
 
-### 运行测试
+### Running Tests
 
-#### 1. 运行所有测试
+#### 1. Run All Tests
 ```bash
 npm test
 ```
 
-#### 2. 运行特定模块测试
+#### 2. Run Specific Module Tests
 ```bash
-# 测试代币合约
+# Test token contract
 npx hardhat test test/token/BondlyTokenUpgradeable.basic.test.ts
 
-# 测试NFT合约
+# Test NFT contract
 npx hardhat test test/nft/ContentNFT.test.ts
 
-# 测试声誉合约
+# Test reputation contract
 npx hardhat test test/reputation/ReputationVault.test.ts
 ```
 
-#### 3. 运行覆盖率测试
+#### 3. Run Coverage Tests
 ```bash
 npm run coverage
 ```
 
-### 测试文件结构
+### Test File Structure
 
 ```
 test/
-├── governace/           # 治理系统测试
+├── governace/           # Governance system tests
 │   ├── BondlyDAO.test.ts
 │   └── BondlyVoting.test.ts
-├── nft/                # NFT系统测试
+├── nft/                # NFT system tests
 │   ├── AchievementNFT.comprehensive.test.ts
 │   └── ContentNFT.test.ts
-├── registry/           # 注册表测试
+├── registry/           # Registry tests
 │   └── BondlyRegistry.test.ts
-├── reputation/         # 声誉系统测试
+├── reputation/         # Reputation system tests
 │   ├── InteractionStaking.test.ts
 │   ├── MixedTokenReputationStrategy.test.ts
 │   ├── ReputationVault.test.ts
 │   └── RewardDistributor.test.ts
-├── token/              # 代币测试
+├── token/              # Token tests
 │   └── BondlyTokenUpgradeable.basic.test.ts
-└── treasury/           # 资金库测试
+└── treasury/           # Treasury tests
     └── BondlyTreasury.test.ts
 ```
 
 ---
 
-## 🛠️ 脚本工具
+## 🛠️ Script Tools
 
-### 部署脚本
+### Deployment Scripts
 
-#### 主要部署脚本
-- `scripts/deploy/deploy.ts` - 完整部署脚本
-- `scripts/deploy/token.ts` - 代币部署脚本
-- `scripts/deploy/governance.ts` - 治理系统部署脚本
-- `scripts/deploy-staking-only.ts` - ETH质押部署脚本
-- `scripts/deploy-interaction-staking.ts` - 互动质押部署脚本
+#### Main Deployment Scripts
+- `scripts/deploy/deploy.ts` - Complete deployment script
+- `scripts/deploy/token.ts` - Token deployment script
+- `scripts/deploy/governance.ts` - Governance system deployment script
+- `scripts/deploy-staking-only.ts` - ETH staking deployment script
+- `scripts/deploy-interaction-staking.ts` - Interaction staking deployment script
 
-#### 工具脚本
-- `scripts/check-deployed-contracts.ts` - 检查部署状态
-- `scripts/check-admin-permissions.ts` - 检查管理员权限
-- `scripts/check-balance.ts` - 检查余额
-- `scripts/check-staking-rewards.ts` - 检查质押奖励
+#### Utility Scripts
+- `scripts/check-deployed-contracts.ts` - Check deployment status
+- `scripts/check-admin-permissions.ts` - Check admin permissions
+- `scripts/check-balance.ts` - Check balance
+- `scripts/check-staking-rewards.ts` - Check staking rewards
 
-### 管理脚本
+### Management Scripts
 
-#### 质押管理
-- `scripts/setup-staking-with-rewards.ts` - 设置质押奖励
-- `scripts/activate-staking-rewards.ts` - 激活质押奖励
-- `scripts/adjust-apy.ts` - 调整APY
-- `scripts/reset-rewards.ts` - 重置奖励
+#### Staking Management
+- `scripts/setup-staking-with-rewards.ts` - Set staking rewards
+- `scripts/activate-staking-rewards.ts` - Activate staking rewards
+- `scripts/adjust-apy.ts` - Adjust APY
+- `scripts/reset-rewards.ts` - Reset rewards
 
-#### 代币管理
-- `scripts/mint-to-relay.ts` - 向中转钱包铸币
-- `scripts/mint-v2.ts` - V2代币铸币
-- `scripts/transfer-v2.ts` - V2代币转账
+#### Token Management
+- `scripts/mint-to-relay.ts` - Mint tokens to relay wallet
+- `scripts/mint-v2.ts` - V2 token minting
+- `scripts/transfer-v2.ts` - V2 token transfer
 
-#### 调试脚本
-- `scripts/debug-registry.ts` - 调试注册表
-- `scripts/debug-staking-rewards.ts` - 调试质押奖励
-- `scripts/fix-registry.ts` - 修复注册表
+#### Debug Scripts
+- `scripts/debug-registry.ts` - Debug registry
+- `scripts/debug-staking-rewards.ts` - Debug staking rewards
+- `scripts/fix-registry.ts` - Fix registry
 
-### 脚本使用示例
+### Script Usage Examples
 
-#### 检查部署状态
+#### Check Deployment Status
 ```bash
 npx hardhat run scripts/check-deployed-contracts.ts --network sepolia
 ```
 
-#### 检查管理员权限
+#### Check Admin Permissions
 ```bash
 npx hardhat run scripts/check-admin-permissions.ts --network sepolia
 ```
 
-#### 设置质押奖励
+#### Set Staking Rewards
 ```bash
 npx hardhat run scripts/setup-staking-with-rewards.ts --network sepolia
 ```
 
 ---
 
-## 📚 各模块详细文档
+## 📚 Module Detailed Documentation
 
-### 🪙 代币系统 (BondlyTokenV2)
+### 🪙 Token System (BondlyTokenV2)
 
-**主要特性：**
-- ✅ **ERC20 标准代币** - 完全兼容 ERC20 标准
-- ✅ **可升级合约** - 使用 UUPS 代理模式，支持合约升级
-- ✅ **多重铸币权限** - 支持 MINTER_ROLE 和 DAO 地址铸币
-- ✅ **批量铸币** - 一次性为多个地址铸造代币
-- ✅ **代币销毁** - 支持强制销毁和用户自助销毁
-- ✅ **投票权重** - 集成 ERC20Votes，用于治理投票
-- ✅ **暂停机制** - 紧急情况下可暂停合约操作
-- ✅ **权限管理** - 基于 AccessControl 的角色权限系统
+**Main Features:**
+- ✅ **ERC20 Standard Token** - Fully compatible with ERC20 standard
+- ✅ **Upgradeable Contract** - Uses UUPS proxy pattern, supports contract upgrades
+- ✅ **Multiple Minting Permissions** - Supports MINTER_ROLE and DAO address minting
+- ✅ **Batch Minting** - Mint tokens for multiple addresses at once
+- ✅ **Token Burning** - Supports forced burning and user self-burning
+- ✅ **Voting Weight** - Integrates ERC20Votes for governance voting
+- ✅ **Pause Mechanism** - Can pause contract operations in emergencies
+- ✅ **Permission Management** - Role-based permission system using AccessControl
 
-**关键功能：**
+**Key Functions:**
 ```solidity
-// 铸币功能 - 支持 MINTER_ROLE 或 DAO
+// Minting function - supports MINTER_ROLE or DAO
 function mint(address to, uint256 amount, string memory reason)
 
-// 批量铸币
+// Batch minting
 function batchMint(address[] memory recipients, uint256[] memory amounts, string memory reason)
 
-// 代币销毁
+// Token burning
 function burn(address from, uint256 amount, string memory reason)
 function selfBurn(uint256 amount, string memory reason)
 ```
 
-### 🖼️ NFT 系统
+### 🖼️ NFT System
 
-**ContentNFT - 内容资产化：**
-- ✅ **内容 NFT 化** - 将用户创作内容铸造为 NFT
-- ✅ **元数据管理** - 标题、摘要、封面图、IPFS 链接
-- ✅ **创作者追踪** - 自动记录内容创作者地址
-- ✅ **IPFS 集成** - 支持去中心化内容存储
-- ✅ **权限控制** - 仅授权地址可铸造 NFT
+**ContentNFT - Content Assetization:**
+- ✅ **Content NFTization** - Mint user-created content as NFTs
+- ✅ **Metadata Management** - Title, summary, cover image, IPFS links
+- ✅ **Creator Tracking** - Automatically records content creator address
+- ✅ **IPFS Integration** - Supports decentralized content storage
+- ✅ **Permission Control** - Only authorized addresses can mint NFTs
 
-**AchievementNFT - 成就徽章：**
-- ✅ **不可转让 SBT** - 灵魂绑定代币，记录用户成就
-- ✅ **多类型成就** - 支持不同类型的成就徽章
-- ✅ **历史追踪** - 记录用户获得成就的时间线
+**AchievementNFT - Achievement Badges:**
+- ✅ **Non-transferable SBT** - Soul-bound tokens, records user achievements
+- ✅ **Multiple Achievement Types** - Supports different types of achievement badges
+- ✅ **History Tracking** - Records timeline of user achievements
 
-### 🏆 声誉系统
+### 🏆 Reputation System
 
-**InteractionStaking - 互动质押：**
-- ✅ **互动质押** - 点赞、评论、收藏需质押 BOND 代币
-- ✅ **奖励分配** - 质押金额作为奖励分配给内容创作者
-- ✅ **质押撤回** - 用户可撤回未结算的质押
-- ✅ **防重复互动** - 每个用户对每个内容只能互动一次
-- ✅ **灵活配置** - 不同互动类型的质押金额可配置
+**InteractionStaking - Interaction Staking:**
+- ✅ **Interaction Staking** - Liking, commenting, collecting requires BOND token staking
+- ✅ **Reward Allocation** - Staked amount is allocated as rewards to content creators
+- ✅ **Staking Withdrawal** - Users can withdraw unclaimed staking
+- ✅ **Anti-duplicate Interaction** - Each user can only interact with each content once
+- ✅ **Flexible Configuration** - Staking amount for different interaction types can be configured
 
-**ReputationVault - 声誉管理：**
-- ✅ **声誉分数** - 基于用户行为计算声誉分数
-- ✅ **快照机制** - 支持声誉快照，用于治理投票
-- ✅ **治理权重** - 声誉分数影响治理投票权重
+**ReputationVault - Reputation Management:**
+- ✅ **Reputation Score** - Reputation score calculated based on user behavior
+- ✅ **Snapshot Mechanism** - Supports reputation snapshots for governance voting
+- ✅ **Governance Weight** - Reputation score affects governance voting weight
 
-**RewardDistributor - 奖励分配：**
-- ✅ **声誉奖励** - 基于声誉分数分配 BOND 奖励
-- ✅ **防重复领取** - 防止用户重复领取奖励
-- ✅ **多代币支持** - 支持多种代币的奖励分配
+**RewardDistributor - Reward Distribution:**
+- ✅ **Reputation Rewards** - BOND rewards allocated based on reputation score
+- ✅ **Anti-duplicate Claiming** - Prevents users from claiming rewards repeatedly
+- ✅ **Multi-token Support** - Supports reward allocation for multiple tokens
 
-**ETHStaking - ETH 质押：**
-- ✅ **ETH 质押** - 用户可质押 ETH 获得 BOND 奖励
-- ✅ **实时 APY** - 动态计算和显示年化收益率
-- ✅ **组合操作** - 支持质押并领取、解除质押并领取
-- ✅ **无锁定期** - 用户可以随时解除质押
-- ✅ **奖励管理** - 管理员可添加奖励流动性
-- ✅ **安全机制** - 重入保护、暂停机制、紧急提取
+**ETHStaking - ETH Staking:**
+- ✅ **ETH Staking** - Users can stake ETH to earn BOND rewards
+- ✅ **Real-time APY** - Dynamic calculation and display of annualized yield
+- ✅ **Combined Operations** - Supports staking and claiming, unstaking and claiming
+- ✅ **No Lock Period** - Users can unstake at any time
+- ✅ **Reward Management** - Admins can add reward liquidity
+- ✅ **Security Mechanisms** - Reentrancy protection, pause mechanism, emergency withdrawal
 
-### 🏛️ 治理系统
+### 🏛️ Governance System
 
-**BondlyDAO - 去中心化治理：**
-- ✅ **提案管理** - 创建、激活、执行治理提案
-- ✅ **双通道提案** - 支持押金提案和声誉提案
-- ✅ **投票机制** - 支持赞成/反对投票
-- ✅ **权限控制** - 仅授权执行者可执行提案
-- ✅ **函数白名单** - 限制可调用的合约函数
+**BondlyDAO - Decentralized Governance:**
+- ✅ **Proposal Management** - Create, activate, execute governance proposals
+- ✅ **Double-channel Proposals** - Supports deposit proposals and reputation proposals
+- ✅ **Voting Mechanism** - Supports approval/rejection voting
+- ✅ **Permission Control** - Only authorized executors can execute proposals
+- ✅ **Function Whitelisting** - Limits callable contract functions
 
-**BondlyVoting - 投票机制：**
-- ✅ **多种权重** - 支持代币权重、声誉权重、混合权重
-- ✅ **投票记录** - 防止重复投票
-- ✅ **快照投票** - 基于快照的投票权重计算
+**BondlyVoting - Voting Mechanism:**
+- ✅ **Multiple Weights** - Supports token weight, reputation weight, mixed weight
+- ✅ **Voting Record** - Prevents duplicate voting
+- ✅ **Snapshot Voting** - Voting weight calculation based on snapshots
 
-### 💰 资金库系统
+### 💰 Treasury System
 
-**BondlyTreasury - 多币种资金管理：**
-- ✅ **多币种支持** - 同时管理 ETH 和 BOND 代币
-- ✅ **DAO 集成** - 与治理系统深度集成
-- ✅ **提案执行** - 执行 DAO 批准的提案
-- ✅ **权限分级** - viewer、operator 不同权限级别
-- ✅ **紧急提取** - 紧急情况下可提取资金
-- ✅ **参数管理** - 动态调整提案金额限制
+**BondlyTreasury - Multi-currency Fund Management:**
+- ✅ **Multi-currency Support** - Manages ETH and BOND tokens simultaneously
+- ✅ **DAO Integration** - Deeply integrated with governance system
+- ✅ **Proposal Execution** - Executes DAO approved proposals
+- ✅ **Permission Levels** - viewer, operator different permission levels
+- ✅ **Emergency Withdrawal** - Can withdraw funds in emergencies
+- ✅ **Parameter Management** - Dynamically adjusts proposal amount limits
 
-### 📋 注册表系统
+### 📋 Registry System
 
-**BondlyRegistry - 统一地址管理：**
-- ✅ **合约寻址** - 统一管理所有合约地址
-- ✅ **版本控制** - 支持合约版本管理
-- ✅ **地址查询** - 通过名称查询合约地址
-- ✅ **升级支持** - 支持合约升级和地址更新
-
----
-
-## 🛡️ 安全特性
-
-### 权限管理
-- **角色权限** - 基于 OpenZeppelin AccessControl
-- **权限分级** - 不同角色拥有不同权限
-- **权限验证** - 严格的权限检查机制
-
-### 安全机制
-- **暂停机制** - 紧急情况下可暂停合约
-- **重入保护** - 防止重入攻击
-- **输入验证** - 严格的参数验证
-- **事件记录** - 完整的操作日志
-
-### 可升级性
-- **UUPS 代理** - 支持合约升级
-- **版本管理** - 支持合约版本迭代
-- **升级控制** - 只有授权地址可升级
+**BondlyRegistry - Unified Address Management:**
+- ✅ **Contract Addressing** - Unifies management of all contract addresses
+- ✅ **Version Control** - Supports contract version management
+- ✅ **Address Query** - Queries contract address by name
+- ✅ **Upgrade Support** - Supports contract upgrades and address updates
 
 ---
 
-**文档版本**: v1.0 | **最后更新**: 2024年12月 
+## 🛡️ Security Features
+
+### Permission Management
+- **Role-based Permissions** - Based on OpenZeppelin AccessControl
+- **Permission Levels** - Different roles have different permissions
+- **Permission Validation** - Strict permission check mechanism
+
+### Security Mechanisms
+- **Pause Mechanism** - Can pause contracts in emergencies
+- **Reentrancy Protection** - Prevents reentrancy attacks
+- **Input Validation** - Strict parameter validation
+- **Event Logging** - Complete operation logs
+
+### Upgradability
+- **UUPS Proxy** - Supports contract upgrades
+- **Version Management** - Supports contract version iteration
+- **Upgrade Control** - Only authorized addresses can upgrade
+
+---
+
+**Document Version**: v1.0 | **Last Updated**: 2024-12-01 

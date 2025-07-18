@@ -1,233 +1,233 @@
-# Bondly 部署配置指南
+# Bondly Deployment Configuration Guide
 
-## 📋 目录
+## 📋 Table of Contents
 
-- [空投功能配置](#空投功能配置)
-- [钱包配置](#钱包配置)
-- [数据库配置](#数据库配置)
-- [环境变量配置](#环境变量配置)
+- [Airdrop Feature Configuration](#airdrop-feature-configuration)
+- [Wallet Configuration](#wallet-configuration)
+- [Database Configuration](#database-configuration)
+- [Environment Variables Configuration](#environment-variables-configuration)
 
 ---
 
-## 🪙 空投功能配置
+## 🪙 Airdrop Feature Configuration
 
-### 功能概述
+### Feature Overview
 
-当新用户首次注册/登录时，系统会自动向用户的钱包地址空投1000个BOND代币。
+When new users register/login for the first time, the system will automatically airdrop 1000 BOND tokens to the user's wallet address.
 
-### 配置步骤
+### Configuration Steps
 
-#### 1. 环境变量配置
+#### 1. Environment Variables Configuration
 
-在 `.env` 文件中添加以下配置：
+Add the following configuration to the `.env` file:
 
 ```bash
-# 以太坊网络配置
-ETH_RPC_URL=http://localhost:8545  # 或你的以太坊节点URL
+# Ethereum network configuration
+ETH_RPC_URL=http://localhost:8545  # or your Ethereum node URL
 
-# 中转钱包私钥（重要：请安全保管）
-ETH_RELAY_WALLET_KEY=你的中转钱包私钥（去掉0x前缀）
+# Relay wallet private key (Important: keep it secure)
+ETH_RELAY_WALLET_KEY=your-relay-wallet-private-key (remove 0x prefix)
 
-# BOND代币合约地址
+# BOND token contract address
 ETH_CONTRACT_ADDRESS=0x8Cb00D43b5627528d97831b9025F33aE3dE7415E
 ```
 
-#### 2. 中转钱包设置
+#### 2. Relay Wallet Setup
 
-1. **创建中转钱包**：
-   - 地址：`0x2C830B8D1a6A9B840bde165a36df2A69fc9AA075`
-   - 确保该钱包有足够的BOND代币余额（建议至少10000个）
+1. **Create relay wallet**:
+   - Address: `0x2C830B8D1a6A9B840bde165a36df2A69fc9AA075`
+   - Ensure the wallet has sufficient BOND token balance (recommend at least 10000)
 
-2. **获取私钥**：
-   - 从钱包导出私钥
-   - 去掉`0x`前缀
-   - 安全保存到环境变量中
+2. **Get private key**:
+   - Export private key from wallet
+   - Remove `0x` prefix
+   - Securely save to environment variables
 
-#### 3. 数据库迁移
+#### 3. Database Migration
 
-执行数据库迁移脚本：
+Execute database migration script:
 
 ```bash
-# 方法1：使用psql
+# Method 1: Using psql
 psql -U youruser -d yourdb -f cmd/migrate/add_airdrop_tables.sql
 
-# 方法2：使用数据库管理工具
-# 手动执行SQL脚本内容
+# Method 2: Using database management tool
+# Manually execute SQL script content
 ```
 
-迁移脚本会：
-- 在 `users` 表添加 `has_received_airdrop` 字段
-- 创建 `airdrop_records` 表记录空投流水
+Migration script will:
+- Add `has_received_airdrop` field to `users` table
+- Create `airdrop_records` table to record airdrop transactions
 
-#### 4. 测试配置
+#### 4. Test Configuration
 
-运行测试脚本验证配置：
+Run test script to verify configuration:
 
 ```bash
 go run cmd/test-airdrop/main.go
 ```
 
-测试脚本会检查：
-- 数据库连接
-- 以太坊网络连接
-- 中转钱包余额
-- 配置是否正确
+Test script will check:
+- Database connection
+- Ethereum network connection
+- Relay wallet balance
+- Whether configuration is correct
 
-### 功能流程
+### Feature Flow
 
-#### 用户注册流程
+#### User Registration Process
 
-1. 用户注册新账户
-2. 系统检查用户是否为新用户且未获得过空投
-3. 如果符合条件，异步执行空投：
-   - 检查中转钱包余额
-   - 发起BOND代币转账交易
-   - 记录空投流水
-   - 标记用户已获得空投
-4. 等待交易确认并更新状态
+1. User registers new account
+2. System checks if user is new and hasn't received airdrop
+3. If conditions are met, asynchronously execute airdrop:
+   - Check relay wallet balance
+   - Initiate BOND token transfer transaction
+   - Record airdrop transaction
+   - Mark user as having received airdrop
+4. Wait for transaction confirmation and update status
 
-#### 空投记录
+#### Airdrop Records
 
-每次空投都会在 `airdrop_records` 表中记录：
-- 用户ID
-- 钱包地址
-- 空投金额
-- 交易哈希
-- 状态（pending/success/failed）
-- 时间戳
+Each airdrop will be recorded in the `airdrop_records` table:
+- User ID
+- Wallet address
+- Airdrop amount
+- Transaction hash
+- Status (pending/success/failed)
+- Timestamp
 
-### 安全注意事项
+### Security Considerations
 
-#### 1. 私钥安全
-- 中转钱包私钥必须安全存储
-- 不要硬编码在代码中
-- 建议使用密钥管理服务
+#### 1. Private Key Security
+- Relay wallet private key must be stored securely
+- Do not hardcode in code
+- Recommend using key management service
 
-#### 2. 防重复空投
-- 系统通过 `has_received_airdrop` 字段防止重复空投
-- 每个用户只能获得一次空投
+#### 2. Prevent Duplicate Airdrops
+- System prevents duplicate airdrops through `has_received_airdrop` field
+- Each user can only receive one airdrop
 
-#### 3. 余额监控
-- 定期检查中转钱包余额
-- 设置余额告警
+#### 3. Balance Monitoring
+- Regularly check relay wallet balance
+- Set up balance alerts
 
-#### 4. 交易监控
-- 监控空投交易状态
-- 处理失败的交易
+#### 4. Transaction Monitoring
+- Monitor airdrop transaction status
+- Handle failed transactions
 
-### API接口
+### API Endpoints
 
-#### 获取用户空投状态
+#### Get User Airdrop Status
 
 ```http
 GET /api/users/{user_id}/airdrop-status
 ```
 
-#### 获取空投历史
+#### Get Airdrop History
 
 ```http
 GET /api/admin/airdrop-history?offset=0&limit=20
 ```
 
-### 监控和告警
+### Monitoring and Alerts
 
-建议设置以下监控：
+Recommended monitoring setup:
 
-1. **中转钱包余额监控**
-2. **空投成功率监控**
-3. **交易确认时间监控**
-4. **失败交易告警**
+1. **Relay wallet balance monitoring**
+2. **Airdrop success rate monitoring**
+3. **Transaction confirmation time monitoring**
+4. **Failed transaction alerts**
 
 ---
 
-## 🔐 钱包配置
+## 🔐 Wallet Configuration
 
-### WALLET_SECRET_KEY 环境变量配置
+### WALLET_SECRET_KEY Environment Variable Configuration
 
-`/api/v1/wallets/generate` 接口需要配置 `WALLET_SECRET_KEY` 环境变量来加密生成的托管钱包私钥。
+The `/api/v1/wallets/generate` endpoint requires the `WALLET_SECRET_KEY` environment variable to encrypt generated hosted wallet private keys.
 
-### 配置步骤
+### Configuration Steps
 
-#### 1. 复制环境变量模板
+#### 1. Copy Environment Variable Template
 ```bash
 cp env.example .env
 ```
 
-#### 2. 生成安全的32字节密钥
+#### 2. Generate Secure 32-byte Key
 ```bash
-# 使用 OpenSSL 生成随机密钥
+# Use OpenSSL to generate random key
 openssl rand -hex 32
 ```
 
-#### 3. 更新 .env 文件
-将生成的密钥设置到 `.env` 文件中：
+#### 3. Update .env File
+Set the generated key in the `.env` file:
 ```env
 WALLET_SECRET_KEY=your-generated-32-byte-hex-key
 ```
 
-### 示例配置
+### Example Configuration
 
 ```env
-# 其他配置...
+# Other configurations...
 WALLET_SECRET_KEY=2be4a7a16aa1c7f6be3cfb64aa1b7215bbf3e1aeab5e5bca867bb0d4adf35cb7
 ```
 
-### 安全注意事项
+### Security Considerations
 
-- **不要将真实的密钥提交到版本控制系统**
-- **在生产环境中使用强随机密钥**
-- **定期轮换密钥**
-- **确保密钥长度为32字节（64个十六进制字符）**
+- **Do not commit real keys to version control system**
+- **Use strong random keys in production environment**
+- **Regularly rotate keys**
+- **Ensure key length is 32 bytes (64 hexadecimal characters)**
 
-### 验证配置
+### Verify Configuration
 
-启动服务后，可以通过以下方式验证配置：
+After starting the service, you can verify the configuration with:
 
 ```bash
-# 测试钱包生成接口
+# Test wallet generation endpoint
 curl -X POST http://localhost:8080/api/v1/wallets/generate \
   -H "Content-Type: application/json"
 ```
 
-如果配置正确，接口将返回生成的托管钱包信息。
+If configured correctly, the endpoint will return generated hosted wallet information.
 
 ---
 
-## 🗄️ 数据库配置
+## 🗄️ Database Configuration
 
-### 数据库迁移
+### Database Migration
 
 ```bash
-# 运行数据库迁移
+# Run database migration
 go run cmd/migrate/main.go
 ```
 
-### 数据填充
+### Data Seeding
 
 ```bash
-# 填充测试数据
+# Seed test data
 go run cmd/seed-data/main.go
 ```
 
-### 查看表结构
+### View Table Structure
 
 ```bash
-# 运行表结构查看工具
+# Run table structure viewer
 go run cmd/read-schema/main.go
 ```
 
 ---
 
-## ⚙️ 环境变量配置
+## ⚙️ Environment Variables Configuration
 
-### 完整的环境变量示例
+### Complete Environment Variables Example
 
 ```env
-# 服务器配置
+# Server configuration
 SERVER_HOST=localhost
 SERVER_PORT=8080
 
-# 数据库配置
+# Database configuration
 DB_HOST=localhost
 DB_PORT=5432
 DB_USER=postgres
@@ -235,74 +235,74 @@ DB_PASSWORD=your_password
 DB_NAME=bondly_db
 DB_SSL_MODE=disable
 
-# Redis配置
+# Redis configuration
 REDIS_HOST=localhost
 REDIS_PORT=6379
 REDIS_PASSWORD=
 REDIS_DB=0
 
-# JWT配置
+# JWT configuration
 JWT_SECRET=your-jwt-secret-key
 JWT_EXPIRES_IN=24h
 
-# 邮件配置
+# Email configuration
 EMAIL_PROVIDER=resend
 EMAIL_RESEND_KEY=your-resend-api-key
 EMAIL_FROM_EMAIL=noreply@bondly.com
 
-# 以太坊配置
+# Ethereum configuration
 ETH_RPC_URL=http://localhost:8545
 ETH_RELAY_WALLET_KEY=your-relay-wallet-private-key
 ETH_CONTRACT_ADDRESS=0x8Cb00D43b5627528d97831b9025F33aE3dE7415E
 
-# 钱包配置
+# Wallet configuration
 WALLET_SECRET_KEY=your-32-byte-wallet-secret-key
 
-# 日志配置
+# Logging configuration
 LOG_LEVEL=info
 LOG_FORMAT=json
 
-# CORS配置
+# CORS configuration
 CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
 ```
 
-### 故障排除
+### Troubleshooting
 
-#### 常见问题
+#### Common Issues
 
-1. **编译错误**：
+1. **Compilation errors**:
    ```bash
    go mod tidy
    go build -o bondly-api .
    ```
 
-2. **数据库连接失败**：
-   - 检查数据库配置
-   - 确保数据库服务运行
+2. **Database connection failure**:
+   - Check database configuration
+   - Ensure database service is running
 
-3. **以太坊连接失败**：
-   - 检查RPC URL
-   - 确保网络连接正常
+3. **Ethereum connection failure**:
+   - Check RPC URL
+   - Ensure network connection is normal
 
-4. **空投失败**：
-   - 检查中转钱包余额
-   - 检查私钥配置
-   - 查看日志错误信息
+4. **Airdrop failure**:
+   - Check relay wallet balance
+   - Check private key configuration
+   - View log error messages
 
-#### 日志查看
+#### Log Viewing
 
-空投相关的日志会记录：
-- 业务逻辑日志
-- 数据库操作日志
-- 区块链交易日志
+Airdrop-related logs will record:
+- Business logic logs
+- Database operation logs
+- Blockchain transaction logs
 
 ---
 
-## 🔧 扩展功能
+## 🔧 Extended Features
 
-未来可以考虑添加：
+Future considerations for adding:
 
-1. **批量空投功能**
-2. **空投金额配置化**
-3. **空投条件扩展**（如邀请奖励）
-4. **空投统计报表** 
+1. **Batch airdrop functionality**
+2. **Configurable airdrop amounts**
+3. **Extended airdrop conditions** (such as invitation rewards)
+4. **Airdrop statistics reports** 
