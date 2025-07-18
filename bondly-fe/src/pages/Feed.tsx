@@ -183,7 +183,7 @@ export default function Feed({ isMobile }: FeedProps) {
     }, 600);
   };
 
-  // 处理点赞
+  // Handle like
   const handleLike = (postId: number) => {
     // TODO: 调用后端接口
     // const response = await fetch(`/api/posts/${postId}/like`, {
@@ -230,7 +230,7 @@ export default function Feed({ isMobile }: FeedProps) {
     );
   };
 
-  // 处理打赏
+  // Handle tip
   const handleTip = (postId: number, authorName: string) => {
     setTipModal({
       isOpen: true,
@@ -240,7 +240,7 @@ export default function Feed({ isMobile }: FeedProps) {
     });
   };
 
-  // 处理举报
+  // Handle report
   const handleReport = (postId: number, title: string, authorName: string) => {
     setReportModal({
       isOpen: true,
@@ -852,7 +852,7 @@ export default function Feed({ isMobile }: FeedProps) {
                   </div>
                 </div>
 
-                {/* 评论区域 */}
+                {/* Comment section */}
                 {selectedPost === post.id && (
                   <CommentSection
                     postId={post.id.toString()}
@@ -887,7 +887,7 @@ export default function Feed({ isMobile }: FeedProps) {
         </div>
       )}
 
-      {/* 打赏模态框 */}
+              {/* Tip modal */}
       <TipModal
         isOpen={tipModal.isOpen}
         onClose={() => setTipModal((prev) => ({ ...prev, isOpen: false }))}
@@ -897,7 +897,7 @@ export default function Feed({ isMobile }: FeedProps) {
         }}
       />
 
-      {/* 举报模态框 */}
+              {/* Report modal */}
       <ReportModal
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}

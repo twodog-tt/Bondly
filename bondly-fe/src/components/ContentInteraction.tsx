@@ -183,7 +183,7 @@ const ContentInteraction: React.FC<ContentInteractionProps> = ({
       padding: "16px 0",
       borderTop: "1px solid #374151"
     }}>
-      {/* 点赞 */}
+              {/* Like */}
       <button
         onClick={() => handleInteraction('like')}
         disabled={loading}

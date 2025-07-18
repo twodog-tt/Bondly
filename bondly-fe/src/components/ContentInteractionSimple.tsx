@@ -28,7 +28,7 @@ const ContentInteractionSimple: React.FC<ContentInteractionSimpleProps> = ({
     views: 0
   };
 
-  // 获取评论数量
+  // Get comment count
   useEffect(() => {
     const fetchCommentCount = async () => {
       try {
@@ -36,7 +36,7 @@ const ContentInteractionSimple: React.FC<ContentInteractionSimpleProps> = ({
         const count = await getCommentCount(contentId);
         setCommentCount(count);
       } catch (error) {
-        console.error('获取评论数量失败:', error);
+        console.error('Failed to get comment count:', error);
         // 如果获取失败，保持默认值0
       } finally {
         setLoading(false);

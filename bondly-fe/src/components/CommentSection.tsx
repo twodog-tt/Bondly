@@ -46,7 +46,7 @@ export default function CommentSection({
     authorName: "",
   });
 
-  // 加载评论列表
+  // Load comment list
   useEffect(() => {
     loadComments();
   }, [postId]);
@@ -61,18 +61,18 @@ export default function CommentSection({
       });
       setComments(response.comments || []);
     } catch (error) {
-      console.error('加载评论失败:', error);
-      notify('加载评论失败', 'error');
-      setComments([]); // 确保失败时设置为空数组而不是null
+      console.error('Failed to load comments:', error);
+      notify('Failed to load comments', 'error');
+              setComments([]); // Ensure empty array instead of null on failure
     } finally {
       setCommentLoading(false);
     }
   };
 
-  // 处理发表评论
+  // Handle post comment
   const handleSubmitComment = async () => {
     if (!isLoggedIn) {
-      notify('请先登录', 'error');
+      notify('Please login first', 'error');
       return;
     }
 
@@ -91,7 +91,7 @@ export default function CommentSection({
       const newCommentObj = await createComment(commentData);
 
       if (replyTo) {
-        // 将回复添加到对应评论的子评论中
+        // Add reply to the corresponding comment's child comments
         setComments((prev) =>
           prev.map((comment) =>
             comment.id === replyTo
@@ -105,32 +105,32 @@ export default function CommentSection({
         setReplyTo(null);
         setReplyContent("");
         setShowReplyForm(null);
-        notify("回复成功", "success");
+        notify("Reply posted successfully", "success");
       } else {
-        // 添加新评论到列表顶部
+        // Add new comment to the top of the list
         setComments((prev) => [newCommentObj, ...prev]);
         setNewComment("");
-        notify("评论成功", "success");
+        notify("Comment posted successfully", "success");
       }
     } catch (error) {
-      console.error('发表评论失败:', error);
-      notify('发表评论失败', 'error');
+      console.error('Failed to post comment:', error);
+      notify('Failed to post comment', 'error');
     } finally {
       setLoading(false);
     }
   };
 
-  // 处理点赞
+  // Handle like
   const handleLike = async (commentId: number) => {
     if (!isLoggedIn) {
-      notify('请先登录', 'error');
+      notify('Please login first', 'error');
       return;
     }
 
     try {
       await likeComment(commentId);
       
-      // 更新本地状态
+      // Update local state
       setComments((prev) =>
         prev.map((comment) => {
           if (comment.id === commentId) {
@@ -153,49 +153,49 @@ export default function CommentSection({
         })
       );
       
-      notify("点赞成功", "success");
+      notify("Liked successfully", "success");
     } catch (error) {
-      console.error('点赞失败:', error);
-      notify('点赞失败', 'error');
+      console.error('Failed to like comment:', error);
+      notify('Failed to like comment', 'error');
     }
   };
 
-  // 处理删除评论
+  // Handle delete comment
   const handleDeleteComment = async (commentId: number) => {
     if (!isLoggedIn) {
-      notify('请先登录', 'error');
+      notify('Please login first', 'error');
       return;
     }
 
     try {
       await deleteComment(commentId);
       
-      // 从本地状态中移除评论
+      // Remove comment from local state
       setComments((prev) => {
-        // 检查是否是主评论
+        // Check if it's a main comment
         const mainCommentIndex = prev.findIndex(c => c.id === commentId);
         if (mainCommentIndex !== -1) {
           return prev.filter((_, index) => index !== mainCommentIndex);
         }
         
-        // 检查是否是回复
+        // Check if it's a reply
         return prev.map(comment => ({
           ...comment,
           child_comments: comment.child_comments?.filter(reply => reply.id !== commentId) || []
         }));
       });
       
-      notify("删除成功", "success");
+      notify("Deleted successfully", "success");
     } catch (error) {
-      console.error('删除评论失败:', error);
-      notify('删除评论失败', 'error');
+      console.error('Failed to delete comment:', error);
+      notify('Failed to delete comment', 'error');
     }
   };
 
-  // 处理回复
+  // Handle reply
   const handleReply = (commentId: number) => {
     if (!isLoggedIn) {
-      notify('请先登录', 'error');
+      notify('Please login first', 'error');
       return;
     }
     setReplyTo(commentId);
@@ -203,7 +203,7 @@ export default function CommentSection({
     setReplyContent("");
   };
 
-  // 处理举报
+  // Handle report
   const handleReport = (
     commentId: number,
     content: string,
@@ -218,14 +218,14 @@ export default function CommentSection({
     });
   };
 
-  // 处理评论打赏
+  // Handle comment tip
   const handleTipComment = (commentId: number, authorName: string) => {
     if (onTipComment) {
       onTipComment(commentId.toString(), authorName);
     }
   };
 
-  // 格式化时间
+  // Format time
   const formatTime = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -234,19 +234,19 @@ export default function CommentSection({
     const hours = Math.floor(diff / 3600000);
     const days = Math.floor(diff / 86400000);
 
-    if (minutes < 1) return "刚刚";
-    if (minutes < 60) return `${minutes}分钟前`;
-    if (hours < 24) return `${hours}小时前`;
-    if (days < 7) return `${days}天前`;
+    if (minutes < 1) return "Just now";
+    if (minutes < 60) return `${minutes} minutes ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    if (days < 7) return `${days} days ago`;
     return date.toLocaleDateString();
   };
 
-  // 检查是否是评论作者
+  // Check if user is comment author
   const isCommentAuthor = (comment: Comment) => {
     return user && comment.author_id === user.user_id;
   };
 
-  // 渲染单个评论
+  // Render single comment
   const renderComment = (comment: Comment, isReply = false) => (
     <div 
       key={comment.id}
@@ -255,7 +255,7 @@ export default function CommentSection({
         position: 'relative'
       }}
     >
-      {/* 评论卡片 */}
+              {/* Comment card */}
       <div 
         style={{
           background: isReply 
@@ -270,7 +270,7 @@ export default function CommentSection({
           marginLeft: isReply ? '20px' : '0'
         }}
       >
-        {/* 装饰性边框 */}
+        {/* Decorative border */}
         <div 
           style={{
             position: 'absolute',
@@ -283,9 +283,9 @@ export default function CommentSection({
           }}
         />
         
-        {/* 用户信息 */}
+        {/* User info */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-          {/* 头像 */}
+          {/* Avatar */}
           {comment.author?.avatar_url ? (
             <div style={{
               width: isReply ? 32 : 40,
@@ -323,7 +323,7 @@ export default function CommentSection({
                 color: 'white',
                 fontSize: isReply ? '14px' : '15px'
               }}>
-                {comment.author?.nickname || "匿名用户"}
+                {comment.author?.nickname || "Anonymous"}
               </span>
               {comment.author?.reputation_score && comment.author.reputation_score > 100 && (
                 <span style={{
@@ -340,7 +340,7 @@ export default function CommentSection({
                   color: '#667eea',
                   fontSize: '12px',
                   fontWeight: '500'
-                }}>(作者)</span>
+                }}>(Author)</span>
               )}
             </div>
             <div style={{ 
@@ -350,14 +350,14 @@ export default function CommentSection({
               alignItems: 'center',
               gap: '8px'
             }}>
-              <span>声望: {comment.author?.reputation_score || 0}</span>
+              <span>Reputation: {comment.author?.reputation_score || 0}</span>
               <span>•</span>
               <span>{formatTime(comment.created_at)}</span>
             </div>
           </div>
         </div>
         
-        {/* 评论内容 */}
+        {/* Comment content */}
         <div style={{ 
           lineHeight: 1.6, 
           fontSize: isReply ? 14 : 16,
@@ -368,7 +368,7 @@ export default function CommentSection({
           {comment.content}
         </div>
         
-        {/* 操作按钮 */}
+        {/* Action buttons */}
         <div style={{ 
           display: 'flex', 
           gap: '8px', 
@@ -429,7 +429,7 @@ export default function CommentSection({
               }}
               onClick={() => handleReply(comment.id)}
             >
-              💬 回复
+              💬 Reply
             </button>
           )}
           
@@ -456,10 +456,10 @@ export default function CommentSection({
               e.currentTarget.style.background = 'rgba(236, 72, 153, 0.1)';
               e.currentTarget.style.borderColor = 'rgba(236, 72, 153, 0.2)';
             }}
-            onClick={() => handleTipComment(comment.id, comment.author?.nickname || "匿名用户")}
-          >
-            💝 打赏
-          </button>
+                          onClick={() => handleTipComment(comment.id, comment.author?.nickname || "Anonymous")}
+                      >
+              💝 Tip
+            </button>
           
           {isCommentAuthor(comment) && (
             <button
@@ -487,7 +487,7 @@ export default function CommentSection({
               }}
               onClick={() => handleDeleteComment(comment.id)}
             >
-              🗑️ 删除
+              🗑️ Delete
             </button>
           )}
           
@@ -514,13 +514,13 @@ export default function CommentSection({
               e.currentTarget.style.background = 'rgba(245, 158, 11, 0.1)';
               e.currentTarget.style.borderColor = 'rgba(245, 158, 11, 0.2)';
             }}
-            onClick={() => handleReport(comment.id, comment.content, comment.author?.nickname || "匿名用户")}
-          >
-            ⚠️ 举报
-          </button>
+                          onClick={() => handleReport(comment.id, comment.content, comment.author?.nickname || "Anonymous")}
+                      >
+              ⚠️ Report
+            </button>
         </div>
         
-        {/* 回复表单 */}
+        {/* Reply form */}
         {showReplyForm === comment.id && (
           <div style={{
             marginTop: '12px',
@@ -535,7 +535,7 @@ export default function CommentSection({
               marginBottom: '8px',
               fontWeight: '500'
             }}>
-              回复 @{comment.author?.nickname || "匿名用户"}
+              Reply to @{comment.author?.nickname || "Anonymous"}
             </div>
             <textarea
               style={{
@@ -551,7 +551,7 @@ export default function CommentSection({
                 color: 'white',
                 outline: 'none'
               }}
-              placeholder={`回复 ${comment.author?.nickname || "匿名用户"}...`}
+              placeholder={`Reply to ${comment.author?.nickname || "Anonymous"}...`}
               value={replyContent}
               onChange={(e) => setReplyContent(e.target.value)}
             />
@@ -580,7 +580,7 @@ export default function CommentSection({
                   setReplyTo(null);
                 }}
               >
-                取消
+                Cancel
               </button>
               <button
                 style={{
@@ -599,14 +599,14 @@ export default function CommentSection({
                 onClick={handleSubmitComment}
                 disabled={!replyContent.trim()}
               >
-                回复
+                Reply
               </button>
             </div>
           </div>
         )}
       </div>
       
-      {/* 子评论 */}
+      {/* Child comments */}
       {comment.child_comments && comment.child_comments.length > 0 && (
         <div style={{ marginTop: '12px' }}>
           {comment.child_comments
@@ -630,7 +630,7 @@ export default function CommentSection({
       position: 'relative',
       overflow: 'hidden'
     }}>
-      {/* 装饰性背景 */}
+      {/* Decorative background */}
       <div style={{
         position: 'absolute',
         top: 0,
@@ -650,10 +650,10 @@ export default function CommentSection({
         alignItems: 'center',
         gap: '8px'
       }}>
-        <span>💬</span> 评论 <span style={{ color: '#667eea' }}>({comments.length})</span>
+        <span>💬</span> Comments <span style={{ color: '#667eea' }}>({comments.length})</span>
       </h3>
       
-      {/* 发表评论 */}
+      {/* Post comment */}
       <div style={{ marginBottom: '32px' }}>
         <textarea
           style={{
@@ -671,7 +671,7 @@ export default function CommentSection({
             outline: 'none',
             transition: 'border-color 0.2s ease'
           }}
-          placeholder="分享你的想法..."
+          placeholder="Share your thoughts..."
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           disabled={loading}
@@ -693,12 +693,12 @@ export default function CommentSection({
             onClick={handleSubmitComment}
             disabled={!newComment.trim() || loading}
           >
-            {loading ? "发送中..." : "发表评论"}
+            {loading ? "Sending..." : "Post Comment"}
           </button>
         </div>
       </div>
       
-      {/* 评论列表 */}
+      {/* Comment list */}
       <div>
         {commentLoading ? (
           <div style={{ 
@@ -706,7 +706,7 @@ export default function CommentSection({
             padding: '40px 20px',
             color: '#9ca3af'
           }}>
-            <p>加载评论中...</p>
+            <p>Loading comments...</p>
           </div>
         ) : comments.length > 0 ? (
           comments
@@ -718,19 +718,19 @@ export default function CommentSection({
             padding: '40px 20px',
             color: '#9ca3af'
           }}>
-            <p>暂无评论，成为第一个评论者吧！</p>
+            <p>No comments yet. Be the first to comment!</p>
           </div>
         )}
       </div>
       
-      {/* 举报模态框 */}
+      {/* Report Modal */}
       <ReportModal
         isOpen={reportModal.isOpen}
         onClose={() => setReportModal((prev) => ({ ...prev, isOpen: false }))}
         onReport={(reason) => {
-          // TODO: 实现举报功能
-          console.log('举报评论:', reportModal.targetId, reason);
-          notify('举报已提交', 'success');
+          // TODO: Implement report functionality
+          console.log('Report comment:', reportModal.targetId, reason);
+          notify('Report submitted', 'success');
           setReportModal((prev) => ({ ...prev, isOpen: false }));
         }}
       />

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import ContentInteraction from '../components/ContentInteraction';
 import CommentSection from '../components/CommentSection';
+import InteractionStakingSection from '../components/InteractionStakingSection';
 import { getContentById, Content } from '../api/content';
 
 interface BlogDetailPageProps {
@@ -14,20 +15,20 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 从URL参数获取内容ID
+  // Get content ID from URL parameters
   const getContentIdFromUrl = () => {
     const urlParams = new URLSearchParams(window.location.search);
     const id = urlParams.get('id');
     return id ? parseInt(id) : null;
   };
 
-  // 获取内容详情
+  // Get content details
   useEffect(() => {
     const fetchContent = async () => {
       const contentId = getContentIdFromUrl();
       
       if (!contentId) {
-        setError('未找到内容ID');
+        setError('Content ID not found');
         setLoading(false);
         return;
       }
@@ -39,7 +40,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
         const contentData = await getContentById(contentId);
         setContent(contentData);
       } catch (err) {
-        setError(err instanceof Error ? err.message : '获取内容失败');
+        setError(err instanceof Error ? err.message : 'Failed to get content');
       } finally {
         setLoading(false);
       }
@@ -52,13 +53,13 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
     console.log("Login clicked");
   };
 
-  // 计算阅读时间
+  // Calculate reading time
   const calculateReadTime = (content: string) => {
     const words = content.trim().split(/\s+/).filter(word => word.length > 0).length;
-    return Math.ceil(words / 200); // 假设每分钟阅读200字
+    return Math.ceil(words / 200); // Assume 200 words per minute
   };
 
-  // 格式化日期
+  // Format date
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('zh-CN', {
       year: 'numeric',
@@ -67,7 +68,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
     });
   };
 
-  // 加载状态
+  // Loading state
   if (loading) {
     return (
       <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
@@ -99,13 +100,13 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             borderRadius: "50%",
             animation: "spin 1s linear infinite"
           }}></div>
-          <p style={{ color: "#9ca3af" }}>加载中...</p>
+          <p style={{ color: "#9ca3af" }}>Loading...</p>
         </div>
       </div>
     );
   }
 
-  // 错误状态
+  // Error state
   if (error || !content) {
     return (
       <div style={{ minHeight: "100vh", background: "#0b0c1a", color: "white" }}>
@@ -129,7 +130,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           flexDirection: "column",
           gap: "20px"
         }}>
-          <p style={{ color: "#ef4444" }}>加载失败: {error || '内容不存在'}</p>
+                      <p style={{ color: "#ef4444" }}>Load failed: {error || 'Content does not exist'}</p>
           <button
             onClick={() => onPageChange?.('feed')}
             style={{
@@ -142,7 +143,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               cursor: "pointer"
             }}
           >
-            返回列表
+                          Back to List
           </button>
         </div>
       </div>
@@ -165,7 +166,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
       />
       
       <div style={{ padding: isMobile ? "20px" : "40px", maxWidth: "800px", margin: "0 auto" }}>
-        {/* 博客头部 */}
+        {/* Blog header */}
         <div style={{ marginBottom: "40px" }}>
           <div style={{
             display: "flex",
@@ -218,15 +219,15 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             </div>
             <div>
               <div style={{ fontWeight: "600", color: "white" }}>
-                {content.author?.nickname || '匿名用户'}
+                {content.author?.nickname || 'Anonymous'}
               </div>
               <div style={{ fontSize: "14px", color: "#9ca3af" }}>
-                声誉积分: {content.author?.reputation_score || 0}
+                Reputation: {content.author?.reputation_score || 0}
               </div>
             </div>
           </div>
           
-          {/* 封面图片 */}
+          {/* Cover image */}
           <div style={{
             height: "300px",
             background: content.cover_image_url 
@@ -240,7 +241,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             position: "relative",
             overflow: "hidden"
           }}>
-            {/* 如果没有封面图片，显示渐变背景 */}
+            {/* If no cover image, show gradient background */}
             {!content.cover_image_url && (
               <div style={{
                 position: "absolute",
@@ -252,7 +253,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               }} />
             )}
             
-            {/* 渐变遮罩，确保文字可读性 */}
+            {/* Gradient overlay to ensure text readability */}
             <div style={{
               position: "absolute",
               bottom: 0,
@@ -264,7 +265,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           </div>
         </div>
 
-        {/* 博客内容 */}
+        {/* Blog content */}
         <div style={{ lineHeight: "1.8", fontSize: "18px" }}>
           <div style={{ 
             color: "#d1d5db",
@@ -274,13 +275,13 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           </div>
         </div>
 
-        {/* 互动区域 */}
+        {/* Interaction area */}
         <div style={{
           borderTop: "1px solid #374151",
           marginTop: "40px",
           paddingTop: "32px"
         }}>
-          {/* 内容互动组件 */}
+          {/* Content interaction component */}
           <ContentInteraction
             contentId={content.id}
             initialStats={{
@@ -291,7 +292,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               views: content.views
             }}
             onStatsChange={(newStats) => {
-              // 更新本地内容状态
+              // Update local content state
               setContent(prev => prev ? {
                 ...prev,
                 likes: newStats.likes,
@@ -300,13 +301,23 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             }}
           />
           
-          {/* 评论区域 */}
+          {/* Interaction staking area */}
+          <InteractionStakingSection
+            contentId={content.id}
+            isMobile={isMobile}
+            onInteraction={(type, success) => {
+                      console.log('Interaction staking result:', type, success);
+        // Additional processing logic can be added here
+            }}
+          />
+          
+          {/* Comment section */}
           <CommentSection
             postId={content.id.toString()}
             isMobile={isMobile}
             onTipComment={(commentId: string, authorName: string) => {
-              // TODO: 实现评论打赏功能
-              console.log('打赏评论:', commentId, authorName);
+                  // TODO: Implement comment tip functionality
+    console.log('Tip comment:', commentId, authorName);
             }}
           />
         </div>

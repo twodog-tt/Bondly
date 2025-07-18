@@ -134,7 +134,7 @@ export default function Drafts({ isMobile, onPageChange }: DraftsProps) {
   };
 
   const handleDeleteDraft = (draftId: string) => {
-    // TODO: 删除草稿确认
+    // TODO: Delete draft confirmation
     console.log("Delete draft:", draftId);
   };
 

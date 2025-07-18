@@ -466,9 +466,9 @@ export const CONTRACTS = {
       }
     ]
   },
-  // InteractionStaking 合约地址 (需要部署后更新)
+  // InteractionStaking 合约地址 (Sepolia 测试网)
   INTERACTION_STAKING: {
-    address: '0x0000000000000000000000000000000000000000', // 需要部署后更新
+    address: '0xf0f1756BEd8126798452904d37ED51f683D5f954', // Sepolia 测试网
     abi: [
       {
         "inputs": [
@@ -519,9 +519,62 @@ export const CONTRACTS = {
             "type": "uint8"
           }
         ],
-        "name": "withdrawStake",
+        "name": "withdrawInteraction",
         "outputs": [],
         "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "getUserStake",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "getTotalStaked",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "view",
         "type": "function"
       },
       {
