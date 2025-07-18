@@ -20,6 +20,7 @@
     "@rainbow-me/rainbowkit": "^2.2.8",
     "@tanstack/react-query": "^5.81.5",
     "framer-motion": "^12.19.1",
+    "ipfs-http-client": "^60.0.1",
     "react-router-dom": "^6.15.0",
     "sharp": "^0.34.2",
     "viem": "^2.31.4",

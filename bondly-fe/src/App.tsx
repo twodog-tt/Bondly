@@ -17,6 +17,7 @@ import DaoPage from "./pages/DaoPage";
 import UserPublicProfilePage from "./pages/UserPublicProfilePage";
 import StakePage from "./pages/StakePage";
 import ETHStakePage from "./pages/ETHStakePage";
+import IPFSTestPage from "./pages/IPFSTestPage";
 
 // 工具函数：渲染装饰元素
 function renderDecorations(isMobile: boolean) {
@@ -490,6 +491,8 @@ function AppContent() {
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page === "eth-stake"
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
+            : page === "ipfs-test"
+            ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page === "editor"
             ? { ...contentBase, padding: 0, minHeight: "100vh" }
             : page === "drafts"
@@ -512,6 +515,7 @@ function AppContent() {
           {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "stake" && <StakePage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "eth-stake" && <ETHStakePage isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "ipfs-test" && <IPFSTestPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page.startsWith("user-profile-") && <UserPublicProfilePage isMobile={isMobile} onPageChange={handlePageChange} />}
         </div>
       </div>

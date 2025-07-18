@@ -125,6 +125,147 @@ export const CONTRACTS = {
       }
     ]
   },
+  // ContentNFT 合约地址 (Sepolia 测试网)
+  CONTENT_NFT: {
+    address: '0x534Bb52B6318f9041D23C10606A4D6e329e0Ef9E', // 新部署的ContentNFT合约地址
+    abi: [
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "to",
+            "type": "address"
+          },
+          {
+            "internalType": "string",
+            "name": "title",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "summary",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "coverImage",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "ipfsLink",
+            "type": "string"
+          },
+          {
+            "internalType": "string",
+            "name": "tokenUri",
+            "type": "string"
+          }
+        ],
+        "name": "mint",
+        "outputs": [
+          {
+            "internalType": "uint256",
+            "name": "",
+            "type": "uint256"
+          }
+        ],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "getContentMeta",
+        "outputs": [
+          {
+            "components": [
+              {
+                "internalType": "string",
+                "name": "title",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "summary",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "coverImage",
+                "type": "string"
+              },
+              {
+                "internalType": "string",
+                "name": "ipfsLink",
+                "type": "string"
+              },
+              {
+                "internalType": "address",
+                "name": "creator",
+                "type": "address"
+              }
+            ],
+            "internalType": "struct ContentNFT.ContentMeta",
+            "name": "",
+            "type": "tuple"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          }
+        ],
+        "name": "ownerOf",
+        "outputs": [
+          {
+            "internalType": "address",
+            "name": "",
+            "type": "address"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "name",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      },
+      {
+        "inputs": [],
+        "name": "symbol",
+        "outputs": [
+          {
+            "internalType": "string",
+            "name": "",
+            "type": "string"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ]
+  },
   // GeneralStaking 合约地址 (需要部署后更新)
   GENERAL_STAKING: {
     address: '0x305AF7c69F6187b0d359C8d143bCD3549AF37646', // 需要部署后更新
@@ -313,6 +454,95 @@ export const CONTRACTS = {
           }
         ],
         "name": "hasRole",
+        "outputs": [
+          {
+            "internalType": "bool",
+            "name": "",
+            "type": "bool"
+          }
+        ],
+        "stateMutability": "view",
+        "type": "function"
+      }
+    ]
+  },
+  // InteractionStaking 合约地址 (需要部署后更新)
+  INTERACTION_STAKING: {
+    address: '0x0000000000000000000000000000000000000000', // 需要部署后更新
+    abi: [
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "stakeInteraction",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "claimReward",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "withdrawStake",
+        "outputs": [],
+        "stateMutability": "nonpayable",
+        "type": "function"
+      },
+      {
+        "inputs": [
+          {
+            "internalType": "address",
+            "name": "user",
+            "type": "address"
+          },
+          {
+            "internalType": "uint256",
+            "name": "tokenId",
+            "type": "uint256"
+          },
+          {
+            "internalType": "uint8",
+            "name": "interactionType",
+            "type": "uint8"
+          }
+        ],
+        "name": "hasInteracted",
         "outputs": [
           {
             "internalType": "bool",

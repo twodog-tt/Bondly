@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import { createContent, updateContent, Content } from '../api/content';
+import { useContentNFT } from '../hooks/useContentNFT';
 
 interface EditorProps {
   isMobile: boolean;
@@ -39,7 +40,11 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
   const [readTime, setReadTime] = useState(0);
   const [savedContentId, setSavedContentId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [showNFTModal, setShowNFTModal] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // NFT发布Hook
+  const { publishAsNFT, isUploading, isMinting, error: nftError } = useContentNFT();
 
   // 自动保存功能
   useEffect(() => {
@@ -160,6 +165,71 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
       return;
     }
     
+    // 显示NFT发布选项
+    setShowNFTModal(true);
+  };
+
+  const handlePublishAsNFT = async () => {
+    if (!articleData.title.trim()) {
+      setError('请输入文章标题');
+      return;
+    }
+    if (!articleData.content.trim()) {
+      setError('请输入文章内容');
+      return;
+    }
+    if (!articleData.summary.trim()) {
+      setError('请输入文章摘要');
+      return;
+    }
+    
+    setIsSaving(true);
+    setError(null);
+    
+    try {
+      // 发布为NFT
+      const nftResult = await publishAsNFT({
+        title: articleData.title,
+        summary: articleData.summary,
+        content: articleData.content,
+        coverImage: articleData.coverImage,
+        category: articleData.category,
+        tags: articleData.tags,
+        isPublished: true,
+      });
+      
+      setArticleData(prev => ({
+        ...prev,
+        isPublished: true,
+        lastSaved: new Date()
+      }));
+      
+      alert(`文章已发布为NFT！\nToken ID: ${nftResult.tokenId}\nIPFS Hash: ${nftResult.ipfsHash}`);
+      setShowNFTModal(false);
+      onPageChange?.('feed');
+    } catch (error) {
+      console.error('NFT Publish failed:', error);
+      setError('NFT发布失败，请重试');
+      alert('NFT发布失败，请检查网络连接');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handlePublishNormal = async () => {
+    if (!articleData.title.trim()) {
+      setError('请输入文章标题');
+      return;
+    }
+    if (!articleData.content.trim()) {
+      setError('请输入文章内容');
+      return;
+    }
+    if (!articleData.summary.trim()) {
+      setError('请输入文章摘要');
+      return;
+    }
+    
     setIsSaving(true);
     setError(null);
     
@@ -192,6 +262,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
       }));
       
       alert('文章发布成功！');
+      setShowNFTModal(false);
       onPageChange?.('feed');
     } catch (error) {
       console.error('Publish failed:', error);
@@ -814,6 +885,143 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
           </div>
         </div>
       </div>
+
+      {/* NFT发布模态框 */}
+      {showNFTModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0, 0, 0, 0.8)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <div style={{
+            background: '#151728',
+            border: '1px solid #374151',
+            borderRadius: '12px',
+            padding: '32px',
+            maxWidth: '500px',
+            width: '90%',
+            maxHeight: '80vh',
+            overflow: 'auto'
+          }}>
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: 'bold',
+              color: 'white',
+              marginBottom: '16px',
+              textAlign: 'center'
+            }}>
+              选择发布方式
+            </h2>
+            
+            <p style={{
+              color: '#9ca3af',
+              marginBottom: '24px',
+              textAlign: 'center',
+              lineHeight: '1.6'
+            }}>
+              您可以选择将文章发布为普通文章或NFT。发布为NFT将获得更多功能和收益机会。
+            </p>
+
+            <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
+              <button
+                onClick={handlePublishAsNFT}
+                disabled={isUploading || isMinting}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  border: 'none',
+                  color: 'white',
+                  padding: '16px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: (isUploading || isMinting) ? 'not-allowed' : 'pointer',
+                  opacity: (isUploading || isMinting) ? 0.6 : 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isUploading ? '上传到IPFS中...' : isMinting ? '铸造NFT中...' : '🚀 发布为NFT'}
+              </button>
+
+              <button
+                onClick={handlePublishNormal}
+                disabled={isSaving}
+                style={{
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  color: 'white',
+                  padding: '16px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: isSaving ? 'not-allowed' : 'pointer',
+                  opacity: isSaving ? 0.6 : 1
+                }}
+              >
+                {isSaving ? '发布中...' : '📝 发布为普通文章'}
+              </button>
+
+              <button
+                onClick={() => setShowNFTModal(false)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  color: '#9ca3af',
+                  padding: '12px 24px',
+                  borderRadius: '8px',
+                  fontSize: '16px',
+                  fontWeight: '500',
+                  cursor: 'pointer'
+                }}
+              >
+                取消
+              </button>
+            </div>
+
+            {(nftError || error) && (
+              <div style={{
+                marginTop: '16px',
+                padding: '12px',
+                background: 'rgba(239, 68, 68, 0.1)',
+                border: '1px solid rgba(239, 68, 68, 0.3)',
+                borderRadius: '8px'
+              }}>
+                <p style={{ color: '#ef4444', fontSize: '14px' }}>
+                  {nftError || error}
+                </p>
+              </div>
+            )}
+
+            <div style={{
+              marginTop: '24px',
+              padding: '16px',
+              background: 'rgba(255, 255, 255, 0.05)',
+              borderRadius: '8px',
+              border: '1px solid rgba(255, 255, 255, 0.1)'
+            }}>
+              <h4 style={{ color: 'white', marginBottom: '8px', fontSize: '16px' }}>
+                NFT发布优势
+              </h4>
+              <ul style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.6' }}>
+                <li>• 内容永久存储在IPFS上</li>
+                <li>• 支持互动质押奖励机制</li>
+                <li>• 创作者可获得用户质押的BOND代币</li>
+                <li>• 内容具有唯一性和不可篡改性</li>
+                <li>• 支持NFT交易和转让</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
