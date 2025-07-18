@@ -331,7 +331,22 @@ const CommonNavbar: React.FC<CommonNavbarProps> = ({
               onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
               onClick={() => onPageChange?.("stake")}
             >
-              Stake
+              BOND Stake
+            </button>
+            <button 
+              style={{
+                background: "transparent",
+                border: "none",
+                color: "white",
+                cursor: "pointer",
+                fontSize: "14px",
+                transition: "opacity 0.2s ease"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.opacity = "0.7"}
+              onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              onClick={() => onPageChange?.("eth-stake")}
+            >
+              ETH Stake
             </button>
             {showDaoButton && (
               <button 

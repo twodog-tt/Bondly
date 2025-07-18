@@ -39,6 +39,10 @@ BONDLY_TOKEN_MAX_SUPPLY=2000000000000000000000000000
 # 治理配置
 DAO_ADDRESS=your_dao_address
 TREASURY_ADDRESS=your_treasury_address
+
+# ETH 质押配置
+REGISTRY_ADDRESS=your_registry_address
+ETH_STAKING_OWNER=your_eth_staking_owner_address
 ```
 
 ## 部署流程
@@ -94,6 +98,13 @@ npx hardhat run scripts/deploy/treasury.ts --network mainnet
 
 部署 BondlyTreasury 合约。
 
+#### 第七步：部署 ETH 质押合约
+```bash
+npx hardhat run scripts/deploy-eth-staking.ts --network mainnet
+```
+
+部署 ETHStaking 合约，支持用户质押 ETH 获得 BOND 奖励。
+
 ### 3. 合约初始化
 
 部署完成后，需要初始化合约间的依赖关系：
@@ -107,6 +118,12 @@ npx hardhat run scripts/init/setup-permissions.ts --network mainnet
 
 # 初始化治理参数
 npx hardhat run scripts/init/setup-governance.ts --network mainnet
+
+# 注册 ETH 质押合约
+npx hardhat run scripts/register-eth-staking.ts --network mainnet
+
+# 添加初始奖励池
+npx hardhat run scripts/add-eth-staking-rewards.ts --network mainnet
 ```
 
 ## 网络配置

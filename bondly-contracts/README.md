@@ -19,6 +19,7 @@ Bondly 合约系统采用模块化设计，包含以下核心模块：
 - **InteractionStaking**: 互动质押机制，用户互动需质押 BOND，奖励归创作者
 - **RewardDistributor**: 基于声誉的奖励分配系统
 - **GeneralStaking**: 通用质押合约，支持多种质押场景
+- **ETHStaking**: ETH 质押合约，用户质押 ETH 获得 BOND 奖励
 - **MixedTokenReputationStrategy**: 混合权重策略，结合代币和声誉计算投票权重
 
 ### 🏛️ 治理系统 (Governance)
@@ -46,6 +47,7 @@ contracts/
 │   ├── RewardDistributor.sol # 奖励分配器
 │   ├── InteractionStaking.sol # 互动质押 (点赞/评论/收藏)
 │   ├── GeneralStaking.sol   # 通用质押合约
+│   ├── ETHStaking.sol       # ETH 质押合约
 │   ├── MixedTokenReputationStrategy.sol # 混合权重策略
 │   └── IReputationVault.sol # 声誉库接口
 ├── governance/              # 治理系统
@@ -120,6 +122,14 @@ function selfBurn(uint256 amount, string memory reason)
 - ✅ **声誉奖励** - 基于声誉分数分配 BOND 奖励
 - ✅ **防重复领取** - 防止用户重复领取奖励
 - ✅ **多代币支持** - 支持多种代币的奖励分配
+
+**ETHStaking - ETH 质押：**
+- ✅ **ETH 质押** - 用户可质押 ETH 获得 BOND 奖励
+- ✅ **实时 APY** - 动态计算和显示年化收益率
+- ✅ **组合操作** - 支持质押并领取、解除质押并领取
+- ✅ **无锁定期** - 用户可以随时解除质押
+- ✅ **奖励管理** - 管理员可添加奖励流动性
+- ✅ **安全机制** - 重入保护、暂停机制、紧急提取
 
 ### 🏛️ 治理系统
 
@@ -252,9 +262,11 @@ npx hardhat test test/nft/ContentNFT.test.ts
 - [docs/RewardDistributor.md](docs/RewardDistributor.md) - 声誉奖励分配
 - [docs/BondlyToken.md](docs/BondlyToken.md) - 平台代币说明
 - [docs/InteractionStaking.md](docs/InteractionStaking.md) - 互动质押机制
+- [docs/ETHStaking.md](docs/ETHStaking.md) - ETH 质押合约说明
 - [docs/BondlyRegistry.md](docs/BondlyRegistry.md) - 合约注册表说明
 - [docs/TESTING.md](docs/TESTING.md) - 测试策略与覆盖率分析
 - [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) - 部署指南与最佳实践
+- [ETH_STAKING_DEPLOYMENT.md](ETH_STAKING_DEPLOYMENT.md) - ETH 质押快速部署指南
 
 ## 🎯 业务场景支持
 
@@ -262,7 +274,8 @@ npx hardhat test test/nft/ContentNFT.test.ts
 2. **社区治理** - 代币持有者参与平台决策
 3. **互动经济** - 用户互动获得奖励，创作者获得收益
 4. **声誉建设** - 用户通过贡献建立声誉
-5. **资金管理** - 平台资金透明管理和分配
+5. **ETH 质押激励** - 用户质押 ETH 获得 BOND 奖励，增加平台流动性
+6. **资金管理** - 平台资金透明管理和分配
 
 ## 🔗 技术栈
 
