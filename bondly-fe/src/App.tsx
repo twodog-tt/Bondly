@@ -6,6 +6,7 @@ import '@rainbow-me/rainbowkit/styles.css';
 import { config } from './config/wagmi';
 import { WalletConnectProvider } from './contexts/WalletConnectContext';
 import { AuthProvider } from './contexts/AuthContext';
+import { StakingPreferencesProvider } from './contexts/StakingPreferencesContext';
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
@@ -533,7 +534,9 @@ function App() {
         <RainbowKitProvider>
           <WalletConnectProvider>
             <AuthProvider>
-              <AppContent />
+              <StakingPreferencesProvider>
+                <AppContent />
+              </StakingPreferencesProvider>
             </AuthProvider>
           </WalletConnectProvider>
         </RainbowKitProvider>

@@ -3,21 +3,25 @@ import { useAccount, useWatchContractEvent } from 'wagmi';
 import { useInteractionStaking, InteractionType } from '../hooks/useInteractionStaking';
 import { useInteractionStakingData } from '../hooks/useInteractionStakingData';
 import { useBondBalance } from '../hooks/useBondBalance';
+import { useStakingPreferences } from '../contexts/StakingPreferencesContext';
 import { CONTRACTS } from '../config/contracts';
 
 interface InteractionStakingSectionProps {
   contentId: number;
   isMobile: boolean;
   onInteraction?: (type: InteractionType, success: boolean) => void;
+  onOpenSettings?: () => void;
 }
 
 const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
   contentId,
   isMobile,
-  onInteraction
+  onInteraction,
+  onOpenSettings
 }) => {
   const { address, isConnected } = useAccount();
   const bondBalanceData = useBondBalance();
+  const { preferences, showManualButtons, hideManualButtons, toggleAdvancedOptions } = useStakingPreferences();
   
   // Use operation hooks first to get InteractionType
   const {
@@ -184,6 +188,11 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
         onInteraction?.(interactionType, true);
         setMessage(`${getInteractionTypeName(interactionType)} staking successful!`);
         
+        // Hide manual buttons after successful auto-staking
+        if (preferences.autoStakingEnabled) {
+          hideManualButtons();
+        }
+        
         // Refetch data after successful staking
         if (interactionType === InteractionType.Like) {
           likeData.refetch();
@@ -196,6 +205,11 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
     } catch (err) {
       console.error('Interaction staking failed:', err);
       const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Show manual buttons if auto-staking fails
+      if (preferences.autoStakingEnabled) {
+        showManualButtons();
+      }
       
       // Enhanced error messages
       if (errorMessage.includes('User rejected')) {
@@ -285,6 +299,9 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
     }
   };
 
+  // Determine if manual buttons should be shown
+  const shouldShowManualButtons = !preferences.autoStakingEnabled || preferences.showManualButtons;
+
   const renderInteractionButton = (interactionType: InteractionType) => {
     const isInteracted = interactionStates[interactionType];
     const info = stakingInfo[interactionType];
@@ -311,37 +328,21 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
           </span>
         </div>
 
-        <div style={{
-          display: "flex",
-          gap: "8px",
-          flexWrap: "wrap"
-        }}>
-          {!isInteracted ? (
-            <button
-              onClick={() => handleStakeInteraction(interactionType)}
-              disabled={isLoading}
-              style={{
-                background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-                color: "white",
-                border: "none",
-                padding: "8px 16px",
-                borderRadius: "8px",
-                fontSize: "14px",
-                cursor: isLoading ? "not-allowed" : "pointer",
-                opacity: isLoading ? 0.5 : 1
-              }}
-            >
-              {isLoading ? "Processing..." : `Stake ${typeName}`}
-            </button>
-          ) : (
-            <>
+        {/* Show manual buttons only when needed */}
+        {shouldShowManualButtons && (
+          <div style={{
+            display: "flex",
+            gap: "8px",
+            flexWrap: "wrap"
+          }}>
+            {!isInteracted ? (
               <button
-                onClick={() => handleWithdrawStake(interactionType)}
+                onClick={() => handleStakeInteraction(interactionType)}
                 disabled={isLoading}
                 style={{
-                  background: "rgba(239, 68, 68, 0.1)",
-                  border: "1px solid rgba(239, 68, 68, 0.3)",
-                  color: "#ef4444",
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
                   padding: "8px 16px",
                   borderRadius: "8px",
                   fontSize: "14px",
@@ -349,17 +350,17 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
                   opacity: isLoading ? 0.5 : 1
                 }}
               >
-                {isLoading ? "Processing..." : "Withdraw Stake"}
+                {isLoading ? "Processing..." : `Stake ${typeName}`}
               </button>
-              
-              {info.pendingReward > 0 && (
+            ) : (
+              <>
                 <button
-                  onClick={() => handleClaimReward(interactionType)}
+                  onClick={() => handleWithdrawStake(interactionType)}
                   disabled={isLoading}
                   style={{
-                    background: "rgba(16, 185, 129, 0.1)",
-                    border: "1px solid rgba(16, 185, 129, 0.3)",
-                    color: "#10b981",
+                    background: "rgba(239, 68, 68, 0.1)",
+                    border: "1px solid rgba(239, 68, 68, 0.3)",
+                    color: "#ef4444",
                     padding: "8px 16px",
                     borderRadius: "8px",
                     fontSize: "14px",
@@ -367,13 +368,33 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
                     opacity: isLoading ? 0.5 : 1
                   }}
                 >
-                  {isLoading ? "Processing..." : `Claim ${info.pendingReward.toFixed(2)} BOND`}
+                  {isLoading ? "Processing..." : "Withdraw Stake"}
                 </button>
-              )}
-            </>
-          )}
-        </div>
+                
+                {info.pendingReward > 0 && (
+                  <button
+                    onClick={() => handleClaimReward(interactionType)}
+                    disabled={isLoading}
+                    style={{
+                      background: "rgba(16, 185, 129, 0.1)",
+                      border: "1px solid rgba(16, 185, 129, 0.3)",
+                      color: "#10b981",
+                      padding: "8px 16px",
+                      borderRadius: "8px",
+                      fontSize: "14px",
+                      cursor: isLoading ? "not-allowed" : "pointer",
+                      opacity: isLoading ? 0.5 : 1
+                    }}
+                  >
+                    {isLoading ? "Processing..." : `Claim ${info.pendingReward.toFixed(2)} BOND`}
+                  </button>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
+        {/* Always show status information */}
         {isInteracted && (
           <div style={{
             marginTop: "8px",
@@ -442,10 +463,75 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
         }}>
           💎 Interaction Staking
         </h3>
-        <div style={{ fontSize: "14px", color: "#9ca3af" }}>
-          BOND Balance: {bondBalanceData.isLoading ? "Loading..." : bondBalanceData.error ? "Error" : `${bondBalanceData.formatted} ${bondBalanceData.symbol}`}
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "12px"
+        }}>
+          <div style={{ fontSize: "14px", color: "#9ca3af" }}>
+            BOND Balance: {bondBalanceData.isLoading ? "Loading..." : bondBalanceData.error ? "Error" : `${bondBalanceData.formatted} ${bondBalanceData.symbol}`}
+          </div>
+          {onOpenSettings && (
+            <button
+              onClick={onOpenSettings}
+              style={{
+                background: "transparent",
+                border: "1px solid #374151",
+                color: "#9ca3af",
+                padding: "6px 12px",
+                borderRadius: "6px",
+                fontSize: "12px",
+                cursor: "pointer",
+                transition: "all 0.2s ease",
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.borderColor = '#667eea';
+                e.currentTarget.style.color = '#667eea';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.borderColor = '#374151';
+                e.currentTarget.style.color = '#9ca3af';
+              }}
+            >
+              ⚙️ Settings
+            </button>
+          )}
         </div>
       </div>
+
+      {/* Auto-staking status */}
+      {preferences.autoStakingEnabled && (
+        <div style={{
+          background: "rgba(16, 185, 129, 0.1)",
+          border: "1px solid rgba(16, 185, 129, 0.3)",
+          borderRadius: "8px",
+          padding: "12px",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <div style={{ color: "#10b981", fontSize: "14px" }}>
+            ✅ Auto-staking enabled - Your interactions will automatically stake BOND tokens
+          </div>
+          {preferences.showAdvancedOptions && (
+            <button
+              onClick={toggleAdvancedOptions}
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(16, 185, 129, 0.3)",
+                color: "#10b981",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                fontSize: "12px",
+                cursor: "pointer",
+              }}
+            >
+              Hide Advanced
+            </button>
+          )}
+        </div>
+      )}
 
       {message && (
         <div style={{
@@ -461,23 +547,68 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
         </div>
       )}
 
+      {/* Manual staking buttons */}
       <div style={{ marginBottom: "16px" }}>
         {renderInteractionButton(InteractionType.Like)}
         {renderInteractionButton(InteractionType.Comment)}
         {renderInteractionButton(InteractionType.Favorite)}
       </div>
 
-              <div style={{
-          fontSize: "12px",
-          color: "#9ca3af",
-          lineHeight: "1.5"
+      {/* Advanced options toggle */}
+      {preferences.autoStakingEnabled && !preferences.showAdvancedOptions && (
+        <div style={{
+          textAlign: "center",
+          marginBottom: "16px"
         }}>
-          <div>💡 Staking Guide:</div>
-          <div>• Stake BOND tokens for interactions, rewards go to content creators</div>
-          <div>• Creators can claim accumulated staking rewards</div>
-          <div>• Users can withdraw stakes before rewards are claimed</div>
-          <div>• Ensure sufficient BOND tokens in your wallet</div>
+          <button
+            onClick={toggleAdvancedOptions}
+            style={{
+              background: "transparent",
+              border: "1px solid #374151",
+              color: "#9ca3af",
+              padding: "8px 16px",
+              borderRadius: "6px",
+              fontSize: "12px",
+              cursor: "pointer",
+              transition: "all 0.2s ease",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.borderColor = '#667eea';
+              e.currentTarget.style.color = '#667eea';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.borderColor = '#374151';
+              e.currentTarget.style.color = '#9ca3af';
+            }}
+          >
+            Show Advanced Options
+          </button>
         </div>
+      )}
+
+      {/* Staking guide */}
+      <div style={{
+        fontSize: "12px",
+        color: "#9ca3af",
+        lineHeight: "1.5"
+      }}>
+        <div>💡 Staking Guide:</div>
+        {preferences.autoStakingEnabled ? (
+          <>
+            <div>• Auto-staking is enabled - interactions automatically stake BOND tokens</div>
+            <div>• Rewards go to content creators</div>
+            <div>• You can withdraw stakes before rewards are claimed</div>
+            <div>• Use advanced options for manual control</div>
+          </>
+        ) : (
+          <>
+            <div>• Manually stake BOND tokens for interactions</div>
+            <div>• Rewards go to content creators</div>
+            <div>• Creators can claim accumulated staking rewards</div>
+            <div>• Users can withdraw stakes before rewards are claimed</div>
+          </>
+        )}
+      </div>
     </div>
   );
 };

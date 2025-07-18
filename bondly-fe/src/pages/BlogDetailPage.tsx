@@ -3,7 +3,10 @@ import CommonNavbar from '../components/CommonNavbar';
 import ContentInteraction from '../components/ContentInteraction';
 import CommentSection from '../components/CommentSection';
 import InteractionStakingSection from '../components/InteractionStakingSection';
+import StakingTutorial from '../components/StakingTutorial';
+import StakingSettings from '../components/StakingSettings';
 import { getContentById, Content } from '../api/content';
+import { useStakingTutorial } from '../hooks/useStakingTutorial';
 
 interface BlogDetailPageProps {
   isMobile: boolean;
@@ -14,6 +17,10 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
   const [content, setContent] = useState<Content | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  
+  // 集成质押引导系统
+  const { showTutorial, handleTutorialComplete, handleTutorialClose } = useStakingTutorial();
+  const [showSettings, setShowSettings] = useState(false);
 
   // Get content ID from URL parameters
   const getContentIdFromUrl = () => {
@@ -309,6 +316,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
                       console.log('Interaction staking result:', type, success);
         // Additional processing logic can be added here
             }}
+            onOpenSettings={() => setShowSettings(true)}
           />
           
           {/* Comment section */}
@@ -322,6 +330,19 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           />
         </div>
       </div>
+      
+      {/* 质押引导教程 */}
+      <StakingTutorial
+        isOpen={showTutorial}
+        onClose={handleTutorialClose}
+        onComplete={handleTutorialComplete}
+      />
+      
+      {/* 质押设置面板 */}
+      <StakingSettings
+        isOpen={showSettings}
+        onClose={() => setShowSettings(false)}
+      />
     </div>
   );
 };
