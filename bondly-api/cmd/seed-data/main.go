@@ -518,58 +518,64 @@ var transactions = []map[string]interface{}{
 // 内容数据
 var contents = []map[string]interface{}{
 	{
-		"title":    "Web3 Social: The Next Generation",
-		"content":  "Web3 social platforms are redefining digital interaction. This is a draft article.",
-		"type":     "article",
-		"status":   "draft",
-		"likes":    0,
-		"dislikes": 0,
-		"views":    0,
+		"title":           "Web3 Social: The Next Generation",
+		"content":         "Web3 social platforms are redefining digital interaction. This is a draft article.",
+		"type":            "article",
+		"status":          "draft",
+		"likes":           0,
+		"dislikes":        0,
+		"views":           0,
+		"cover_image_url": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop",
 	},
 	{
-		"title":    "DAO Governance Deep Dive",
-		"content":  "A comprehensive guide to DAO governance models and best practices.",
-		"type":     "article",
-		"status":   "published",
-		"likes":    23,
-		"dislikes": 1,
-		"views":    120,
+		"title":           "DAO Governance Deep Dive",
+		"content":         "A comprehensive guide to DAO governance models and best practices.",
+		"type":            "article",
+		"status":          "published",
+		"likes":           23,
+		"dislikes":        1,
+		"views":           120,
+		"cover_image_url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop",
 	},
 	{
-		"title":    "NFT Use Cases in 2025",
-		"content":  "NFTs are more than art. Explore their use in gaming, identity, and real estate.",
-		"type":     "article",
-		"status":   "published",
-		"likes":    45,
-		"dislikes": 2,
-		"views":    340,
+		"title":           "NFT Use Cases in 2025",
+		"content":         "NFTs are more than art. Explore their use in gaming, identity, and real estate.",
+		"type":            "article",
+		"status":          "published",
+		"likes":           45,
+		"dislikes":        2,
+		"views":           340,
+		"cover_image_url": "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800&h=400&fit=crop",
 	},
 	{
-		"title":    "DeFi Security Checklist",
-		"content":  "How to stay safe in DeFi: audits, multisig, and best practices.",
-		"type":     "guide",
-		"status":   "archived",
-		"likes":    12,
-		"dislikes": 0,
-		"views":    80,
+		"title":           "DeFi Security Checklist",
+		"content":         "How to stay safe in DeFi: audits, multisig, and best practices.",
+		"type":            "guide",
+		"status":          "archived",
+		"likes":           12,
+		"dislikes":        0,
+		"views":           80,
+		"cover_image_url": "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&h=400&fit=crop",
 	},
 	{
-		"title":    "Layer2 Scaling Solutions",
-		"content":  "A technical overview of Layer2 solutions: Optimistic Rollups, ZK Rollups, and more.",
-		"type":     "tech",
-		"status":   "published",
-		"likes":    31,
-		"dislikes": 0,
-		"views":    210,
+		"title":           "Layer2 Scaling Solutions",
+		"content":         "A technical overview of Layer2 solutions: Optimistic Rollups, ZK Rollups, and more.",
+		"type":            "tech",
+		"status":          "published",
+		"likes":           31,
+		"dislikes":        0,
+		"views":           210,
+		"cover_image_url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=400&fit=crop",
 	},
 	{
-		"title":    "Web3 Community Building",
-		"content":  "Tips and tricks for building a strong Web3 community.",
-		"type":     "guide",
-		"status":   "draft",
-		"likes":    0,
-		"dislikes": 0,
-		"views":    0,
+		"title":           "Web3 Community Building",
+		"content":         "Tips and tricks for building a strong Web3 community.",
+		"type":            "guide",
+		"status":          "draft",
+		"likes":           0,
+		"dislikes":        0,
+		"views":           0,
+		"cover_image_url": "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800&h=400&fit=crop",
 	},
 }
 
@@ -740,9 +746,9 @@ func (s *DataSeeder) seedContents(userIDs []int64) {
 		// 插入内容
 		result := s.db.Exec(`
 			INSERT INTO contents (
-				author_id, title, content, type, status, likes, dislikes, views, created_at, updated_at
-			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-		`, contentData["author_id"], contentData["title"], contentData["content"], contentData["type"], contentData["status"], contentData["likes"], contentData["dislikes"], contentData["views"], contentData["created_at"], contentData["updated_at"])
+				author_id, title, content, type, status, likes, dislikes, views, cover_image_url, created_at, updated_at
+			) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+		`, contentData["author_id"], contentData["title"], contentData["content"], contentData["type"], contentData["status"], contentData["likes"], contentData["dislikes"], contentData["views"], contentData["cover_image_url"], contentData["created_at"], contentData["updated_at"])
 		if result.Error != nil {
 			log.Printf("Error inserting content %s: %v", contentData["title"], result.Error)
 			continue
