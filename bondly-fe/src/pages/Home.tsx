@@ -611,6 +611,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       <HeroSection 
         isMobile={isMobile}
         onPageChange={onPageChange}
+        onLoginClick={handleLoginClick}
       />
 
       {/* 荣誉分Top榜单 */}
