@@ -16,6 +16,9 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [hasAdminRole, setHasAdminRole] = useState(false);
   const [isCheckingRole, setIsCheckingRole] = useState(true);
+  const [isApprovalStage, setIsApprovalStage] = useState(false);
+  const [pendingAmount, setPendingAmount] = useState<bigint>(0n);
+  const [pendingDuration, setPendingDuration] = useState<bigint>(0n);
 
   // 合约地址
   const ethStakingAddress = getContractAddress('ETH_STAKING') as `0x${string}`;
@@ -119,16 +122,11 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
       setSuccess('Reward added successfully!');
       setRewardAmount('');
       setDurationDays('30');
+      setIsApprovalStage(false);
+      setPendingAmount(0n);
+      setPendingDuration(0n);
     },
   });
-
-  // 监听写入状态变化
-  useEffect(() => {
-    if (writeError) {
-      setError(writeError.message || 'Transaction failed');
-      setIsLoading(false);
-    }
-  }, [writeError]);
 
   // 监听交易成功
   useEffect(() => {
@@ -138,6 +136,57 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
       setIsLoading(false);
     }
   }, [writeData, isPending]);
+
+  // 添加奖励到池子的函数
+  const addRewardToPool = async (amount: bigint, duration: bigint) => {
+    try {
+      (writeContract as any)({
+        address: ethStakingAddress,
+        abi: getContractABI('ETH_STAKING'),
+        functionName: 'addReward',
+        args: [amount, duration],
+      });
+      setSuccess('Please confirm the add reward transaction in your wallet');
+    } catch (err: any) {
+      setError(err.message || 'Add reward failed');
+      setIsLoading(false);
+      setIsApprovalStage(false);
+    }
+  };
+
+  // 监听写入状态变化
+  useEffect(() => {
+    if (writeError) {
+      setError(writeError.message || 'Transaction failed');
+      setIsLoading(false);
+      setIsApprovalStage(false);
+    }
+  }, [writeError]);
+
+  // 监听BOND代币授权事件
+  useWatchContractEvent({
+    address: bondTokenAddress,
+    abi: getContractABI('BOND_TOKEN'),
+    eventName: 'Approval',
+    onLogs: (logs) => {
+      console.log('Approval event detected:', logs);
+      // 检查是否是当前用户的授权
+      const approvalLog = logs.find(log => {
+        const args = log.args as any;
+        return args?.owner?.toLowerCase() === address?.toLowerCase() &&
+               args?.spender?.toLowerCase() === ethStakingAddress.toLowerCase();
+      });
+      
+      if (approvalLog && isApprovalStage) {
+        console.log('Approval confirmed, proceeding to add reward');
+        setSuccess('Approval confirmed! Now adding reward to pool...');
+        // 自动进行添加奖励操作
+        setTimeout(() => {
+          addRewardToPool(pendingAmount, pendingDuration);
+        }, 2000); // 等待2秒确保授权交易已确认
+      }
+    },
+  });
 
   // 添加流动性
   const handleAddLiquidity = async () => {
@@ -180,33 +229,26 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
       if (currentAllowance < amountWei) {
         // 先授权
         try {
+          setIsApprovalStage(true);
+          setPendingAmount(amountWei);
+          setPendingDuration(durationSeconds);
           (writeContract as any)({
             address: bondTokenAddress,
             abi: getContractABI('BOND_TOKEN'),
             functionName: 'approve',
             args: [ethStakingAddress, amountWei],
           });
-          setSuccess('Please confirm the approval transaction in your wallet');
+          setSuccess('Please confirm the approval transaction in your wallet. After approval, the reward will be added automatically.');
         } catch (err: any) {
           setError(err.message || 'Approval failed');
           setIsLoading(false);
+          setIsApprovalStage(false);
         }
         return;
       }
 
-      // 添加奖励
-      try {
-        (writeContract as any)({
-          address: ethStakingAddress,
-          abi: getContractABI('ETH_STAKING'),
-          functionName: 'addReward',
-          args: [amountWei, durationSeconds],
-        });
-        setSuccess('Please confirm the add liquidity transaction in your wallet');
-      } catch (err: any) {
-        setError(err.message || 'Add liquidity failed');
-        setIsLoading(false);
-      }
+      // 直接添加奖励（已有足够授权）
+      addRewardToPool(amountWei, durationSeconds);
 
     } catch (err: any) {
       setError(err.message || 'Failed to add liquidity');
@@ -362,6 +404,24 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
           Address: {address?.slice(0, 6)}...{address?.slice(-4)}
         </div>
       </div>
+
+      {/* 操作状态指示器 */}
+      {isApprovalStage && (
+        <div style={{
+          marginBottom: "20px",
+          padding: "12px",
+          background: "rgba(59, 130, 246, 0.1)",
+          borderRadius: "8px",
+          border: "1px solid rgba(59, 130, 246, 0.3)"
+        }}>
+          <div style={{ fontSize: "14px", color: "#3b82f6", fontWeight: "600" }}>
+            🔄 Waiting for Approval Confirmation
+          </div>
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginTop: "4px" }}>
+            Please confirm the approval transaction in your wallet. After approval, the reward will be added automatically.
+          </div>
+        </div>
+      )}
 
       {/* 当前状态 */}
       <div style={{
