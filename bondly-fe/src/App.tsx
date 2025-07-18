@@ -7,6 +7,7 @@ import { config } from './config/wagmi';
 import { WalletConnectProvider } from './contexts/WalletConnectContext';
 import { AuthProvider } from './contexts/AuthContext';
 import { StakingPreferencesProvider } from './contexts/StakingPreferencesContext';
+import { AdminProvider } from './contexts/AdminContext';
 import Home from "./pages/Home";
 import Feed from "./pages/Feed";
 import Profile from "./pages/Profile";
@@ -535,7 +536,9 @@ function App() {
           <WalletConnectProvider>
             <AuthProvider>
               <StakingPreferencesProvider>
-                <AppContent />
+                <AdminProvider>
+                  <AppContent />
+                </AdminProvider>
               </StakingPreferencesProvider>
             </AuthProvider>
           </WalletConnectProvider>

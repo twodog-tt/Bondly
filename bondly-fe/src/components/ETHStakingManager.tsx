@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { useETHStaking } from '../hooks/useETHStaking';
+import { AdminRewardsPanel } from './AdminRewardsPanel';
 
 interface ETHStakingManagerProps {
   isMobile: boolean;
@@ -220,343 +221,348 @@ const ETHStakingManager: React.FC<ETHStakingManagerProps> = ({ isMobile }) => {
   }
 
   return (
-    <div style={{
-      background: "rgba(255,255,255,0.04)",
-      borderRadius: "20px",
-      padding: isMobile ? "24px 16px" : "32px",
-      border: "1px solid #23244a",
-      boxShadow: "0 4px 24px rgba(102,126,234,0.08)"
-    }}>
-      {/* 标题和刷新按钮 */}
+    <div>
+      {/* 管理员奖金管理面板 */}
+      <AdminRewardsPanel className="mb-6" />
+      
       <div style={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        marginBottom: "24px"
+        background: "rgba(255,255,255,0.04)",
+        borderRadius: "20px",
+        padding: isMobile ? "24px 16px" : "32px",
+        border: "1px solid #23244a",
+        boxShadow: "0 4px 24px rgba(102,126,234,0.08)"
       }}>
-        <h3 style={{
-          fontSize: isMobile ? "20px" : "24px",
-          fontWeight: "700",
-          color: "white"
+        {/* 标题和刷新按钮 */}
+        <div style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          marginBottom: "24px"
         }}>
-          🔐 ETH Staking
-        </h3>
-        <button
-          onClick={handleRefresh}
-          disabled={isLoading}
-          style={{
+          <h3 style={{
+            fontSize: isMobile ? "20px" : "24px",
+            fontWeight: "700",
+            color: "white"
+          }}>
+            💎 ETH Staking for BOND Rewards
+          </h3>
+          <button
+            onClick={handleRefresh}
+            disabled={isLoading}
+            style={{
+              background: "rgba(102,126,234,0.1)",
+              border: "1px solid rgba(102,126,234,0.3)",
+              borderRadius: "8px",
+              padding: "8px 16px",
+              color: "#667eea",
+              fontSize: "12px",
+              cursor: isLoading ? "not-allowed" : "pointer",
+              opacity: isLoading ? 0.6 : 1,
+              transition: "all 0.2s ease"
+            }}
+          >
+            {isLoading ? "Loading..." : "🔄 Refresh"}
+          </button>
+        </div>
+
+        {/* 统计信息 */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
+          gap: "16px",
+          marginBottom: "24px"
+        }}>
+          <div style={{
             background: "rgba(102,126,234,0.1)",
-            border: "1px solid rgba(102,126,234,0.3)",
-            borderRadius: "8px",
-            padding: "8px 16px",
-            color: "#667eea",
-            fontSize: "12px",
-            cursor: isLoading ? "not-allowed" : "pointer",
-            opacity: isLoading ? 0.6 : 1,
-            transition: "all 0.2s ease"
-          }}
-        >
-          {isLoading ? "Loading..." : "🔄 Refresh"}
-        </button>
-      </div>
+            borderRadius: "12px",
+            padding: "16px",
+            border: "1px solid rgba(102,126,234,0.2)"
+          }}>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+              Your Staked
+            </div>
+            <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#667eea" }}>
+              {isLoading ? "Loading..." : `${parseFloat(stakedAmount).toFixed(4)} ETH`}
+            </div>
+          </div>
 
-      {/* 统计信息 */}
-      <div style={{
-        display: "grid",
-        gridTemplateColumns: isMobile ? "repeat(2, 1fr)" : "repeat(4, 1fr)",
-        gap: "16px",
-        marginBottom: "24px"
-      }}>
-        <div style={{
-          background: "rgba(102,126,234,0.1)",
-          borderRadius: "12px",
-          padding: "16px",
-          border: "1px solid rgba(102,126,234,0.2)"
-        }}>
-          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
-            Your Staked
+          <div style={{
+            background: "rgba(16,185,129,0.1)",
+            borderRadius: "12px",
+            padding: "16px",
+            border: "1px solid rgba(16,185,129,0.2)"
+          }}>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+              Pending Reward
+            </div>
+            <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#10b981" }}>
+              {isLoading ? "Loading..." : `${parseFloat(pendingReward).toFixed(4)} BOND`}
+            </div>
           </div>
-          <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#667eea" }}>
-            {isLoading ? "Loading..." : `${parseFloat(stakedAmount).toFixed(4)} ETH`}
-          </div>
-        </div>
 
-        <div style={{
-          background: "rgba(16,185,129,0.1)",
-          borderRadius: "12px",
-          padding: "16px",
-          border: "1px solid rgba(16,185,129,0.2)"
-        }}>
-          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
-            Pending Reward
+          <div style={{
+            background: "rgba(245,158,11,0.1)",
+            borderRadius: "12px",
+            padding: "16px",
+            border: "1px solid rgba(245,158,11,0.2)"
+          }}>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+              Current APY
+            </div>
+            <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#f59e0b" }}>
+              {isLoading ? "Loading..." : `${apy}%`}
+            </div>
           </div>
-          <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#10b981" }}>
-            {isLoading ? "Loading..." : `${parseFloat(pendingReward).toFixed(4)} BOND`}
-          </div>
-        </div>
 
-        <div style={{
-          background: "rgba(245,158,11,0.1)",
-          borderRadius: "12px",
-          padding: "16px",
-          border: "1px solid rgba(245,158,11,0.2)"
-        }}>
-          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
-            Current APY
-          </div>
-          <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#f59e0b" }}>
-            {isLoading ? "Loading..." : `${apy}%`}
+          <div style={{
+            background: "rgba(139,92,246,0.1)",
+            borderRadius: "12px",
+            padding: "16px",
+            border: "1px solid rgba(139,92,246,0.2)"
+          }}>
+            <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+              Total Staked
+            </div>
+            <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#8b5cf6" }}>
+              {isLoading ? "Loading..." : `${parseFloat(totalStaked).toFixed(4)} ETH`}
+            </div>
           </div>
         </div>
 
-        <div style={{
-          background: "rgba(139,92,246,0.1)",
-          borderRadius: "12px",
-          padding: "16px",
-          border: "1px solid rgba(139,92,246,0.2)"
-        }}>
-          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
-            Total Staked
-          </div>
-          <div style={{ fontSize: isMobile ? "16px" : "18px", fontWeight: "600", color: "#8b5cf6" }}>
-            {isLoading ? "Loading..." : `${parseFloat(totalStaked).toFixed(4)} ETH`}
-          </div>
-        </div>
-      </div>
-
-      {/* 错误和成功消息 */}
-      {error && (
-        <div style={{
-          background: "rgba(239,68,68,0.1)",
-          border: "1px solid rgba(239,68,68,0.3)",
-          borderRadius: "8px",
-          padding: "12px",
-          marginBottom: "16px",
-          color: "#ef4444",
-          fontSize: "14px"
-        }}>
-          ⚠️ {error}
-        </div>
-      )}
-
-      {success && (
-        <div style={{
-          background: "rgba(16,185,129,0.1)",
-          border: "1px solid rgba(16,185,129,0.3)",
-          borderRadius: "8px",
-          padding: "12px",
-          marginBottom: "16px",
-          color: "#10b981",
-          fontSize: "14px"
-        }}>
-          ✅ {success}
-        </div>
-      )}
-
-      {/* 质押操作 */}
-      <div style={{
-        background: "#151728",
-        borderRadius: "12px",
-        padding: "20px",
-        marginBottom: "20px",
-        border: "1px solid rgba(255,255,255,0.1)"
-      }}>
-        <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
-          💎 Stake ETH
-        </h4>
-        
-        <div style={{ marginBottom: "16px" }}>
-          <input
-            type="number"
-            placeholder="Enter ETH amount (min 0.01)"
-            value={stakeAmount}
-            onChange={(e) => setStakeAmount(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.05)",
-              color: "white",
-              fontSize: "14px"
-            }}
-          />
-        </div>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-          gap: "12px"
-        }}>
-          <button
-            onClick={handleStake}
-            disabled={isLoading || !stakeAmount}
-            style={{
-              background: isLoading || !stakeAmount ? "rgba(255,255,255,0.1)" : "#667eea",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: isLoading || !stakeAmount ? "not-allowed" : "pointer",
-              opacity: isLoading || !stakeAmount ? 0.6 : 1,
-              transition: "all 0.2s ease"
-            }}
-          >
-            {isLoading ? "Processing..." : "Stake ETH"}
-          </button>
-
-          <button
-            onClick={handleStakeAndClaim}
-            disabled={isLoading || !stakeAmount}
-            style={{
-              background: isLoading || !stakeAmount ? "rgba(255,255,255,0.1)" : "#10b981",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: isLoading || !stakeAmount ? "not-allowed" : "pointer",
-              opacity: isLoading || !stakeAmount ? 0.6 : 1,
-              transition: "all 0.2s ease"
-            }}
-          >
-            {isLoading ? "Processing..." : "Stake & Claim"}
-          </button>
-        </div>
-      </div>
-
-      {/* 解除质押操作 */}
-      <div style={{
-        background: "#151728",
-        borderRadius: "12px",
-        padding: "20px",
-        marginBottom: "20px",
-        border: "1px solid rgba(255,255,255,0.1)"
-      }}>
-        <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
-          🔓 Unstake ETH
-        </h4>
-        
-        <div style={{ marginBottom: "16px" }}>
-          <input
-            type="number"
-            placeholder="Enter ETH amount to unstake"
-            value={unstakeAmount}
-            onChange={(e) => setUnstakeAmount(e.target.value)}
-            style={{
-              width: "100%",
-              padding: "12px",
-              borderRadius: "8px",
-              border: "1px solid rgba(255,255,255,0.2)",
-              background: "rgba(255,255,255,0.05)",
-              color: "white",
-              fontSize: "14px"
-            }}
-          />
-        </div>
-
-        <div style={{
-          display: "grid",
-          gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
-          gap: "12px"
-        }}>
-          <button
-            onClick={handleUnstake}
-            disabled={isLoading || !unstakeAmount}
-            style={{
-              background: isLoading || !unstakeAmount ? "rgba(255,255,255,0.1)" : "#f59e0b",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: isLoading || !unstakeAmount ? "not-allowed" : "pointer",
-              opacity: isLoading || !unstakeAmount ? 0.6 : 1,
-              transition: "all 0.2s ease"
-            }}
-          >
-            {isLoading ? "Processing..." : "Unstake ETH"}
-          </button>
-
-          <button
-            onClick={handleUnstakeAndClaim}
-            disabled={isLoading || !unstakeAmount}
-            style={{
-              background: isLoading || !unstakeAmount ? "rgba(255,255,255,0.1)" : "#8b5cf6",
-              color: "white",
-              border: "none",
-              borderRadius: "8px",
-              padding: "12px",
-              fontSize: "14px",
-              fontWeight: "600",
-              cursor: isLoading || !unstakeAmount ? "not-allowed" : "pointer",
-              opacity: isLoading || !unstakeAmount ? 0.6 : 1,
-              transition: "all 0.2s ease"
-            }}
-          >
-            {isLoading ? "Processing..." : "Unstake & Claim"}
-          </button>
-        </div>
-      </div>
-
-      {/* 领取奖励操作 */}
-      <div style={{
-        background: "#151728",
-        borderRadius: "12px",
-        padding: "20px",
-        border: "1px solid rgba(255,255,255,0.1)"
-      }}>
-        <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
-          🎁 Claim Rewards
-        </h4>
-        
-        <button
-          onClick={handleClaim}
-          disabled={isLoading || parseFloat(pendingReward) <= 0}
-          style={{
-            width: "100%",
-            background: isLoading || parseFloat(pendingReward) <= 0 ? "rgba(255,255,255,0.1)" : "#10b981",
-            color: "white",
-            border: "none",
+        {/* 错误和成功消息 */}
+        {error && (
+          <div style={{
+            background: "rgba(239,68,68,0.1)",
+            border: "1px solid rgba(239,68,68,0.3)",
             borderRadius: "8px",
             padding: "12px",
-            fontSize: "14px",
-            fontWeight: "600",
-            cursor: isLoading || parseFloat(pendingReward) <= 0 ? "not-allowed" : "pointer",
-            opacity: isLoading || parseFloat(pendingReward) <= 0 ? 0.6 : 1,
-            transition: "all 0.2s ease"
-          }}
-        >
-          {isLoading ? "Processing..." : `Claim ${parseFloat(pendingReward).toFixed(4)} BOND`}
-        </button>
-      </div>
-
-      {/* 奖励池信息 */}
-      <div style={{
-        marginTop: "20px",
-        padding: "16px",
-        background: "rgba(102,126,234,0.05)",
-        borderRadius: "8px",
-        border: "1px solid rgba(102,126,234,0.2)"
-      }}>
-        <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "8px" }}>
-          📊 Pool Information
-        </div>
-        <div style={{ fontSize: "14px", color: "#667eea" }}>
-          Reward Pool: {isLoading ? "Loading..." : `${parseFloat(rewardPoolBalance).toFixed(2)} BOND`}
-        </div>
-        <div style={{ fontSize: "14px", color: "#667eea" }}>
-          Reward Rate: {isLoading ? "Loading..." : `${parseFloat(rewardRate).toFixed(8)} BOND/s`}
-        </div>
-        {rewardEndTime !== '0' && (
-          <div style={{ fontSize: "14px", color: "#667eea" }}>
-            End Time: {isLoading ? "Loading..." : new Date(parseInt(rewardEndTime) * 1000).toLocaleString()}
+            marginBottom: "16px",
+            color: "#ef4444",
+            fontSize: "14px"
+          }}>
+            ⚠️ {error}
           </div>
         )}
+
+        {success && (
+          <div style={{
+            background: "rgba(16,185,129,0.1)",
+            border: "1px solid rgba(16,185,129,0.3)",
+            borderRadius: "8px",
+            padding: "12px",
+            marginBottom: "16px",
+            color: "#10b981",
+            fontSize: "14px"
+          }}>
+            ✅ {success}
+          </div>
+        )}
+
+        {/* 质押操作 */}
+        <div style={{
+          background: "#151728",
+          borderRadius: "12px",
+          padding: "20px",
+          marginBottom: "20px",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}>
+          <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+            💎 Stake ETH
+          </h4>
+          
+          <div style={{ marginBottom: "16px" }}>
+            <input
+              type="number"
+              placeholder="Enter ETH amount (min 0.01)"
+              value={stakeAmount}
+              onChange={(e) => setStakeAmount(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "rgba(255,255,255,0.05)",
+                color: "white",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+            gap: "12px"
+          }}>
+            <button
+              onClick={handleStake}
+              disabled={isLoading || !stakeAmount}
+              style={{
+                background: isLoading || !stakeAmount ? "rgba(255,255,255,0.1)" : "#667eea",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "12px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isLoading || !stakeAmount ? "not-allowed" : "pointer",
+                opacity: isLoading || !stakeAmount ? 0.6 : 1,
+                transition: "all 0.2s ease"
+              }}
+            >
+              {isLoading ? "Processing..." : "Stake ETH"}
+            </button>
+
+            <button
+              onClick={handleStakeAndClaim}
+              disabled={isLoading || !stakeAmount}
+              style={{
+                background: isLoading || !stakeAmount ? "rgba(255,255,255,0.1)" : "#10b981",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "12px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isLoading || !stakeAmount ? "not-allowed" : "pointer",
+                opacity: isLoading || !stakeAmount ? 0.6 : 1,
+                transition: "all 0.2s ease"
+              }}
+            >
+              {isLoading ? "Processing..." : "Stake & Claim"}
+            </button>
+          </div>
+        </div>
+
+        {/* 解除质押操作 */}
+        <div style={{
+          background: "#151728",
+          borderRadius: "12px",
+          padding: "20px",
+          marginBottom: "20px",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}>
+          <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+            🔓 Unstake ETH
+          </h4>
+          
+          <div style={{ marginBottom: "16px" }}>
+            <input
+              type="number"
+              placeholder="Enter ETH amount to unstake"
+              value={unstakeAmount}
+              onChange={(e) => setUnstakeAmount(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid rgba(255,255,255,0.2)",
+                background: "rgba(255,255,255,0.05)",
+                color: "white",
+                fontSize: "14px"
+              }}
+            />
+          </div>
+
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)",
+            gap: "12px"
+          }}>
+            <button
+              onClick={handleUnstake}
+              disabled={isLoading || !unstakeAmount}
+              style={{
+                background: isLoading || !unstakeAmount ? "rgba(255,255,255,0.1)" : "#f59e0b",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "12px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isLoading || !unstakeAmount ? "not-allowed" : "pointer",
+                opacity: isLoading || !unstakeAmount ? 0.6 : 1,
+                transition: "all 0.2s ease"
+              }}
+            >
+              {isLoading ? "Processing..." : "Unstake ETH"}
+            </button>
+
+            <button
+              onClick={handleUnstakeAndClaim}
+              disabled={isLoading || !unstakeAmount}
+              style={{
+                background: isLoading || !unstakeAmount ? "rgba(255,255,255,0.1)" : "#8b5cf6",
+                color: "white",
+                border: "none",
+                borderRadius: "8px",
+                padding: "12px",
+                fontSize: "14px",
+                fontWeight: "600",
+                cursor: isLoading || !unstakeAmount ? "not-allowed" : "pointer",
+                opacity: isLoading || !unstakeAmount ? 0.6 : 1,
+                transition: "all 0.2s ease"
+              }}
+            >
+              {isLoading ? "Processing..." : "Unstake & Claim"}
+            </button>
+          </div>
+        </div>
+
+        {/* 领取奖励操作 */}
+        <div style={{
+          background: "#151728",
+          borderRadius: "12px",
+          padding: "20px",
+          border: "1px solid rgba(255,255,255,0.1)"
+        }}>
+          <h4 style={{ fontSize: "16px", fontWeight: "600", marginBottom: "16px", color: "white" }}>
+            🎁 Claim Rewards
+          </h4>
+          
+          <button
+            onClick={handleClaim}
+            disabled={isLoading || parseFloat(pendingReward) <= 0}
+            style={{
+              width: "100%",
+              background: isLoading || parseFloat(pendingReward) <= 0 ? "rgba(255,255,255,0.1)" : "#10b981",
+              color: "white",
+              border: "none",
+              borderRadius: "8px",
+              padding: "12px",
+              fontSize: "14px",
+              fontWeight: "600",
+              cursor: isLoading || parseFloat(pendingReward) <= 0 ? "not-allowed" : "pointer",
+              opacity: isLoading || parseFloat(pendingReward) <= 0 ? 0.6 : 1,
+              transition: "all 0.2s ease"
+            }}
+          >
+            {isLoading ? "Processing..." : `Claim ${parseFloat(pendingReward).toFixed(4)} BOND`}
+          </button>
+        </div>
+
+        {/* 奖励池信息 */}
+        <div style={{
+          marginTop: "20px",
+          padding: "16px",
+          background: "rgba(102,126,234,0.05)",
+          borderRadius: "8px",
+          border: "1px solid rgba(102,126,234,0.2)"
+        }}>
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "8px" }}>
+            📊 Pool Information
+          </div>
+          <div style={{ fontSize: "14px", color: "#667eea" }}>
+            Reward Pool: {isLoading ? "Loading..." : `${parseFloat(rewardPoolBalance).toFixed(2)} BOND`}
+          </div>
+          <div style={{ fontSize: "14px", color: "#667eea" }}>
+            Reward Rate: {isLoading ? "Loading..." : `${parseFloat(rewardRate).toFixed(8)} BOND/s`}
+          </div>
+          {rewardEndTime !== '0' && (
+            <div style={{ fontSize: "14px", color: "#667eea" }}>
+              End Time: {isLoading ? "Loading..." : new Date(parseInt(rewardEndTime) * 1000).toLocaleString()}
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

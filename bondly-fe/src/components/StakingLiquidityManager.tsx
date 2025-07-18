@@ -292,7 +292,7 @@ const StakingLiquidityManager: React.FC<StakingLiquidityManagerProps> = ({ isMob
         marginBottom: "16px",
         color: "white"
       }}>
-        💰 Staking Liquidity Management
+        💰 BOND Staking Liquidity Management
       </h3>
 
       {/* 权限状态 */}

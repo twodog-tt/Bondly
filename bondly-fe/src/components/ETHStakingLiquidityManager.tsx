@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount, useReadContract, useWriteContract } from 'wagmi';
+import { useAccount, useReadContract, useWriteContract, useWatchContractEvent } from 'wagmi';
 import { parseEther, formatEther } from 'viem';
 import { getContractAddress, getContractABI } from '../config/contracts';
 
@@ -105,7 +105,39 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
   });
 
   // 写入合约
-  const { writeContract, isPending } = useWriteContract();
+  const { writeContract, isPending, data: writeData, error: writeError } = useWriteContract();
+
+  // 监听合约事件
+  useWatchContractEvent({
+    address: ethStakingAddress,
+    abi: getContractABI('ETH_STAKING'),
+    eventName: 'RewardAdded',
+    onLogs: (logs) => {
+      console.log('Reward added event detected:', logs);
+      // 刷新数据
+      refetchRole();
+      setSuccess('Reward added successfully!');
+      setRewardAmount('');
+      setDurationDays('30');
+    },
+  });
+
+  // 监听写入状态变化
+  useEffect(() => {
+    if (writeError) {
+      setError(writeError.message || 'Transaction failed');
+      setIsLoading(false);
+    }
+  }, [writeError]);
+
+  // 监听交易成功
+  useEffect(() => {
+    if (writeData && !isPending) {
+      console.log('Transaction successful:', writeData);
+      setSuccess('Transaction submitted successfully! Please wait for confirmation...');
+      setIsLoading(false);
+    }
+  }, [writeData, isPending]);
 
   // 添加流动性
   const handleAddLiquidity = async () => {
@@ -147,27 +179,34 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
       // 检查授权额度
       if (currentAllowance < amountWei) {
         // 先授权
-        (writeContract as any)({
-          address: bondTokenAddress,
-          abi: getContractABI('BOND_TOKEN'),
-          functionName: 'approve',
-          args: [ethStakingAddress, amountWei],
-        });
-        setSuccess('Please confirm the approval transaction');
+        try {
+          (writeContract as any)({
+            address: bondTokenAddress,
+            abi: getContractABI('BOND_TOKEN'),
+            functionName: 'approve',
+            args: [ethStakingAddress, amountWei],
+          });
+          setSuccess('Please confirm the approval transaction in your wallet');
+        } catch (err: any) {
+          setError(err.message || 'Approval failed');
+          setIsLoading(false);
+        }
         return;
       }
 
       // 添加奖励
-      (writeContract as any)({
-        address: ethStakingAddress,
-        abi: getContractABI('ETH_STAKING'),
-        functionName: 'addReward',
-        args: [amountWei, durationSeconds],
-      });
-
-      setSuccess('Please confirm the add liquidity transaction');
-      setRewardAmount('');
-      setDurationDays('30');
+      try {
+        (writeContract as any)({
+          address: ethStakingAddress,
+          abi: getContractABI('ETH_STAKING'),
+          functionName: 'addReward',
+          args: [amountWei, durationSeconds],
+        });
+        setSuccess('Please confirm the add liquidity transaction in your wallet');
+      } catch (err: any) {
+        setError(err.message || 'Add liquidity failed');
+        setIsLoading(false);
+      }
 
     } catch (err: any) {
       setError(err.message || 'Failed to add liquidity');
@@ -273,14 +312,40 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
       border: "1px solid #23244a",
       boxShadow: "0 4px 24px rgba(102,126,234,0.08)"
     }}>
-      <h3 style={{
-        fontSize: isMobile ? "20px" : "24px",
-        fontWeight: "700",
-        marginBottom: "16px",
-        color: "white"
+      <div style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "16px"
       }}>
-        💎 ETH Staking Liquidity Management
-      </h3>
+        <h3 style={{
+          fontSize: isMobile ? "20px" : "24px",
+          fontWeight: "700",
+          color: "white"
+        }}>
+          💎 ETH Staking Liquidity Management
+        </h3>
+        <button
+          onClick={() => {
+            refetchRole();
+            setSuccess('Data refreshed');
+          }}
+          disabled={isLoading || isPending}
+          style={{
+            background: "rgba(102,126,234,0.1)",
+            border: "1px solid rgba(102,126,234,0.3)",
+            borderRadius: "8px",
+            padding: "8px 16px",
+            color: "#667eea",
+            fontSize: "12px",
+            cursor: isLoading || isPending ? "not-allowed" : "pointer",
+            opacity: isLoading || isPending ? 0.6 : 1,
+            transition: "all 0.2s ease"
+          }}
+        >
+          🔄 Refresh
+        </button>
+      </div>
 
       {/* 权限状态 */}
       <div style={{

@@ -1,6 +1,7 @@
 import React from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import ETHStakingManager from '../components/ETHStakingManager';
+import ETHStakingLiquidityManager from '../components/ETHStakingLiquidityManager';
 
 interface ETHStakePageProps {
   isMobile: boolean;
@@ -52,6 +53,11 @@ const ETHStakePage: React.FC<ETHStakePageProps> = ({ isMobile, onPageChange }) =
 
           {/* ETH质押管理组件 */}
           <ETHStakingManager isMobile={isMobile} />
+
+          {/* ETH质押流动性管理组件 */}
+          <div style={{ marginTop: "32px" }}>
+            <ETHStakingLiquidityManager isMobile={isMobile} />
+          </div>
 
           {/* 说明信息 */}
           <div style={{
