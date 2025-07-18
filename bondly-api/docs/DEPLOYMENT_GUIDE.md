@@ -1,0 +1,308 @@
+# Bondly 部署配置指南
+
+## 📋 目录
+
+- [空投功能配置](#空投功能配置)
+- [钱包配置](#钱包配置)
+- [数据库配置](#数据库配置)
+- [环境变量配置](#环境变量配置)
+
+---
+
+## 🪙 空投功能配置
+
+### 功能概述
+
+当新用户首次注册/登录时，系统会自动向用户的钱包地址空投1000个BOND代币。
+
+### 配置步骤
+
+#### 1. 环境变量配置
+
+在 `.env` 文件中添加以下配置：
+
+```bash
+# 以太坊网络配置
+ETH_RPC_URL=http://localhost:8545  # 或你的以太坊节点URL
+
+# 中转钱包私钥（重要：请安全保管）
+ETH_RELAY_WALLET_KEY=你的中转钱包私钥（去掉0x前缀）
+
+# BOND代币合约地址
+ETH_CONTRACT_ADDRESS=0x8Cb00D43b5627528d97831b9025F33aE3dE7415E
+```
+
+#### 2. 中转钱包设置
+
+1. **创建中转钱包**：
+   - 地址：`0x2C830B8D1a6A9B840bde165a36df2A69fc9AA075`
+   - 确保该钱包有足够的BOND代币余额（建议至少10000个）
+
+2. **获取私钥**：
+   - 从钱包导出私钥
+   - 去掉`0x`前缀
+   - 安全保存到环境变量中
+
+#### 3. 数据库迁移
+
+执行数据库迁移脚本：
+
+```bash
+# 方法1：使用psql
+psql -U youruser -d yourdb -f cmd/migrate/add_airdrop_tables.sql
+
+# 方法2：使用数据库管理工具
+# 手动执行SQL脚本内容
+```
+
+迁移脚本会：
+- 在 `users` 表添加 `has_received_airdrop` 字段
+- 创建 `airdrop_records` 表记录空投流水
+
+#### 4. 测试配置
+
+运行测试脚本验证配置：
+
+```bash
+go run cmd/test-airdrop/main.go
+```
+
+测试脚本会检查：
+- 数据库连接
+- 以太坊网络连接
+- 中转钱包余额
+- 配置是否正确
+
+### 功能流程
+
+#### 用户注册流程
+
+1. 用户注册新账户
+2. 系统检查用户是否为新用户且未获得过空投
+3. 如果符合条件，异步执行空投：
+   - 检查中转钱包余额
+   - 发起BOND代币转账交易
+   - 记录空投流水
+   - 标记用户已获得空投
+4. 等待交易确认并更新状态
+
+#### 空投记录
+
+每次空投都会在 `airdrop_records` 表中记录：
+- 用户ID
+- 钱包地址
+- 空投金额
+- 交易哈希
+- 状态（pending/success/failed）
+- 时间戳
+
+### 安全注意事项
+
+#### 1. 私钥安全
+- 中转钱包私钥必须安全存储
+- 不要硬编码在代码中
+- 建议使用密钥管理服务
+
+#### 2. 防重复空投
+- 系统通过 `has_received_airdrop` 字段防止重复空投
+- 每个用户只能获得一次空投
+
+#### 3. 余额监控
+- 定期检查中转钱包余额
+- 设置余额告警
+
+#### 4. 交易监控
+- 监控空投交易状态
+- 处理失败的交易
+
+### API接口
+
+#### 获取用户空投状态
+
+```http
+GET /api/users/{user_id}/airdrop-status
+```
+
+#### 获取空投历史
+
+```http
+GET /api/admin/airdrop-history?offset=0&limit=20
+```
+
+### 监控和告警
+
+建议设置以下监控：
+
+1. **中转钱包余额监控**
+2. **空投成功率监控**
+3. **交易确认时间监控**
+4. **失败交易告警**
+
+---
+
+## 🔐 钱包配置
+
+### WALLET_SECRET_KEY 环境变量配置
+
+`/api/v1/wallets/generate` 接口需要配置 `WALLET_SECRET_KEY` 环境变量来加密生成的托管钱包私钥。
+
+### 配置步骤
+
+#### 1. 复制环境变量模板
+```bash
+cp env.example .env
+```
+
+#### 2. 生成安全的32字节密钥
+```bash
+# 使用 OpenSSL 生成随机密钥
+openssl rand -hex 32
+```
+
+#### 3. 更新 .env 文件
+将生成的密钥设置到 `.env` 文件中：
+```env
+WALLET_SECRET_KEY=your-generated-32-byte-hex-key
+```
+
+### 示例配置
+
+```env
+# 其他配置...
+WALLET_SECRET_KEY=2be4a7a16aa1c7f6be3cfb64aa1b7215bbf3e1aeab5e5bca867bb0d4adf35cb7
+```
+
+### 安全注意事项
+
+- **不要将真实的密钥提交到版本控制系统**
+- **在生产环境中使用强随机密钥**
+- **定期轮换密钥**
+- **确保密钥长度为32字节（64个十六进制字符）**
+
+### 验证配置
+
+启动服务后，可以通过以下方式验证配置：
+
+```bash
+# 测试钱包生成接口
+curl -X POST http://localhost:8080/api/v1/wallets/generate \
+  -H "Content-Type: application/json"
+```
+
+如果配置正确，接口将返回生成的托管钱包信息。
+
+---
+
+## 🗄️ 数据库配置
+
+### 数据库迁移
+
+```bash
+# 运行数据库迁移
+go run cmd/migrate/main.go
+```
+
+### 数据填充
+
+```bash
+# 填充测试数据
+go run cmd/seed-data/main.go
+```
+
+### 查看表结构
+
+```bash
+# 运行表结构查看工具
+go run cmd/read-schema/main.go
+```
+
+---
+
+## ⚙️ 环境变量配置
+
+### 完整的环境变量示例
+
+```env
+# 服务器配置
+SERVER_HOST=localhost
+SERVER_PORT=8080
+
+# 数据库配置
+DB_HOST=localhost
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=your_password
+DB_NAME=bondly_db
+DB_SSL_MODE=disable
+
+# Redis配置
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_PASSWORD=
+REDIS_DB=0
+
+# JWT配置
+JWT_SECRET=your-jwt-secret-key
+JWT_EXPIRES_IN=24h
+
+# 邮件配置
+EMAIL_PROVIDER=resend
+EMAIL_RESEND_KEY=your-resend-api-key
+EMAIL_FROM_EMAIL=noreply@bondly.com
+
+# 以太坊配置
+ETH_RPC_URL=http://localhost:8545
+ETH_RELAY_WALLET_KEY=your-relay-wallet-private-key
+ETH_CONTRACT_ADDRESS=0x8Cb00D43b5627528d97831b9025F33aE3dE7415E
+
+# 钱包配置
+WALLET_SECRET_KEY=your-32-byte-wallet-secret-key
+
+# 日志配置
+LOG_LEVEL=info
+LOG_FORMAT=json
+
+# CORS配置
+CORS_ALLOWED_ORIGINS=http://localhost:3000,http://localhost:5173
+```
+
+### 故障排除
+
+#### 常见问题
+
+1. **编译错误**：
+   ```bash
+   go mod tidy
+   go build -o bondly-api .
+   ```
+
+2. **数据库连接失败**：
+   - 检查数据库配置
+   - 确保数据库服务运行
+
+3. **以太坊连接失败**：
+   - 检查RPC URL
+   - 确保网络连接正常
+
+4. **空投失败**：
+   - 检查中转钱包余额
+   - 检查私钥配置
+   - 查看日志错误信息
+
+#### 日志查看
+
+空投相关的日志会记录：
+- 业务逻辑日志
+- 数据库操作日志
+- 区块链交易日志
+
+---
+
+## 🔧 扩展功能
+
+未来可以考虑添加：
+
+1. **批量空投功能**
+2. **空投金额配置化**
+3. **空投条件扩展**（如邀请奖励）
+4. **空投统计报表** 
