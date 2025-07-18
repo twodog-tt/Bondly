@@ -20,7 +20,7 @@ type DataSeeder struct {
 var users = []map[string]interface{}{
 	{
 		"wallet_address":   "0x742d35Cc6634C0532925a3b8D4C9db96C4b4d8b6",
-		"email":            "alice@web3.com",
+		"email":            "alice2@web3.com",
 		"nickname":         "Alice Crypto",
 		"avatar_url":       "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face",
 		"bio":              "Web3 enthusiast | DeFi researcher | Building the future of decentralized social media",
@@ -29,7 +29,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0x8ba1f109551bd432803012645aac136c772c3c3",
-		"email":            "bob@web3.com",
+		"email":            "bob2@web3.com",
 		"nickname":         "Bob Blockchain",
 		"avatar_url":       "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face",
 		"bio":              "Smart contract developer | NFT artist | Exploring the intersection of art and technology",
@@ -38,7 +38,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0x1234567890123456789012345678901234567890",
-		"email":            "carol@web3.com",
+		"email":            "carol2@web3.com",
 		"nickname":         "Carol DAO",
 		"avatar_url":       "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face",
 		"bio":              "DAO governance expert | Community builder | Empowering decentralized decision making",
@@ -47,7 +47,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0x9876543210987654321098765432109876543210",
-		"email":            "dave@web3.com",
+		"email":            "dave2@web3.com",
 		"nickname":         "Dave DeFi",
 		"avatar_url":       "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face",
 		"bio":              "DeFi strategist | Yield farmer | Sharing insights on the latest protocols",
@@ -56,7 +56,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0xabcdef1234567890abcdef1234567890abcdef12",
-		"email":            "eve@web3.com",
+		"email":            "eve2@web3.com",
 		"nickname":         "Eve NFT",
 		"avatar_url":       "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=150&h=150&fit=crop&crop=face",
 		"bio":              "NFT collector | Digital art curator | Building bridges between traditional and digital art",
@@ -65,7 +65,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0xfedcba0987654321fedcba0987654321fedcba09",
-		"email":            "frank@web3.com",
+		"email":            "frank2@web3.com",
 		"nickname":         "Frank Layer2",
 		"avatar_url":       "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face",
 		"bio":              "Layer 2 researcher | Scaling solutions | Making blockchain accessible to everyone",
@@ -74,7 +74,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0x1111111111111111111111111111111111111111",
-		"email":            "grace@web3.com",
+		"email":            "grace2@web3.com",
 		"nickname":         "Grace Governance",
 		"avatar_url":       "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&crop=face",
 		"bio":              "Governance specialist | Tokenomics expert | Designing sustainable token economies",
@@ -83,7 +83,7 @@ var users = []map[string]interface{}{
 	},
 	{
 		"wallet_address":   "0x2222222222222222222222222222222222222222",
-		"email":            "henry@web3.com",
+		"email":            "henry2@web3.com",
 		"nickname":         "Henry Hash",
 		"avatar_url":       "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&crop=face",
 		"bio":              "Cryptography researcher | Zero-knowledge proofs | Privacy in the digital age",
@@ -95,195 +95,317 @@ var users = []map[string]interface{}{
 // 文章数据
 var posts = []map[string]interface{}{
 	{
-		"title": "The Future of Decentralized Social Media",
-		"content": `# The Future of Decentralized Social Media
+		"title": "Bondly: Revolutionizing Web3 Social Media with Content Monetization",
+		"content": `# Bondly: Revolutionizing Web3 Social Media with Content Monetization
 
-In the era of Web3, we're witnessing a paradigm shift in how we think about social media. Traditional platforms have centralized control over user data, content moderation, and monetization. But what if we could build a social media platform that's truly owned by its users?
+Welcome to Bondly, the next-generation decentralized social media platform that's redefining how creators monetize their content through blockchain technology. Our platform combines the best of traditional social media with the power of Web3, creating a truly innovative ecosystem for content creators and consumers alike.
 
-## Key Benefits of Decentralized Social Media
+## 🚀 Core Innovation: Content-as-NFT
 
-1. **User Ownership**: Users own their data and content
-2. **Censorship Resistance**: No single entity can censor content
-3. **Monetization**: Direct creator-to-fan relationships
-4. **Interoperability**: Cross-platform data portability
+Bondly introduces a groundbreaking concept where every piece of content can be minted as an NFT, giving creators unprecedented control over their work. This isn't just about digital art – it's about transforming articles, blog posts, and social content into valuable, tradeable assets.
 
-## Technical Challenges
+### Key Benefits:
+- **True Ownership**: Creators maintain full control over their content
+- **Monetization**: Direct revenue through NFT sales and royalties
+- **Transparency**: All transactions recorded on the blockchain
+- **Interoperability**: NFTs can be traded across multiple platforms
 
-Building decentralized social media comes with unique challenges:
-- Scalability issues with blockchain
-- Content moderation in a decentralized environment
-- User experience vs decentralization trade-offs
+## 💎 Interactive Staking Mechanism
 
-The future is bright for Web3 social platforms! 🚀`,
+Our platform features a unique interactive staking system that rewards both creators and consumers:
+
+### For Content Creators:
+- Earn rewards when users interact with your content
+- Build a loyal community through engagement incentives
+- Receive BOND tokens for quality content creation
+
+### For Content Consumers:
+- Stake tokens to show support for creators
+- Earn rewards for meaningful interactions
+- Participate in content curation and discovery
+
+## 🔗 Seamless Wallet Integration
+
+Bondly supports multiple blockchain networks, making it accessible to users across the entire Web3 ecosystem:
+
+- **Ethereum**: Main network for high-value transactions
+- **Polygon**: Low-cost transactions for everyday interactions
+- **Arbitrum**: Fast and efficient Layer 2 scaling
+- **Optimism**: Optimistic rollups for enhanced performance
+- **BSC**: Binance Smart Chain for broader accessibility
+
+The future of social media is here, and it's decentralized! 🌟`,
 		"cover_image_url": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop",
-		"tags":            []string{"web3", "social-media", "decentralization"},
-		"likes":           45,
-		"views":           1200,
+		"tags":            []string{"bondly", "web3", "nft", "social-media"},
+		"likes":           156,
+		"views":           3200,
 		"is_published":    true,
 	},
 	{
-		"title": "Understanding DeFi Yield Farming Strategies",
-		"content": `# Understanding DeFi Yield Farming Strategies
+		"title": "The Bondly Token Economy: A Sustainable Creator Ecosystem",
+		"content": `# The Bondly Token Economy: A Sustainable Creator Ecosystem
 
-Yield farming has become one of the most popular ways to earn passive income in the DeFi ecosystem. But what exactly is yield farming, and how can you get started?
+At the heart of Bondly lies our innovative token economy, designed to create a sustainable and rewarding ecosystem for all participants. The BOND token serves as the foundation for our platform's economic model, enabling seamless interactions and value exchange.
 
-## What is Yield Farming?
+## 🏦 Token Distribution & Utility
 
-Yield farming is the practice of lending or staking cryptocurrency to earn rewards in the form of additional cryptocurrency. It's essentially earning interest on your crypto holdings.
+### BOND Token Features:
+- **Total Supply**: 100,000,000 BOND tokens
+- **Initial Airdrop**: 1,000 BOND for new users
+- **Staking Rewards**: Earn through content interaction
+- **Governance Rights**: Participate in platform decisions
 
-## Popular Yield Farming Strategies
+### Economic Model:
+1. **Content Creation Rewards**: Creators earn BOND for quality content
+2. **Interaction Incentives**: Users earn for meaningful engagement
+3. **Staking Mechanisms**: Lock tokens to earn additional rewards
+4. **Governance Participation**: Token holders vote on platform proposals
 
-### 1. Liquidity Provision
-Provide liquidity to DEX pairs and earn trading fees plus token rewards.
+## 🎯 Reputation System
 
-### 2. Staking
-Stake your tokens in various protocols to earn staking rewards.
+Bondly implements a sophisticated reputation scoring system that rewards quality contributions:
 
-### 3. Lending
-Lend your crypto assets on lending platforms like Aave or Compound.
+### Reputation Factors:
+- **Content Quality**: Engagement rates and user feedback
+- **Community Contribution**: Helpful comments and curation
+- **Consistency**: Regular activity and reliable participation
+- **Innovation**: Unique content and creative approaches
 
-## Risk Management
+### Benefits of High Reputation:
+- Increased visibility for content
+- Higher staking rewards
+- Governance voting power
+- Exclusive platform features
 
-Remember: Higher yields often come with higher risks. Always:
-- Do your own research
-- Understand the smart contracts
-- Diversify your investments
-- Never invest more than you can afford to lose
+## 🔄 Circular Economy
 
-Stay safe and happy farming! 🌾`,
+Our token economy creates a virtuous cycle:
+- Creators produce quality content → Earn BOND tokens
+- Users engage with content → Earn interaction rewards
+- Platform grows → Token value increases
+- Community thrives → Sustainable ecosystem
+
+This creates a self-sustaining ecosystem where everyone benefits! 💎`,
 		"cover_image_url": "https://images.unsplash.com/photo-1621761191319-c6fb62004040?w=800&h=400&fit=crop",
-		"tags":            []string{"defi", "yield-farming", "cryptocurrency"},
-		"likes":           67,
-		"views":           2100,
+		"tags":            []string{"tokenomics", "bond-token", "reputation", "governance"},
+		"likes":           234,
+		"views":           4100,
 		"is_published":    true,
 	},
 	{
-		"title": "NFTs: Beyond Digital Art",
-		"content": `# NFTs: Beyond Digital Art
+		"title": "Bondly's Technical Architecture: Building the Future of Social Media",
+		"content": `# Bondly's Technical Architecture: Building the Future of Social Media
 
-While NFTs are often associated with digital art, their potential applications extend far beyond the art world. Let's explore some innovative use cases.
+Bondly's technical foundation represents a cutting-edge approach to decentralized social media, combining robust backend infrastructure with seamless blockchain integration. Our architecture ensures scalability, security, and user experience excellence.
 
-## Real Estate NFTs
+## 🏗️ Backend Infrastructure
 
-Tokenizing real estate properties as NFTs can:
-- Fractionalize ownership
-- Reduce transaction costs
-- Increase liquidity
-- Enable global investment
+### Technology Stack:
+- **Go + Gin**: High-performance API framework
+- **PostgreSQL**: Reliable relational database
+- **Redis**: Fast caching and session management
+- **GORM**: Elegant database ORM
+- **JWT**: Secure authentication system
 
-## Identity and Credentials
+### Key Features:
+- **RESTful APIs**: Clean, intuitive API design
+- **Real-time Updates**: WebSocket support for live interactions
+- **File Upload**: IPFS integration for decentralized storage
+- **Email Service**: Automated notifications and alerts
 
-NFTs can represent:
-- Educational certificates
-- Professional licenses
-- Membership cards
-- Identity documents
+## 🔗 Blockchain Integration
 
-## Gaming and Virtual Worlds
+### Smart Contract Ecosystem:
+- **BondlyToken**: ERC-20 token with governance capabilities
+- **ContentNFT**: NFT standard for content tokenization
+- **InteractionStaking**: Innovative staking mechanism
+- **ReputationVault**: Reputation scoring and rewards
+- **BondlyDAO**: Decentralized governance system
 
-In gaming, NFTs enable:
-- True ownership of in-game assets
-- Cross-game interoperability
-- Player-driven economies
-- Unique digital experiences
+### Multi-Chain Support:
+- **Ethereum Mainnet**: Primary network for high-value transactions
+- **Polygon**: Cost-effective transactions for daily use
+- **Arbitrum**: Layer 2 scaling for enhanced performance
+- **Optimism**: Optimistic rollups for faster confirmations
 
-## The Future of NFTs
+## 🛡️ Security & Privacy
 
-The NFT ecosystem is still in its early stages. As technology evolves, we'll see even more innovative applications that we haven't even imagined yet.
+### Security Measures:
+- **Private Key Encryption**: Secure wallet management
+- **Rate Limiting**: Protection against abuse
+- **Input Validation**: Comprehensive data sanitization
+- **Audit Trail**: Complete transaction logging
 
-What's your favorite NFT use case? 🤔`,
+### Privacy Features:
+- **Optional Anonymity**: Users can choose privacy levels
+- **Data Ownership**: Users control their personal information
+- **Transparent Algorithms**: Open-source reputation system
+- **No Centralized Control**: Truly decentralized platform
+
+## 🚀 Performance & Scalability
+
+### Optimization Strategies:
+- **Database Indexing**: Optimized query performance
+- **Caching Layers**: Redis for fast data access
+- **CDN Integration**: Global content delivery
+- **Load Balancing**: Horizontal scaling capabilities
+
+The technical excellence behind Bondly ensures a smooth, secure, and scalable user experience! ⚡`,
 		"cover_image_url": "https://images.unsplash.com/photo-1620321023374-d1a68fbc720d?w=800&h=400&fit=crop",
-		"tags":            []string{"nft", "blockchain", "innovation"},
-		"likes":           89,
-		"views":           3400,
+		"tags":            []string{"architecture", "blockchain", "security", "scalability"},
+		"likes":           189,
+		"views":           2800,
 		"is_published":    true,
 	},
 	{
-		"title": "DAO Governance: A Complete Guide",
-		"content": `# DAO Governance: A Complete Guide
+		"title": "Bondly Governance: Empowering Community-Driven Decisions",
+		"content": `# Bondly Governance: Empowering Community-Driven Decisions
 
-Decentralized Autonomous Organizations (DAOs) are revolutionizing how we think about organizational structure and decision-making.
+Bondly's governance system represents a new paradigm in platform decision-making, where every token holder has a voice in shaping the future of the ecosystem. Our DAO (Decentralized Autonomous Organization) ensures that the platform evolves according to community needs and values.
 
-## What is a DAO?
+## 🏛️ Governance Structure
 
-A DAO is an organization governed by smart contracts and community voting, rather than traditional hierarchical management.
+### Proposal System:
+- **Community Proposals**: Any token holder can submit proposals
+- **Discussion Period**: Open debate and community feedback
+- **Voting Mechanism**: Transparent on-chain voting
+- **Execution**: Automated implementation of approved proposals
 
-## Governance Models
+### Voting Power Calculation:
+- **Token-Based**: 1 BOND = 1 vote
+- **Reputation Bonus**: High-reputation users get additional weight
+- **Staking Multiplier**: Staked tokens receive voting bonuses
+- **Time Lock**: Long-term holders get increased influence
 
-### 1. Token-Based Voting
-Each token represents one vote. More tokens = more voting power.
+## 🎯 Governance Categories
 
-### 2. Reputation-Based Voting
-Voting power based on contribution and reputation within the community.
+### Platform Development:
+- **Feature Requests**: New functionality and improvements
+- **Technical Upgrades**: Protocol and smart contract updates
+- **Integration Proposals**: New blockchain networks and services
 
-### 3. Quadratic Voting
-Voting power increases with the square root of tokens held.
+### Economic Policy:
+- **Token Distribution**: Airdrop and reward adjustments
+- **Staking Parameters**: APY rates and lock periods
+- **Fee Structures**: Transaction and platform fees
 
-## Best Practices
+### Community Management:
+- **Content Guidelines**: Moderation policies and standards
+- **Reputation Rules**: Scoring algorithm adjustments
+- **Dispute Resolution**: Conflict resolution mechanisms
 
-- Transparent proposal process
-- Clear voting mechanisms
-- Effective communication channels
-- Regular community engagement
+## 🔄 Governance Process
 
-## Challenges
+### 1. Proposal Submission
+- Minimum token requirement for proposal creation
+- Clear documentation and rationale required
+- Community discussion and feedback period
 
-- Voter apathy
-- Sybil attacks
-- Decision paralysis
-- Scalability issues
+### 2. Voting Period
+- Transparent on-chain voting mechanism
+- Real-time vote tracking and results
+- Quorum requirements for proposal approval
 
-DAOs represent the future of organizational governance! 🏛️`,
+### 3. Implementation
+- Automated execution of approved proposals
+- Transparent implementation tracking
+- Community oversight and accountability
+
+## 🌟 Benefits of Decentralized Governance
+
+- **Community Ownership**: Users truly own the platform
+- **Transparency**: All decisions are publicly visible
+- **Innovation**: Rapid iteration based on user feedback
+- **Alignment**: Platform evolution matches user needs
+
+Bondly's governance system ensures that the platform remains truly community-driven! 🗳️`,
 		"cover_image_url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&h=400&fit=crop",
-		"tags":            []string{"dao", "governance", "decentralization"},
-		"likes":           56,
-		"views":           1800,
+		"tags":            []string{"dao", "governance", "community", "voting"},
+		"likes":           145,
+		"views":           1900,
 		"is_published":    true,
 	},
 	{
-		"title": "Layer 2 Scaling Solutions Explained",
-		"content": `# Layer 2 Scaling Solutions Explained
+		"title": "Bondly's User Experience: Bridging Web2 and Web3 Seamlessly",
+		"content": `# Bondly's User Experience: Bridging Web2 and Web3 Seamlessly
 
-As Ethereum's popularity grows, so do the challenges of network congestion and high gas fees. Layer 2 solutions offer a promising path forward.
+Bondly's user interface and experience design represents a breakthrough in making Web3 technology accessible to mainstream users. We've created an intuitive platform that feels familiar to social media users while unlocking the full potential of blockchain technology.
 
-## What are Layer 2 Solutions?
+## 🎨 Design Philosophy
 
-Layer 2 solutions are protocols that run on top of the main blockchain (Layer 1) to improve scalability and reduce transaction costs.
+### User-Centric Approach:
+- **Familiar Interface**: Social media layout with Web3 enhancements
+- **Progressive Disclosure**: Advanced features revealed gradually
+- **Clear Onboarding**: Step-by-step guidance for new users
+- **Responsive Design**: Seamless experience across all devices
 
-## Popular Layer 2 Solutions
+### Visual Identity:
+- **Dark Theme**: Modern, professional appearance
+- **Consistent Branding**: Cohesive Bondly visual language
+- **Accessibility**: WCAG compliant design standards
+- **Performance**: Fast loading and smooth interactions
 
-### 1. Optimistic Rollups
-- Arbitrum
-- Optimism
-- Boba Network
+## 🔐 Wallet Integration
 
-### 2. ZK Rollups
-- zkSync
-- StarkNet
-- Polygon zkEVM
+### Seamless Connection:
+- **Multiple Wallets**: MetaMask, WalletConnect, and more
+- **One-Click Login**: Instant wallet-based authentication
+- **Cross-Chain Support**: Automatic network detection
+- **Security Features**: Encrypted private key storage
 
-### 3. State Channels
-- Lightning Network (Bitcoin)
-- Raiden Network (Ethereum)
+### User-Friendly Features:
+- **Balance Display**: Real-time token and NFT balances
+- **Transaction History**: Clear record of all activities
+- **Gas Optimization**: Smart fee estimation and optimization
+- **Error Handling**: Helpful messages for common issues
 
-## Benefits
+## 📱 Mobile Experience
 
-- Lower transaction fees
-- Faster transaction times
-- Maintained security
-- Better user experience
+### Responsive Design:
+- **Mobile-First**: Optimized for smartphone users
+- **Touch-Friendly**: Intuitive touch interactions
+- **Offline Support**: Basic functionality without internet
+- **Push Notifications**: Real-time updates and alerts
 
-## Trade-offs
+### Performance Optimization:
+- **Fast Loading**: Optimized assets and caching
+- **Smooth Scrolling**: 60fps animations and transitions
+- **Battery Efficient**: Minimal resource consumption
+- **Data Saving**: Compressed images and lazy loading
 
-- Centralization concerns
-- Security assumptions
-- User experience complexity
+## 🎯 Key User Journeys
 
-Layer 2 solutions are crucial for mass adoption! ⚡`,
+### New User Onboarding:
+1. **Welcome Screen**: Introduction to Bondly's features
+2. **Wallet Connection**: Simple wallet setup process
+3. **Airdrop Claim**: Automatic BOND token distribution
+4. **Profile Setup**: Customize avatar and bio
+5. **First Post**: Guided content creation experience
+
+### Content Creation:
+- **Rich Text Editor**: Markdown support with live preview
+- **Media Upload**: Drag-and-drop file management
+- **NFT Minting**: One-click content tokenization
+- **Publishing Options**: Public, private, or token-gated content
+
+### Social Interaction:
+- **Like & Comment**: Familiar social media interactions
+- **Staking Support**: Show appreciation with token stakes
+- **Content Discovery**: AI-powered recommendation engine
+- **Community Building**: Follow creators and join discussions
+
+## 🌟 Accessibility Features
+
+- **Screen Reader Support**: Full compatibility with assistive technologies
+- **Keyboard Navigation**: Complete keyboard-only operation
+- **High Contrast Mode**: Enhanced visibility options
+- **Font Scaling**: Adjustable text sizes for readability
+
+Bondly proves that Web3 can be both powerful and user-friendly! ✨`,
 		"cover_image_url": "https://images.unsplash.com/photo-1518709268805-4e9042af2176?w=800&h=400&fit=crop",
-		"tags":            []string{"layer2", "scaling", "ethereum"},
-		"likes":           78,
-		"views":           2900,
+		"tags":            []string{"ux-design", "mobile", "accessibility", "wallet"},
+		"likes":           267,
+		"views":           3500,
 		"is_published":    true,
 	},
 }
@@ -521,6 +643,7 @@ func (s *DataSeeder) clearData() {
 	s.db.Exec("DELETE FROM proposals")
 	s.db.Exec("DELETE FROM comments")
 	s.db.Exec("DELETE FROM posts")
+	s.db.Exec("DELETE FROM content_interactions") // 先删除内容互动表
 	s.db.Exec("DELETE FROM contents")
 	s.db.Exec("DELETE FROM user_followers")
 	s.db.Exec("DELETE FROM wallet_bindings")
