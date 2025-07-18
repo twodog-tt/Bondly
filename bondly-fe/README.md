@@ -2,6 +2,22 @@
 
 基于 React + TypeScript + Vite 构建的现代化 Web3 应用前端。
 
+## 🆕 最新更新 (2024年12月)
+
+### Interaction Staking Hook 重构 ✅
+- **数据读取与操作分离**: 创建 `useInteractionStakingData` 用于合约读取，优化 `useInteractionStaking` 用于操作
+- **真实合约数据**: 使用 `useReadContract` 替换mock数据，实现真实合约调用
+- **事件驱动更新**: 添加 `useWatchContractEvent` 实时合约事件监听
+- **性能优化**: 实现memoization和条件查询
+- **增强错误处理**: 改进错误消息和状态管理
+
+**变更文件:**
+- `src/hooks/useInteractionStakingData.ts` (新增)
+- `src/hooks/useInteractionStaking.ts` (重构)
+- `src/components/InteractionStakingSection.tsx` (更新)
+
+**详细文档:** 参见 `INTERACTION_STAKING_REFACTOR.md`
+
 ## 🚀 特性
 
 - **现代化技术栈**: React 18 + TypeScript + Vite

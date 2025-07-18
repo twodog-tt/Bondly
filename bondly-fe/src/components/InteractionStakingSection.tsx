@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { useAccount } from 'wagmi';
+import { useAccount, useWatchContractEvent } from 'wagmi';
 import { useInteractionStaking, InteractionType } from '../hooks/useInteractionStaking';
+import { useInteractionStakingData } from '../hooks/useInteractionStakingData';
 import { useBondBalance } from '../hooks/useBondBalance';
+import { CONTRACTS } from '../config/contracts';
 
 interface InteractionStakingSectionProps {
   contentId: number;
@@ -15,13 +17,13 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
   onInteraction
 }) => {
   const { address, isConnected } = useAccount();
-  const { balance: bondBalance } = useBondBalance();
+  const bondBalanceData = useBondBalance();
+  
+  // Use operation hooks first to get InteractionType
   const {
     stakeInteraction,
     claimReward,
     withdrawStake,
-    getStakingInfo,
-    hasInteracted,
     getStakeAmounts,
     getInteractionTypeName,
     isStaking,
@@ -29,6 +31,11 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
     error,
     InteractionType
   } = useInteractionStaking();
+  
+  // Use new data reading hooks
+  const likeData = useInteractionStakingData(contentId, InteractionType.Like);
+  const commentData = useInteractionStakingData(contentId, InteractionType.Comment);
+  const favoriteData = useInteractionStakingData(contentId, InteractionType.Favorite);
 
   const [interactionStates, setInteractionStates] = useState<{
     [key in InteractionType]: boolean;
@@ -54,60 +61,107 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
 
   const stakeAmounts = getStakeAmounts();
 
-  // 加载互动状态
+  // Watch contract events for real-time updates
+  const interactionStakingAddress = CONTRACTS.INTERACTION_STAKING?.address as `0x${string}`;
+
+  // Watch interaction staked events
+  useWatchContractEvent({
+    address: interactionStakingAddress,
+    abi: CONTRACTS.INTERACTION_STAKING.abi,
+    eventName: 'InteractionStaked',
+    onLogs: (logs) => {
+      logs.forEach((log) => {
+        // Parse event data manually since args might not be available
+        console.log('Interaction staked event detected:', log);
+        // Refetch all data when any interaction is staked
+        likeData.refetch();
+        commentData.refetch();
+        favoriteData.refetch();
+      });
+    },
+  });
+
+  // Watch reward claimed events
+  useWatchContractEvent({
+    address: interactionStakingAddress,
+    abi: CONTRACTS.INTERACTION_STAKING.abi,
+    eventName: 'RewardClaimed',
+    onLogs: (logs) => {
+      logs.forEach((log) => {
+        console.log('Reward claimed event detected:', log);
+        // Refetch all data when reward is claimed
+        likeData.refetch();
+        commentData.refetch();
+        favoriteData.refetch();
+      });
+    },
+  });
+
+  // Watch interaction withdrawn events
+  useWatchContractEvent({
+    address: interactionStakingAddress,
+    abi: CONTRACTS.INTERACTION_STAKING.abi,
+    eventName: 'InteractionWithdrawn',
+    onLogs: (logs) => {
+      logs.forEach((log) => {
+        console.log('Interaction withdrawn event detected:', log);
+        // Refetch all data when interaction is withdrawn
+        likeData.refetch();
+        commentData.refetch();
+        favoriteData.refetch();
+      });
+    },
+  });
+
+  // Load interaction states from new data hooks
   useEffect(() => {
-    const loadInteractionStates = async () => {
-      if (!address || !isConnected) return;
+    if (!address || !isConnected) return;
 
-      try {
-        const states = await Promise.all([
-          hasInteracted(contentId, InteractionType.Like),
-          hasInteracted(contentId, InteractionType.Comment),
-          hasInteracted(contentId, InteractionType.Favorite),
-        ]);
+    setInteractionStates({
+      [InteractionType.Like]: likeData.hasInteracted,
+      [InteractionType.Comment]: commentData.hasInteracted,
+      [InteractionType.Favorite]: favoriteData.hasInteracted,
+    });
+  }, [contentId, address, isConnected, likeData.hasInteracted, commentData.hasInteracted, favoriteData.hasInteracted]);
 
-        setInteractionStates({
-          [InteractionType.Like]: states[0],
-          [InteractionType.Comment]: states[1],
-          [InteractionType.Favorite]: states[2],
-        });
-      } catch (err) {
-        console.error('加载互动状态失败:', err);
-      }
-    };
-
-    loadInteractionStates();
-  }, [contentId, address, isConnected, hasInteracted]);
-
-  // 加载质押信息
+  // Load staking info from new data hooks
   useEffect(() => {
-    const loadStakingInfo = async () => {
-      if (!address || !isConnected) return;
+    if (!address || !isConnected) return;
 
-      try {
-        const info = await Promise.all([
-          getStakingInfo(contentId, InteractionType.Like),
-          getStakingInfo(contentId, InteractionType.Comment),
-          getStakingInfo(contentId, InteractionType.Favorite),
-        ]);
+    setStakingInfo({
+      [InteractionType.Like]: { 
+        stakedAmount: likeData.stakedAmount, 
+        pendingReward: 0 // TODO: Add reward calculation
+      },
+      [InteractionType.Comment]: { 
+        stakedAmount: commentData.stakedAmount, 
+        pendingReward: 0 
+      },
+      [InteractionType.Favorite]: { 
+        stakedAmount: favoriteData.stakedAmount, 
+        pendingReward: 0 
+      },
+    });
+  }, [contentId, address, isConnected, likeData.stakedAmount, commentData.stakedAmount, favoriteData.stakedAmount]);
 
-        setStakingInfo({
-          [InteractionType.Like]: info[0],
-          [InteractionType.Comment]: info[1],
-          [InteractionType.Favorite]: info[2],
-        });
-      } catch (err) {
-        console.error('加载质押信息失败:', err);
-      }
-    };
-
-    loadStakingInfo();
-  }, [contentId, address, isConnected, getStakingInfo]);
-
-  // 处理质押互动
+  // Handle stake interaction with enhanced error handling
   const handleStakeInteraction = async (interactionType: InteractionType) => {
     if (!isConnected || !address) {
       setMessage('Please connect your wallet first');
+      return;
+    }
+
+    // Check if user has already interacted
+    if (interactionStates[interactionType]) {
+      setMessage(`You have already ${getInteractionTypeName(interactionType).toLowerCase()}d this content`);
+      return;
+    }
+
+    // Check BOND balance
+    const stakeAmount = stakeAmounts[interactionType];
+    const currentBalance = parseFloat(bondBalanceData.formatted);
+    if (currentBalance < stakeAmount) {
+      setMessage(`Insufficient BOND balance. You need ${stakeAmount.toFixed(2)} BOND`);
       return;
     }
 
@@ -115,8 +169,6 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
     setMessage('');
 
     try {
-      const stakeAmount = stakeAmounts[interactionType];
-      
       const result = await stakeInteraction({
         tokenId: contentId,
         interactionType,
@@ -131,17 +183,38 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
         
         onInteraction?.(interactionType, true);
         setMessage(`${getInteractionTypeName(interactionType)} staking successful!`);
+        
+        // Refetch data after successful staking
+        if (interactionType === InteractionType.Like) {
+          likeData.refetch();
+        } else if (interactionType === InteractionType.Comment) {
+          commentData.refetch();
+        } else if (interactionType === InteractionType.Favorite) {
+          favoriteData.refetch();
+        }
       }
     } catch (err) {
-      console.error('质押互动失败:', err);
-      setMessage(`Staking failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+      console.error('Interaction staking failed:', err);
+      const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+      
+      // Enhanced error messages
+      if (errorMessage.includes('User rejected')) {
+        setMessage('Transaction cancelled by user');
+      } else if (errorMessage.includes('insufficient funds')) {
+        setMessage('Insufficient BOND balance for staking');
+      } else if (errorMessage.includes('already staked')) {
+        setMessage(`You have already ${getInteractionTypeName(interactionType).toLowerCase()}d this content`);
+      } else {
+        setMessage(`Staking failed: ${errorMessage}`);
+      }
+      
       onInteraction?.(interactionType, false);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 处理领取奖励
+  // Handle claim reward
   const handleClaimReward = async (interactionType: InteractionType) => {
     if (!isConnected || !address) {
       setMessage('Please connect your wallet first');
@@ -157,22 +230,24 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
       if (result.success) {
         setMessage(`Reward claimed successfully! Received ${result.rewardAmount.toFixed(2)} BOND`);
         
-        // 重新加载质押信息
-        const newInfo = await getStakingInfo(contentId, interactionType);
-        setStakingInfo(prev => ({
-          ...prev,
-          [interactionType]: newInfo,
-        }));
+        // Reload staking info by refetching data
+        if (interactionType === InteractionType.Like) {
+          likeData.refetch();
+        } else if (interactionType === InteractionType.Comment) {
+          commentData.refetch();
+        } else if (interactionType === InteractionType.Favorite) {
+          favoriteData.refetch();
+        }
       }
     } catch (err) {
-      console.error('领取奖励失败:', err);
+      console.error('Reward claim failed:', err);
       setMessage(`Claim failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // 处理撤回质押
+  // Handle withdraw stake
   const handleWithdrawStake = async (interactionType: InteractionType) => {
     if (!isConnected || !address) {
       setMessage('Please connect your wallet first');
@@ -193,15 +268,17 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
         
         setMessage(`${getInteractionTypeName(interactionType)} stake withdrawn`);
         
-        // 重新加载质押信息
-        const newInfo = await getStakingInfo(contentId, interactionType);
-        setStakingInfo(prev => ({
-          ...prev,
-          [interactionType]: newInfo,
-        }));
+        // Reload staking info by refetching data
+        if (interactionType === InteractionType.Like) {
+          likeData.refetch();
+        } else if (interactionType === InteractionType.Comment) {
+          commentData.refetch();
+        } else if (interactionType === InteractionType.Favorite) {
+          favoriteData.refetch();
+        }
       }
     } catch (err) {
-      console.error('撤回质押失败:', err);
+      console.error('Stake withdrawal failed:', err);
       setMessage(`Withdraw failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
       setIsLoading(false);
@@ -366,7 +443,7 @@ const InteractionStakingSection: React.FC<InteractionStakingSectionProps> = ({
           💎 Interaction Staking
         </h3>
         <div style={{ fontSize: "14px", color: "#9ca3af" }}>
-          BOND Balance: {bondBalance ? `${Number(bondBalance).toFixed(2)}` : "Loading..."}
+          BOND Balance: {bondBalanceData.isLoading ? "Loading..." : bondBalanceData.error ? "Error" : `${bondBalanceData.formatted} ${bondBalanceData.symbol}`}
         </div>
       </div>
 
