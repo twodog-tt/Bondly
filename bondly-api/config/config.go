@@ -55,6 +55,7 @@ type EthereumConfig struct {
 	ContractAddress        string
 	RelayWalletKey         string // 中转钱包私钥
 	ReputationVaultAddress string // ReputationVault合约地址
+	ContentNFTAddress      string // ContentNFT合约地址
 }
 
 type KafkaConfig struct {
@@ -123,6 +124,7 @@ func Load() (*Config, error) {
 			ContractAddress:        getEnv("ETH_CONTRACT_ADDRESS", ""),
 			RelayWalletKey:         getEnv("ETH_RELAY_WALLET_KEY", ""),
 			ReputationVaultAddress: getEnv("ETH_REPUTATION_VAULT_ADDRESS", ""),
+			ContentNFTAddress:      getEnv("ETH_CONTENT_NFT_ADDRESS", ""),
 		},
 		Kafka: KafkaConfig{
 			Brokers:     strings.Split(getEnv("KAFKA_BROKERS", "localhost:9092"), ","),

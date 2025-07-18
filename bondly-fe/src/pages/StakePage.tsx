@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import { formatEther, parseEther } from 'viem';
 import CommonNavbar from '../components/CommonNavbar';
+import StakingLiquidityManager from '../components/StakingLiquidityManager';
 import { getContractAddress, getContractABI } from '../config/contracts';
 import { useBondBalance } from '../hooks/useBondBalance';
 import { useStaking } from '../hooks/useStaking';
@@ -524,6 +525,11 @@ const StakePage: React.FC<StakePageProps> = ({ isMobile, onPageChange }) => {
                 <span style={{ color: "#10b981", fontWeight: "500" }}>{apy}%</span>
               </div>
             </div>
+          </div>
+
+          {/* 管理员流动性管理区域 */}
+          <div style={{ marginTop: "32px" }}>
+            <StakingLiquidityManager isMobile={isMobile} />
           </div>
         </div>
       </div>
