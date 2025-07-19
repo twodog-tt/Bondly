@@ -93,12 +93,15 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
     query: { enabled: isConnected && !!address },
   });
 
-  const { data: allowance } = useReadContract({
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
     address: bondTokenAddress,
     abi: getContractABI('BOND_TOKEN'),
     functionName: 'allowance',
     args: [address as `0x${string}`, ethStakingAddress],
-    query: { enabled: isConnected && !!address },
+    query: { 
+      enabled: isConnected && !!address,
+      refetchInterval: 5000, // 每5秒自动刷新一次
+    },
   });
 
   const { data: apy } = useReadContract({
@@ -177,13 +180,22 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
                args?.spender?.toLowerCase() === ethStakingAddress.toLowerCase();
       });
       
-      if (approvalLog && isApprovalStage) {
-        console.log('Approval confirmed, proceeding to add reward');
-        setSuccess('Approval confirmed! Now adding reward to pool...');
-        // 自动进行添加奖励操作
-        setTimeout(() => {
-          addRewardToPool(pendingAmount, pendingDuration);
-        }, 2000); // 等待2秒确保授权交易已确认
+      if (approvalLog) {
+        console.log('Approval confirmed for current user');
+        // 刷新授权数据
+        refetchAllowance();
+        
+        if (isApprovalStage) {
+          console.log('Proceeding to add reward');
+          setSuccess('Approval confirmed! Now adding reward to pool...');
+          // 自动进行添加奖励操作
+          setTimeout(() => {
+            addRewardToPool(pendingAmount, pendingDuration);
+          }, 2000); // 等待2秒确保授权交易已确认
+        } else {
+          // 用户主动授权（如点击Approve Max）
+          setSuccess('Authorization updated successfully!');
+        }
       }
     },
   });
@@ -370,6 +382,7 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
         <button
           onClick={() => {
             refetchRole();
+            refetchAllowance();
             setSuccess('Data refreshed');
           }}
           disabled={isLoading || isPending}
@@ -404,6 +417,157 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
           Address: {address?.slice(0, 6)}...{address?.slice(-4)}
         </div>
       </div>
+
+      {/* 授权状态显示 */}
+      <div style={{
+        marginBottom: "20px",
+        padding: "12px",
+        background: "rgba(59, 130, 246, 0.1)",
+        borderRadius: "8px",
+        border: "1px solid rgba(59, 130, 246, 0.3)"
+      }}>
+        <div style={{ fontSize: "14px", color: "#3b82f6", fontWeight: "600", marginBottom: "8px" }}>
+          🔐 BOND Token Authorization Status
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: isMobile ? "1fr" : "repeat(2, 1fr)", gap: "8px", fontSize: "12px" }}>
+          <div>
+            <span style={{ color: "#9ca3af" }}>Your Balance: </span>
+            <span style={{ color: "#3b82f6", fontWeight: "600" }}>
+              {userBalance ? formatEther(BigInt(userBalance.toString())) : '0'} BOND
+            </span>
+          </div>
+          <div>
+            <span style={{ color: "#9ca3af" }}>Authorized: </span>
+            <span style={{ color: "#3b82f6", fontWeight: "600" }}>
+              {allowance ? formatEther(BigInt(allowance.toString())) : '0'} BOND
+            </span>
+          </div>
+        </div>
+        {/* 调试信息 */}
+        {allowance && userBalance && (
+          <div style={{ marginTop: "4px", fontSize: "10px", color: "#6b7280" }}>
+            Debug: Allowance={allowance.toString()}, Balance={userBalance.toString()}
+          </div>
+        )}
+        {allowance && userBalance && (
+          <div style={{ marginTop: "8px", fontSize: "11px", color: "#9ca3af" }}>
+            {BigInt(allowance.toString()) >= BigInt(userBalance.toString()) 
+              ? "✅ Sufficient authorization for all your BOND tokens"
+              : (() => {
+                  try {
+                    const allowanceBigInt = BigInt(allowance.toString());
+                    const balanceBigInt = BigInt(userBalance.toString());
+                    
+                    // 如果授权为0，直接显示无授权
+                    if (allowanceBigInt === 0n) {
+                      return "⚠️ No authorization - You need to approve BOND tokens before adding rewards";
+                    }
+                    
+                    // 如果授权大于0但小于余额，计算百分比
+                    if (allowanceBigInt > 0n && balanceBigInt > 0n) {
+                      const percentage = Number((allowanceBigInt * 100n) / balanceBigInt);
+                      
+                      if (percentage >= 100) {
+                        return "✅ Sufficient authorization for all your BOND tokens";
+                      } else if (percentage > 0) {
+                        return "⚠️ Authorization covers " + percentage + "% of your balance";
+                      } else {
+                        // 如果百分比为0但授权不为0，说明授权很小
+                        return "⚠️ Authorization covers less than 1% of your balance";
+                      }
+                    }
+                    
+                    return "⚠️ Unable to calculate authorization status";
+                  } catch (error) {
+                    console.error('Authorization calculation error:', error);
+                    return "⚠️ Unable to calculate authorization status";
+                  }
+                })()
+            }
+          </div>
+        )}
+        
+        {/* 授权管理按钮 */}
+        <div style={{ marginTop: "12px", display: "flex", gap: "8px", flexWrap: "wrap" }}>
+          <button
+            onClick={() => {
+              if (userBalance) {
+                const maxAmount = parseEther(formatEther(BigInt(userBalance.toString())));
+                (writeContract as any)({
+                  address: bondTokenAddress,
+                  abi: getContractABI('BOND_TOKEN'),
+                  functionName: 'approve',
+                  args: [ethStakingAddress, maxAmount],
+                });
+                setSuccess('Approving maximum BOND tokens for convenience');
+              }
+            }}
+            disabled={isLoading || isPending}
+            style={{
+              background: "rgba(59, 130, 246, 0.2)",
+              border: "1px solid rgba(59, 130, 246, 0.4)",
+              borderRadius: "6px",
+              padding: "6px 12px",
+              color: "#3b82f6",
+              fontSize: "11px",
+              cursor: isLoading || isPending ? "not-allowed" : "pointer",
+              opacity: isLoading || isPending ? 0.6 : 1,
+              transition: "all 0.2s ease"
+            }}
+          >
+            🔓 Approve Max
+          </button>
+          <button
+            onClick={() => {
+              (writeContract as any)({
+                address: bondTokenAddress,
+                abi: getContractABI('BOND_TOKEN'),
+                functionName: 'approve',
+                args: [ethStakingAddress, 0n],
+              });
+              setSuccess('Revoking BOND token authorization');
+            }}
+            disabled={isLoading || isPending}
+            style={{
+              background: "rgba(239, 68, 68, 0.2)",
+              border: "1px solid rgba(239, 68, 68, 0.4)",
+              borderRadius: "6px",
+              padding: "6px 12px",
+              color: "#ef4444",
+              fontSize: "11px",
+              cursor: isLoading || isPending ? "not-allowed" : "pointer",
+              opacity: isLoading || isPending ? 0.6 : 1,
+              transition: "all 0.2s ease"
+            }}
+          >
+            🚫 Revoke Auth
+          </button>
+        </div>
+      </div>
+
+      {/* 待处理状态显示 */}
+      {isApprovalStage && (
+        <div style={{
+          marginBottom: "20px",
+          padding: "12px",
+          background: "rgba(245, 158, 11, 0.1)",
+          borderRadius: "8px",
+          border: "1px solid rgba(245, 158, 11, 0.3)"
+        }}>
+          <div style={{ fontSize: "14px", color: "#f59e0b", fontWeight: "600", marginBottom: "8px" }}>
+            ⏳ Pending Reward Addition
+          </div>
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>
+            Amount: {pendingAmount ? formatEther(pendingAmount) : '0'} BOND
+          </div>
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "8px" }}>
+            Duration: {pendingDuration ? Number(pendingDuration) / (24 * 60 * 60) : '0'} days
+          </div>
+          <div style={{ fontSize: "11px", color: "#f59e0b" }}>
+            🔄 Waiting for approval confirmation. After approval, reward will be added automatically.
+          </div>
+        </div>
+      )}
 
       {/* 操作状态指示器 */}
       {isApprovalStage && (
@@ -497,6 +661,32 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
               fontSize: "14px"
             }}
           />
+          {/* 授权状态检查 */}
+          {rewardAmount && allowance && userBalance && (
+            <div style={{
+              marginTop: "8px",
+              fontSize: "12px",
+              padding: "8px",
+              borderRadius: "6px",
+              background: BigInt(allowance.toString()) >= parseEther(rewardAmount)
+                ? "rgba(34, 197, 94, 0.1)"
+                : "rgba(239, 68, 68, 0.1)",
+              border: "1px solid",
+              borderColor: BigInt(allowance.toString()) >= parseEther(rewardAmount)
+                ? "rgba(34, 197, 94, 0.3)"
+                : "rgba(239, 68, 68, 0.3)",
+              color: BigInt(allowance.toString()) >= parseEther(rewardAmount)
+                ? "#22c55e"
+                : "#ef4444"
+            }}>
+              {BigInt(allowance.toString()) >= parseEther(rewardAmount)
+                ? "✅ Sufficient authorization for this amount"
+                : BigInt(allowance.toString()) === 0n
+                ? "⚠️ No authorization - Click 'Approve Max' or proceed to authorize"
+                : "⚠️ Insufficient authorization. You'll need to approve first."
+              }
+            </div>
+          )}
         </div>
 
         <div style={{ marginBottom: "16px" }}>
@@ -525,15 +715,46 @@ const ETHStakingLiquidityManager: React.FC<ETHStakingLiquidityManagerProps> = ({
           />
         </div>
 
-        {userBalance && (
-          <div style={{
-            fontSize: "12px",
-            color: "#9ca3af",
-            marginBottom: "16px"
-          }}>
-            Available Balance: {formatEther(BigInt(userBalance.toString()))} BOND
+        {/* 余额和授权信息 */}
+        <div style={{
+          padding: "12px",
+          background: "#151728",
+          borderRadius: "8px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          marginBottom: "16px"
+        }}>
+          <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "8px" }}>
+            💰 Token Information
           </div>
-        )}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", fontSize: "11px" }}>
+            <div>
+              <span style={{ color: "#9ca3af" }}>Your Balance: </span>
+              <span style={{ color: "#3b82f6", fontWeight: "600" }}>
+                {userBalance ? formatEther(BigInt(userBalance.toString())) : '0'} BOND
+              </span>
+            </div>
+            <div>
+              <span style={{ color: "#9ca3af" }}>Authorized: </span>
+              <span style={{ color: "#3b82f6", fontWeight: "600" }}>
+                {allowance ? formatEther(BigInt(allowance.toString())) : '0'} BOND
+              </span>
+            </div>
+          </div>
+          {rewardAmount && allowance && userBalance && (
+            <div style={{
+              marginTop: "8px",
+              fontSize: "11px",
+              color: BigInt(allowance.toString()) >= parseEther(rewardAmount) ? "#22c55e" : "#f59e0b"
+            }}>
+              {BigInt(allowance.toString()) >= parseEther(rewardAmount)
+                ? "✅ Ready to add reward (one transaction)"
+                : BigInt(allowance.toString()) === 0n
+                ? "⚠️ No authorization - Will require approval + reward addition (two transactions)"
+                : "⚠️ Will require approval + reward addition (two transactions)"
+              }
+            </div>
+          )}
+        </div>
       </div>
 
       {/* 操作按钮 */}
