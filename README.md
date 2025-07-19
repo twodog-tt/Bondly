@@ -2,7 +2,10 @@
 
 > **Connect with people you trust, share the value you create.**
 
-Video Introduction：https://www.bilibili.com/video/BV1T4udz1Ek7/?vd_source=4294884d12011f690a0ffce59877a3a2
+Video Introduction：
+bilibili:https://www.bilibili.com/video/BV1T4udz1Ek7/?vd_source=4294884d12011f690a0ffce59877a3a2
+YouTube:https://youtu.be/9OKgWyUvUns
+
 
 ---
 
