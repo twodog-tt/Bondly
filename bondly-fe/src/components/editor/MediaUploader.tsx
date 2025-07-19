@@ -234,11 +234,18 @@ export default function MediaUploader({
         ) : (
           <div>
             <input
-              type="url"
-              placeholder="请输入媒体文件链接..."
+              type="text"
               value={mediaUrl}
               onChange={(e) => setMediaUrl(e.target.value)}
-              style={inputStyle}
+              placeholder="Enter media file URL..."
+              style={{
+                width: "100%",
+                padding: "12px",
+                borderRadius: "8px",
+                border: "1px solid #ddd",
+                fontSize: "16px",
+                marginBottom: "16px",
+              }}
             />
 
             <div style={{ display: "flex", justifyContent: "flex-end" }}>

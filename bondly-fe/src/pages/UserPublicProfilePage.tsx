@@ -79,7 +79,7 @@ const mockUserNFTs = [
 const mockGovernanceData = [
   {
     id: 1,
-    proposalTitle: "提高创作者奖励比例",
+    proposalTitle: "Increase Creator Reward Ratio",
     voteChoice: "yes",
     reputationGained: 25,
     earningsFromVote: 2.1,
@@ -87,7 +87,7 @@ const mockGovernanceData = [
   },
   {
     id: 2,
-    proposalTitle: "新增内容分类标准",
+    proposalTitle: "Add New Content Category Standards",
     voteChoice: "yes", 
     reputationGained: 15,
     earningsFromVote: 1.8,
@@ -95,7 +95,7 @@ const mockGovernanceData = [
   },
   {
     id: 3,
-    proposalTitle: "修改质押机制参数",
+    proposalTitle: "Modify Staking Mechanism Parameters",
     voteChoice: "no",
     reputationGained: 10,
     earningsFromVote: 0.9,

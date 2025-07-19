@@ -33,28 +33,28 @@ export const useContentNFT = () => {
   // 发布文章并铸造NFT
   const publishAsNFT = useCallback(async (contentData: ContentNFTData): Promise<NFTMintResult> => {
     if (!address) {
-      throw new Error('请先连接钱包');
+      throw new Error('Please connect your wallet first');
     }
 
     setIsUploading(true);
     setError(null);
 
     try {
-      console.log('开始发布文章为NFT...');
+      console.log('Starting to publish article as NFT...');
 
       // 1. 上传内容到IPFS
-      console.log('上传内容到IPFS...');
+      console.log('Uploading content to IPFS...');
       const ipfsHash = await uploadToPinataIPFS(contentData.content, `${contentData.title}.md`);
-      console.log('内容已上传到IPFS:', ipfsHash);
+      console.log('Content uploaded to IPFS:', ipfsHash);
 
       // 2. 生成并上传元数据到IPFS
-      console.log('生成NFT元数据...');
+      console.log('Generating NFT metadata...');
       const metadata = generateNFTMetadata(contentData, ipfsHash);
       const metadataHash = await uploadMetadataToPinataIPFS(metadata);
-      console.log('元数据已上传到IPFS:', metadataHash);
+      console.log('Metadata uploaded to IPFS:', metadataHash);
 
       // 3. 保存到后端数据库
-      console.log('保存到后端数据库...');
+      console.log('Saving to backend database...');
       const backendContent = {
         title: contentData.title,
         content: contentData.content,
@@ -64,11 +64,11 @@ export const useContentNFT = () => {
       };
 
       const savedContent = await createContent(backendContent);
-      console.log('内容已保存到后端:', savedContent);
+      console.log('Content saved to backend:', savedContent);
 
       // 4. 真正的NFT铸造
       setIsMinting(true);
-      console.log('开始真正的NFT铸造...');
+      console.log('Starting actual NFT minting...');
       
       if (!writeContract) {
         throw new Error('合约写入功能不可用');

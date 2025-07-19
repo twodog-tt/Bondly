@@ -127,7 +127,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
     try {
       // 检查钱包是否已连接
       if (!window.ethereum) {
-        alert('请先安装 MetaMask 钱包');
+        alert('Please install MetaMask wallet');
         return;
       }
 
@@ -137,7 +137,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       });
 
       if (accounts.length === 0) {
-        alert('请连接钱包');
+        alert('Please connect your wallet');
         return;
       }
 
@@ -176,12 +176,12 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       checkAuthStatus();
 
     } catch (error: any) {
-      console.error('钱包登录失败:', error);
+      console.error('Wallet login failed:', error);
       
       if (error instanceof Error) {
-        alert(`钱包登录失败: ${error.message}`);
+        alert(`Wallet login failed: ${error.message}`);
       } else {
-        alert('钱包登录失败，请稍后重试');
+        alert('Wallet login failed, please try again later');
       }
     }
   };
@@ -305,7 +305,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       const { authApi } = await import('../utils/api');
       const result = await authApi.sendCode(loginData.email);
       
-      console.log('验证码发送成功:', result);
+      console.log('Verification code sent successfully:', result);
       setIsCodeSent(true);
       setCountdown(60);
 
@@ -323,10 +323,10 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       
       if (error instanceof Error) {
         // 如果是API错误，显示具体的错误信息
-        const errorMessage = error.message || "发送验证码失败";
+        const errorMessage = error.message || "Failed to send verification code";
         setEmailError(errorMessage);
       } else {
-        setEmailError("发送验证码失败，请稍后重试");
+        setEmailError("Failed to send verification code, please try again later");
       }
     } finally {
       setIsVerifying(false);
@@ -352,7 +352,7 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         loginData.verificationCode
       );
       
-      console.log('验证码验证成功:', result);
+      console.log('Verification code verified successfully:', result);
       
       if (result.isValid) {
         // 检查是否返回了token
@@ -387,21 +387,21 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
   
         } else {
           // 没有token，说明是新用户，需要继续注册流程
-          console.log('验证码验证成功，但需要继续注册流程');
+          console.log('Verification code verified, but continue registration process is required');
           setLoginStep(2);
         }
       } else {
-        setVerificationCodeError("验证码无效，请重新输入");
+        setVerificationCodeError("Invalid verification code, please re-enter");
       }
     } catch (error: any) {
       console.error("Verification code verification failed:", error);
       
       if (error instanceof Error) {
         // 如果是API错误，显示具体的错误信息
-        const errorMessage = error.message || "验证码验证失败";
+        const errorMessage = error.message || "Failed to verify verification code";
         setVerificationCodeError(errorMessage);
       } else {
-        setVerificationCodeError("验证码验证失败，请重新输入");
+        setVerificationCodeError("Failed to verify verification code, please re-enter");
       }
     } finally {
       setIsVerifying(false);
@@ -429,13 +429,13 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
         setLoginData(prev => ({ ...prev, avatar: file }));
         setAvatarPreview(result.url);
       } catch (error: any) {
-        console.error("头像上传失败:", error);
+        console.error("Avatar upload failed:", error);
         
         // 显示错误信息
         if (error instanceof Error) {
-          alert(`头像上传失败: ${error.message}`);
+          alert(`Avatar upload failed: ${error.message}`);
         } else {
-          alert("头像上传失败，请重试");
+          alert("Avatar upload failed, please try again");
         }
       }
     }
@@ -508,9 +508,9 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       console.error("Failed to login:", error);
       
       if (error instanceof Error) {
-        alert(`登录失败: ${error.message}`);
+        alert(`Login failed: ${error.message}`);
       } else {
-        alert("登录失败，请稍后重试");
+        alert("Login failed, please try again later");
       }
     } finally {
       setIsVerifying(false);
@@ -544,9 +544,9 @@ const Home: React.FC<HomeProps> = ({ isMobile, onPageChange }) => {
       console.error("Failed to generate custody wallet:", error);
       
       if (error instanceof Error) {
-        alert(`生成托管钱包失败: ${error.message}`);
+        alert(`Failed to generate custody wallet: ${error.message}`);
       } else {
-        alert("生成托管钱包失败，请稍后重试");
+        alert("Failed to generate custody wallet, please try again later");
       }
     } finally {
       setIsGeneratingWallet(false);

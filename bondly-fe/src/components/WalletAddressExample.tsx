@@ -44,9 +44,9 @@ const WalletAddressExample: React.FC = () => {
     if (address) {
       try {
         await navigator.clipboard.writeText(address);
-        alert('地址已复制到剪贴板！');
+        alert('Address copied to clipboard!');
       } catch (err) {
-        console.error('复制失败:', err);
+        console.error('Copy failed:', err);
       }
     }
   };
@@ -60,8 +60,8 @@ const WalletAddressExample: React.FC = () => {
         border: '1px solid rgba(255, 255, 255, 0.1)',
         color: 'white'
       }}>
-        <h3>钱包未连接</h3>
-        <p>请先连接钱包以查看地址信息</p>
+        <h3>Wallet Not Connected</h3>
+        <p>Please connect your wallet to view address information</p>
       </div>
     );
   }
@@ -74,10 +74,10 @@ const WalletAddressExample: React.FC = () => {
       border: '1px solid rgba(255, 255, 255, 0.1)',
       color: 'white'
     }}>
-      <h3>钱包信息</h3>
+      <h3>Wallet Information</h3>
       
       <div style={{ marginBottom: '15px' }}>
-        <strong>地址:</strong> 
+        <strong>Address:</strong> 
         <span style={{ 
           fontFamily: 'monospace', 
           marginLeft: '10px',
@@ -100,26 +100,26 @@ const WalletAddressExample: React.FC = () => {
             fontSize: '12px'
           }}
         >
-          复制
+          Copy
         </button>
       </div>
 
       <div style={{ marginBottom: '15px' }}>
-        <strong>余额:</strong> 
+        <strong>Balance:</strong> 
         <span style={{ marginLeft: '10px' }}>
           {walletInfo.balance}
         </span>
       </div>
 
       <div style={{ marginBottom: '15px' }}>
-        <strong>网络:</strong> 
+        <strong>Network:</strong> 
         <span style={{ marginLeft: '10px' }}>
           {walletInfo.network}
         </span>
       </div>
 
       <div style={{ marginBottom: '15px' }}>
-        <strong>连接器:</strong> 
+        <strong>Connector:</strong> 
         <span style={{ marginLeft: '10px' }}>
           {walletInfo.connector}
         </span>
@@ -132,7 +132,7 @@ const WalletAddressExample: React.FC = () => {
         borderRadius: '8px',
         fontSize: '14px'
       }}>
-        <strong>完整地址:</strong>
+        <strong>Full Address:</strong>
         <div style={{ 
           fontFamily: 'monospace', 
           fontSize: '12px',

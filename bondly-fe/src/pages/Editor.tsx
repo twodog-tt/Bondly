@@ -100,13 +100,13 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
       setError(null);
     } catch (error) {
       console.error('Auto save failed:', error);
-      setError('自动保存失败，请检查网络连接');
+      setError('Auto-save failed, please check your network connection');
     }
   };
 
   const handleSave = async () => {
     if (!articleData.title.trim()) {
-      setError('请输入文章标题');
+      setError('Please enter article title');
       return;
     }
     
@@ -141,11 +141,11 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
       }));
       
       // 显示成功消息
-      alert('草稿保存成功！');
+      alert('Draft saved successfully!');
     } catch (error) {
       console.error('Save failed:', error);
-      setError('保存失败，请重试');
-      alert('保存失败，请检查网络连接');
+      setError('Save failed, please try again');
+      alert('Save failed, please check your network connection');
     } finally {
       setIsSaving(false);
     }
@@ -153,15 +153,15 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
 
   const handlePublish = async () => {
     if (!articleData.title.trim()) {
-      setError('请输入文章标题');
+      setError('Please enter article title');
       return;
     }
     if (!articleData.content.trim()) {
-      setError('请输入文章内容');
+      setError('Please enter article content');
       return;
     }
     if (!articleData.summary.trim()) {
-      setError('请输入文章摘要');
+      setError('Please enter article summary');
       return;
     }
     
@@ -171,15 +171,15 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
 
   const handlePublishAsNFT = async () => {
     if (!articleData.title.trim()) {
-      setError('请输入文章标题');
+      setError('Please enter article title');
       return;
     }
     if (!articleData.content.trim()) {
-      setError('请输入文章内容');
+      setError('Please enter article content');
       return;
     }
     if (!articleData.summary.trim()) {
-      setError('请输入文章摘要');
+      setError('Please enter article summary');
       return;
     }
     
@@ -204,13 +204,13 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
         lastSaved: new Date()
       }));
       
-      alert(`文章已发布为NFT！\nToken ID: ${nftResult.tokenId}\nIPFS Hash: ${nftResult.ipfsHash}`);
+      alert(`Article published as NFT!\nToken ID: ${nftResult.tokenId}\nIPFS Hash: ${nftResult.ipfsHash}`);
       setShowNFTModal(false);
       onPageChange?.('feed');
     } catch (error) {
       console.error('NFT Publish failed:', error);
-      setError('NFT发布失败，请重试');
-      alert('NFT发布失败，请检查网络连接');
+      setError('NFT publishing failed, please try again');
+      alert('NFT publishing failed, please check your network connection');
     } finally {
       setIsSaving(false);
     }
@@ -218,15 +218,15 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
 
   const handlePublishNormal = async () => {
     if (!articleData.title.trim()) {
-      setError('请输入文章标题');
+      setError('Please enter article title');
       return;
     }
     if (!articleData.content.trim()) {
-      setError('请输入文章内容');
+      setError('Please enter article content');
       return;
     }
     if (!articleData.summary.trim()) {
-      setError('请输入文章摘要');
+      setError('Please enter article summary');
       return;
     }
     
@@ -261,13 +261,13 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
         lastSaved: new Date()
       }));
       
-      alert('文章发布成功！');
+      alert('Article published successfully!');
       setShowNFTModal(false);
       onPageChange?.('feed');
     } catch (error) {
       console.error('Publish failed:', error);
-      setError('发布失败，请重试');
-      alert('发布失败，请检查网络连接');
+      setError('Publishing failed, please try again');
+      alert('Publishing failed, please check your network connection');
     } finally {
       setIsSaving(false);
     }
@@ -286,15 +286,15 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
           coverImage: result.url
         }));
         
-        alert('封面图片上传成功！');
+        alert('Cover image uploaded successfully!');
       } catch (error: any) {
-        console.error("封面图片上传失败:", error);
+        console.error("Cover image upload failed:", error);
         
         // 显示错误信息
         if (error instanceof Error) {
-          alert(`封面图片上传失败: ${error.message}`);
+          alert(`Cover image upload failed: ${error.message}`);
         } else {
-          alert("封面图片上传失败，请重试");
+          alert("Cover image upload failed, please try again");
         }
       }
     }
@@ -917,7 +917,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
               marginBottom: '16px',
               textAlign: 'center'
             }}>
-              选择发布方式
+              Choose Publishing Method
             </h2>
             
             <p style={{
@@ -926,7 +926,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
               textAlign: 'center',
               lineHeight: '1.6'
             }}>
-              您可以选择将文章发布为普通文章或NFT。发布为NFT将获得更多功能和收益机会。
+              You can choose to publish your article as a regular post or as an NFT. Publishing as an NFT provides more features and earning opportunities.
             </p>
 
             <div style={{ display: 'flex', gap: '16px', flexDirection: 'column' }}>
@@ -949,7 +949,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
                   gap: '8px'
                 }}
               >
-                {isUploading ? '上传到IPFS中...' : isMinting ? '铸造NFT中...' : '🚀 发布为NFT'}
+                {isUploading ? 'Uploading to IPFS...' : isMinting ? 'Minting NFT...' : '🚀 Publish as NFT'}
               </button>
 
               <button
@@ -967,7 +967,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
                   opacity: isSaving ? 0.6 : 1
                 }}
               >
-                {isSaving ? '发布中...' : '📝 发布为普通文章'}
+                {isSaving ? 'Publishing...' : '📝 Publish as Regular Article'}
               </button>
 
               <button
@@ -983,7 +983,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
                   cursor: 'pointer'
                 }}
               >
-                取消
+                Cancel
               </button>
             </div>
 
@@ -1009,14 +1009,14 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
               border: '1px solid rgba(255, 255, 255, 0.1)'
             }}>
               <h4 style={{ color: 'white', marginBottom: '8px', fontSize: '16px' }}>
-                NFT发布优势
+                NFT Publishing Benefits
               </h4>
               <ul style={{ color: '#9ca3af', fontSize: '14px', lineHeight: '1.6' }}>
-                <li>• 内容永久存储在IPFS上</li>
-                <li>• 支持互动质押奖励机制</li>
-                <li>• 创作者可获得用户质押的BOND代币</li>
-                <li>• 内容具有唯一性和不可篡改性</li>
-                <li>• 支持NFT交易和转让</li>
+                <li>• Content permanently stored on IPFS</li>
+                <li>• Support for interactive staking rewards</li>
+                <li>• Creators can earn BOND tokens from user staking</li>
+                <li>• Content has uniqueness and immutability</li>
+                <li>• Support for NFT trading and transfer</li>
               </ul>
             </div>
           </div>

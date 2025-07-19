@@ -281,11 +281,8 @@ We welcome all forms of contributions!
 
 ## 📞 Contact Us
 
-- **Project Homepage**: https://bondly.io
-- **GitHub**: https://github.com/bondly
-- **Discord**: https://discord.gg/bondly
-- **Twitter**: https://twitter.com/bondly_io
-- **Email**: hello@bondly.io
+- **Email**: twodogtt01@gmail.com
+- **tg**: @ttttmax
 
 ---
 
