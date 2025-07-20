@@ -4,6 +4,7 @@ import { createContent, updateContent, Content } from '../api/content';
 import { useContentNFT } from '../hooks/useContentNFT';
 import NFTMintSuccessModal from '../components/NFTMintSuccessModal';
 import { useAccount } from 'wagmi';
+import { getContentById } from '../api/content'; // Added import for getContentById
 
 interface EditorProps {
   isMobile: boolean;
@@ -51,6 +52,36 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
   // NFT发布Hook
   const { publishAsNFT, isUploading, isMinting, error: nftError } = useContentNFT();
   const { address } = useAccount();
+
+  // 加载现有内容（如果是编辑模式）
+  useEffect(() => {
+    const loadExistingContent = async () => {
+      console.log('Editor: editContentId =', editContentId); // 调试信息
+      if (editContentId) {
+        try {
+          console.log('Editor: Loading existing content with ID =', editContentId); // 调试信息
+          const existingContent = await getContentById(editContentId);
+          console.log('Editor: Loaded existing content =', existingContent); // 调试信息
+          setArticleData({
+            title: existingContent.title,
+            content: existingContent.content,
+            summary: existingContent.content.substring(0, 200) + '...', // 自动生成摘要
+            tags: [],
+            category: existingContent.type || 'technology',
+            coverImage: existingContent.cover_image_url,
+            isPublished: existingContent.status === 'published',
+            lastSaved: new Date(existingContent.updated_at)
+          });
+          setSavedContentId(existingContent.id);
+        } catch (error) {
+          console.error('Failed to load existing content:', error);
+          setError('Failed to load existing content');
+        }
+      }
+    };
+
+    loadExistingContent();
+  }, [editContentId]);
 
   // 自动保存功能
   useEffect(() => {

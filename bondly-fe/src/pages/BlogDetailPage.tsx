@@ -7,6 +7,7 @@ import StakingTutorial from '../components/StakingTutorial';
 import StakingSettings from '../components/StakingSettings';
 import { getContentById, Content } from '../api/content';
 import { useStakingTutorial } from '../hooks/useStakingTutorial';
+import { useAuth } from '../contexts/AuthContext';
 
 interface BlogDetailPageProps {
   isMobile: boolean;
@@ -21,6 +22,12 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
   // 集成质押引导系统
   const { showTutorial, handleTutorialComplete, handleTutorialClose } = useStakingTutorial();
   const [showSettings, setShowSettings] = useState(false);
+  
+  // 获取用户认证信息
+  const { user, isLoggedIn } = useAuth();
+  
+  // 判断当前用户是否是文章作者
+  const isAuthor = isLoggedIn && user && content && user.user_id === content.author_id;
 
   // Get content ID from URL parameters
   const getContentIdFromUrl = () => {
@@ -58,6 +65,16 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
 
   const handleLoginClick = () => {
     console.log("Login clicked");
+  };
+
+  // 处理编辑按钮点击
+  const handleEditClick = () => {
+    if (content) {
+      // 跳转到编辑器页面，并传递文章ID
+      const url = `${window.location.pathname}?page=editor&id=${content.id}`;
+      window.history.pushState({}, '', url);
+      onPageChange?.('editor');
+    }
   };
 
   // Calculate reading time
@@ -188,6 +205,25 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
             <span>{calculateReadTime(content.content)} min read</span>
             <span>•</span>
             <span>{formatDate(content.created_at)}</span>
+            {content.nft_token_id && (
+              <>
+                <span>•</span>
+                <span style={{
+                  background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                  color: "white",
+                  padding: "2px 8px",
+                  borderRadius: "12px",
+                  fontSize: "12px",
+                  fontWeight: "600",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "4px"
+                }}>
+                  <span>🪙</span>
+                  NFT
+                </span>
+              </>
+            )}
           </div>
           
           <h1 style={{
@@ -199,6 +235,34 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           }}>
             {content.title}
           </h1>
+          
+          {/* 编辑按钮 - 只有作者才能看到 */}
+          {isAuthor && (
+            <div style={{ marginBottom: "20px" }}>
+              <button
+                onClick={handleEditClick}
+                style={{
+                  background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                  color: "white",
+                  border: "none",
+                  padding: "10px 20px",
+                  borderRadius: "8px",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                  cursor: "pointer",
+                  transition: "opacity 0.2s ease",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.opacity = "0.9"}
+                onMouseLeave={(e) => e.currentTarget.style.opacity = "1"}
+              >
+                <span>✏️</span>
+                Edit Article
+              </button>
+            </div>
+          )}
           
           <div style={{
             display: "flex",
@@ -269,6 +333,29 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
               height: "80px",
               background: "linear-gradient(transparent, rgba(0, 0, 0, 0.7))"
             }} />
+            
+            {/* NFT标识 - 在封面图片右上角 */}
+            {content.nft_token_id && (
+              <div style={{
+                position: "absolute",
+                top: "16px",
+                right: "16px",
+                background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                color: "white",
+                padding: "6px 12px",
+                borderRadius: "8px",
+                fontSize: "14px",
+                fontWeight: "600",
+                backdropFilter: "blur(10px)",
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                boxShadow: "0 4px 12px rgba(0, 0, 0, 0.3)"
+              }}>
+                <span>🪙</span>
+                NFT
+              </div>
+            )}
           </div>
         </div>
 

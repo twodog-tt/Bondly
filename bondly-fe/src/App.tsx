@@ -511,7 +511,19 @@ function AppContent() {
           {page === "home" && <Home isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "feed" && <BlogListPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "profile" && <Profile isMobile={isMobile} onPageChange={handlePageChange} />}
-          {page === "editor" && <Editor isMobile={isMobile} onPageChange={handlePageChange} />}
+          {page === "editor" && (
+            <Editor 
+              isMobile={isMobile} 
+              onPageChange={handlePageChange}
+              editContentId={(() => {
+                const urlParams = new URLSearchParams(window.location.search);
+                const id = urlParams.get('id');
+                const editId = id ? parseInt(id) : undefined;
+                console.log('App: URL params id =', id, 'editId =', editId); // 调试信息
+                return editId;
+              })()}
+            />
+          )}
           {page === "drafts" && <Drafts isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "blog-detail" && <BlogDetailPage isMobile={isMobile} onPageChange={handlePageChange} />}
           {page === "dao" && <DaoPage isMobile={isMobile} onPageChange={handlePageChange} />}

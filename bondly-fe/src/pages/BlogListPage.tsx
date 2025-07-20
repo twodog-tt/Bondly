@@ -282,6 +282,28 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
                       {content.type || 'article'}
                     </div>
                     
+                    {/* NFT标识 */}
+                    {content.nft_token_id && (
+                      <div style={{
+                        position: "absolute",
+                        top: "12px",
+                        left: content.type ? "80px" : "12px",
+                        background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                        color: "white",
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        fontSize: "12px",
+                        fontWeight: "600",
+                        backdropFilter: "blur(10px)",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "4px"
+                      }}>
+                        <span>🪙</span>
+                        NFT
+                      </div>
+                    )}
+                    
                     {/* 阅读时间标签 */}
                     <div style={{
                       position: "absolute",
