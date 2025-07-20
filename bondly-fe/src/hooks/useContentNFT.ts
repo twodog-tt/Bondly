@@ -26,6 +26,7 @@ export const useContentNFT = () => {
   const { address } = useAccount();
   const [isUploading, setIsUploading] = useState(false);
   const [isMinting, setIsMinting] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // 添加防重复提交状态
   const [error, setError] = useState<string | null>(null);
 
   // 合约写入
@@ -33,11 +34,17 @@ export const useContentNFT = () => {
 
   // 发布文章并铸造NFT
   const publishAsNFT = useCallback(async (contentData: ContentNFTData): Promise<NFTMintResult> => {
+    if (isSubmitting) {
+      console.log('NFT发布正在进行中，忽略重复请求');
+      throw new Error('NFT发布正在进行中，请稍后再试');
+    }
+
     if (!address) {
       throw new Error('Please connect your wallet first');
     }
 
     setIsUploading(true);
+    setIsSubmitting(true); // 设置提交状态
     setError(null);
 
     try {
@@ -214,8 +221,9 @@ export const useContentNFT = () => {
     } finally {
       setIsUploading(false);
       setIsMinting(false);
+      setIsSubmitting(false); // 重置提交状态
     }
-  }, [address, writeContract]);
+  }, [address, writeContract, isSubmitting]);
 
   // 获取NFT信息
   const getNFTInfo = useCallback(async (tokenId: number) => {
@@ -260,6 +268,7 @@ export const useContentNFT = () => {
     // 状态
     isUploading,
     isMinting,
+    isSubmitting, // 添加防重复提交状态
     error,
     
     // 方法

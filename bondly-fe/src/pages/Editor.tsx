@@ -34,6 +34,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
   });
   
   const [isSaving, setIsSaving] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false); // 添加防重复提交状态
   const [showPreview, setShowPreview] = useState(false);
   const [showImageUpload, setShowImageUpload] = useState(false);
   const [newTag, setNewTag] = useState('');
@@ -64,7 +65,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [articleData]);
+  }, []); // 移除 articleData 依赖，只在组件挂载时创建定时器
 
   // 计算字数和阅读时间
   useEffect(() => {
@@ -175,6 +176,11 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
   };
 
   const handlePublishAsNFT = async () => {
+    if (isSubmitting) {
+      console.log('NFT发布正在进行中，忽略重复请求');
+      return;
+    }
+    
     if (!articleData.title.trim()) {
       setError('Please enter article title');
       return;
@@ -189,6 +195,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
     }
     
     setIsSaving(true);
+    setIsSubmitting(true); // 设置提交状态
     setError(null);
     
     try {
@@ -228,6 +235,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
       alert('NFT publishing failed, please check your network connection');
     } finally {
       setIsSaving(false);
+      setIsSubmitting(false); // 重置提交状态
     }
   };
 
