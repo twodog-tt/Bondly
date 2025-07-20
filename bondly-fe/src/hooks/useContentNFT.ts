@@ -1,5 +1,6 @@
 import { useState, useCallback } from 'react';
-import { useAccount, useWriteContract } from 'wagmi';
+import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
+import { parseEther } from 'viem';
 import { CONTRACTS } from '../config/contracts';
 import { uploadToPinataIPFS, uploadMetadataToPinataIPFS, generateNFTMetadata } from '../utils/ipfs';
 import { createContent, updateContent } from '../api/content';
@@ -15,7 +16,7 @@ export interface ContentNFTData {
 }
 
 export interface NFTMintResult {
-  tokenId: number;
+  tokenId: number | string; // 允许为数字或字符串（如'timeout', 'Loading...'）
   ipfsHash: string;
   metadataHash: string;
   transactionHash: string;
@@ -78,7 +79,7 @@ export const useContentNFT = () => {
       const hash = await (writeContract as any)({
         address: CONTRACTS.CONTENT_NFT.address as `0x${string}`,
         abi: CONTRACTS.CONTENT_NFT.abi,
-        functionName: 'mint',
+        functionName: 'mintWithFee', // 使用付费铸造函数
         args: [
           address, // to: 接收者地址
           contentData.title, // title: 内容标题
@@ -87,23 +88,120 @@ export const useContentNFT = () => {
           `https://ipfs.io/ipfs/${ipfsHash}`, // ipfsLink: IPFS上的详细内容链接
           `https://ipfs.io/ipfs/${metadataHash}`, // tokenUri: NFT元数据JSON链接
         ],
+        value: parseEther("0.01"), // 支付0.01 ETH铸造费用
       });
 
       console.log('NFT铸造交易已提交:', hash);
 
-      // 等待交易确认
-      // 注意：这里需要等待交易确认，但wagmi v2的处理方式有所不同
-      // 暂时使用模拟的tokenId，实际应该从事件中解析
-      const tokenId = Math.floor(Math.random() * 1000) + 1;
+      // 等待交易确认并获取真实的Token ID
+      let tokenId: number;
+      try {
+        // 使用wagmi的useWaitForTransactionReceipt来等待交易确认
+        // 由于我们在hook内部，需要手动等待
+        const waitForTransaction = async (txHash: string) => {
+          return new Promise((resolve, reject) => {
+            const checkTransaction = async () => {
+              try {
+                // 使用fetch查询区块链状态
+                const response = await fetch(`https://sepolia.infura.io/v3/${import.meta.env.VITE_WAGMI_PROJECT_ID}`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    jsonrpc: '2.0',
+                    method: 'eth_getTransactionReceipt',
+                    params: [txHash],
+                    id: 1
+                  })
+                });
+                
+                const data = await response.json();
+                if (data.result) {
+                  if (data.result.status === '0x1') {
+                    resolve(data.result);
+                  } else {
+                    reject(new Error('Transaction failed'));
+                  }
+                } else {
+                  // 交易还在pending，继续等待
+                  setTimeout(checkTransaction, 3000);
+                }
+              } catch (error) {
+                reject(error);
+              }
+            };
+            checkTransaction();
+          });
+        };
+
+        // 等待交易确认
+        await waitForTransaction(hash);
+        
+        // 获取真实的Token ID - 通过查询交易日志中的ContentMinted事件
+        const getTokenIdFromEvent = async (txHash: string, maxRetries = 10, interval = 1000) => {
+          for (let i = 0; i < maxRetries; i++) {
+            try {
+              const response = await fetch(`https://sepolia.infura.io/v3/${import.meta.env.VITE_WAGMI_PROJECT_ID}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  jsonrpc: '2.0',
+                  method: 'eth_getTransactionReceipt',
+                  params: [txHash],
+                  id: 1
+                })
+              });
+              
+              const data = await response.json();
+              if (data.result && data.result.logs) {
+                // 查找ContentMinted事件
+                // ContentMinted事件签名: ContentMinted(address,uint256,string,uint256)
+                // 事件选择器: keccak256("ContentMinted(address,uint256,string,uint256)") = 0xcef4f611
+                const eventSignature = '0xcef4f611';
+                
+                for (const log of data.result.logs) {
+                  if (log.topics[0] === eventSignature && log.address.toLowerCase() === CONTRACTS.CONTENT_NFT.address.toLowerCase()) {
+                    // 解析事件数据
+                    // topics[1] = to address (indexed)
+                    // topics[2] = tokenId (indexed)
+                    // data = tokenURI + fee (non-indexed)
+                    const tokenIdHex = log.topics[2];
+                    const tokenId = parseInt(tokenIdHex, 16);
+                    console.log('从事件中获取到Token ID:', tokenId);
+                    return tokenId;
+                  }
+                }
+              }
+              
+              // 等待一段时间后重试
+              if (i < maxRetries - 1) {
+                await new Promise(resolve => setTimeout(resolve, interval));
+              }
+            } catch (error) {
+              console.log(`Token ID获取重试 ${i + 1}/${maxRetries}:`, error);
+            }
+          }
+          throw new Error('Token ID获取超时');
+        };
+
+        tokenId = await getTokenIdFromEvent(hash);
+        console.log('获取到真实的Token ID:', tokenId);
+        
+      } catch (error) {
+        console.error('获取Token ID失败:', error);
+        // 如果获取失败，使用超时标记值
+        tokenId = -1; // 表示获取失败
+      }
 
       // 更新后端数据库，添加NFT信息
       await updateContent(savedContent.id, {
-        ...savedContent,
-        // 注意：这里可能需要根据实际的UpdateContentRequest类型调整
+        nft_token_id: tokenId > 0 ? tokenId : null,
+        nft_contract_address: CONTRACTS.CONTENT_NFT.address,
+        ip_fs_hash: ipfsHash,
+        metadata_hash: metadataHash
       });
 
       return {
-        tokenId: tokenId,
+        tokenId: tokenId > 0 ? tokenId : (tokenId === -1 ? 'timeout' : 'Loading...'),
         ipfsHash,
         metadataHash,
         transactionHash: hash,

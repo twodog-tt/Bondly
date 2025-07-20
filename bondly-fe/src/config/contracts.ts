@@ -1,5 +1,94 @@
 // 合约配置
 export const CONTRACTS = {
+  // Sepolia 上的 ContentNFTV2 合约
+  CONTENT_NFT: {
+    address: "0xA8D4C5bD21Feba75BF99879B34cf35E82dB5aCEC" as `0x${string}`,
+    abi: [
+      // 铸造函数（管理员免费）
+      {
+        inputs: [
+          { name: "to", type: "address" },
+          { name: "title", type: "string" },
+          { name: "summary", type: "string" },
+          { name: "coverImage", type: "string" },
+          { name: "ipfsLink", type: "string" },
+          { name: "tokenUri", type: "string" }
+        ],
+        name: "mint",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "nonpayable",
+        type: "function"
+      },
+      // 付费铸造函数（用户自主铸造）
+      {
+        inputs: [
+          { name: "to", type: "address" },
+          { name: "title", type: "string" },
+          { name: "summary", type: "string" },
+          { name: "coverImage", type: "string" },
+          { name: "ipfsLink", type: "string" },
+          { name: "tokenUri", type: "string" }
+        ],
+        name: "mintWithFee",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "payable",
+        type: "function"
+      },
+      // 获取NFT元数据
+      {
+        inputs: [{ name: "tokenId", type: "uint256" }],
+        name: "getContentMeta",
+        outputs: [
+          {
+            components: [
+              { name: "title", type: "string" },
+              { name: "summary", type: "string" },
+              { name: "coverImage", type: "string" },
+              { name: "ipfsLink", type: "string" },
+              { name: "creator", type: "address" },
+              { name: "mintedAt", type: "uint256" }
+            ],
+            name: "",
+            type: "tuple"
+          }
+        ],
+        stateMutability: "view",
+        type: "function"
+      },
+      // 获取铸造费用
+      {
+        inputs: [],
+        name: "getMintFee",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function"
+      },
+      // 获取总供应量
+      {
+        inputs: [],
+        name: "totalSupply",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function"
+      },
+      // 获取用户铸造数量
+      {
+        inputs: [{ name: "user", type: "address" }],
+        name: "getUserMintCount",
+        outputs: [{ name: "", type: "uint256" }],
+        stateMutability: "view",
+        type: "function"
+      },
+      // 检查NFT所有权
+      {
+        inputs: [{ name: "tokenId", type: "uint256" }],
+        name: "ownerOf",
+        outputs: [{ name: "", type: "address" }],
+        stateMutability: "view",
+        type: "function"
+      }
+    ]
+  },
   // BOND 代币合约地址 (Sepolia 测试网) - V2合约
   BOND_TOKEN: {
     address: '0x8Cb00D43b5627528d97831b9025F33aE3dE7415E', // V2合约地址
@@ -118,147 +207,6 @@ export const CONTRACTS = {
             "internalType": "uint256",
             "name": "",
             "type": "uint256"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      }
-    ]
-  },
-  // ContentNFT 合约地址 (Sepolia 测试网)
-  CONTENT_NFT: {
-    address: '0x534Bb52B6318f9041D23C10606A4D6e329e0Ef9E', // 新部署的ContentNFT合约地址
-    abi: [
-      {
-        "inputs": [
-          {
-            "internalType": "address",
-            "name": "to",
-            "type": "address"
-          },
-          {
-            "internalType": "string",
-            "name": "title",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "summary",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "coverImage",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "ipfsLink",
-            "type": "string"
-          },
-          {
-            "internalType": "string",
-            "name": "tokenUri",
-            "type": "string"
-          }
-        ],
-        "name": "mint",
-        "outputs": [
-          {
-            "internalType": "uint256",
-            "name": "",
-            "type": "uint256"
-          }
-        ],
-        "stateMutability": "nonpayable",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          }
-        ],
-        "name": "getContentMeta",
-        "outputs": [
-          {
-            "components": [
-              {
-                "internalType": "string",
-                "name": "title",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "summary",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "coverImage",
-                "type": "string"
-              },
-              {
-                "internalType": "string",
-                "name": "ipfsLink",
-                "type": "string"
-              },
-              {
-                "internalType": "address",
-                "name": "creator",
-                "type": "address"
-              }
-            ],
-            "internalType": "struct ContentNFT.ContentMeta",
-            "name": "",
-            "type": "tuple"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [
-          {
-            "internalType": "uint256",
-            "name": "tokenId",
-            "type": "uint256"
-          }
-        ],
-        "name": "ownerOf",
-        "outputs": [
-          {
-            "internalType": "address",
-            "name": "",
-            "type": "address"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "name",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
-          }
-        ],
-        "stateMutability": "view",
-        "type": "function"
-      },
-      {
-        "inputs": [],
-        "name": "symbol",
-        "outputs": [
-          {
-            "internalType": "string",
-            "name": "",
-            "type": "string"
           }
         ],
         "stateMutability": "view",

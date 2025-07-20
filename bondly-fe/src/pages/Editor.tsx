@@ -2,6 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import CommonNavbar from '../components/CommonNavbar';
 import { createContent, updateContent, Content } from '../api/content';
 import { useContentNFT } from '../hooks/useContentNFT';
+import NFTMintSuccessModal from '../components/NFTMintSuccessModal';
+import { useAccount } from 'wagmi';
 
 interface EditorProps {
   isMobile: boolean;
@@ -41,10 +43,13 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
   const [savedContentId, setSavedContentId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [showNFTModal, setShowNFTModal] = useState(false);
+  const [showNFTSuccessModal, setShowNFTSuccessModal] = useState(false);
+  const [nftSuccessData, setNftSuccessData] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // NFT发布Hook
   const { publishAsNFT, isUploading, isMinting, error: nftError } = useContentNFT();
+  const { address } = useAccount();
 
   // 自动保存功能
   useEffect(() => {
@@ -204,9 +209,19 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
         lastSaved: new Date()
       }));
       
-      alert(`Article published as NFT!\nToken ID: ${nftResult.tokenId}\nIPFS Hash: ${nftResult.ipfsHash}`);
+      // 显示NFT成功弹框，展示真实数据
+      setNftSuccessData({
+        tokenId: typeof nftResult.tokenId === 'number' ? 
+          (nftResult.tokenId === -1 ? 'Loading...' : nftResult.tokenId.toString()) : 
+          nftResult.tokenId,
+        title: articleData.title,
+        creator: address || 'Unknown', // 使用当前用户地址
+        ipfsHash: nftResult.ipfsHash,
+        mintedAt: new Date().toISOString(),
+        transactionHash: nftResult.transactionHash
+      });
+      setShowNFTSuccessModal(true);
       setShowNFTModal(false);
-      onPageChange?.('feed');
     } catch (error) {
       console.error('NFT Publish failed:', error);
       setError('NFT publishing failed, please try again');
@@ -261,7 +276,7 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
         lastSaved: new Date()
       }));
       
-      alert('Article published successfully!');
+      // 移除浏览器弹框，直接跳转到feed页面
       setShowNFTModal(false);
       onPageChange?.('feed');
     } catch (error) {
@@ -886,6 +901,9 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
         </div>
       </div>
 
+      {/* 交易状态模态框 */}
+      {/* Removed TransactionModals as per edit hint */}
+
       {/* NFT发布模态框 */}
       {showNFTModal && (
         <div style={{
@@ -1022,6 +1040,16 @@ const Editor: React.FC<EditorProps> = ({ isMobile, onPageChange, editContentId }
           </div>
         </div>
       )}
+
+      {/* NFT铸造成功弹框 */}
+      <NFTMintSuccessModal
+        isOpen={showNFTSuccessModal}
+        onClose={() => {
+          setShowNFTSuccessModal(false);
+          onPageChange?.('feed');
+        }}
+        nftData={nftSuccessData}
+      />
     </div>
   );
 };

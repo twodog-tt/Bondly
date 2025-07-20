@@ -9,6 +9,10 @@ export interface Content {
   type: string;
   status: string;
   cover_image_url?: string;
+  nft_token_id?: number;
+  nft_contract_address?: string;
+  ip_fs_hash?: string;
+  metadata_hash?: string;
   likes: number;
   dislikes: number;
   views: number;
@@ -36,6 +40,10 @@ export interface UpdateContentRequest {
   type?: string;
   status?: string;
   cover_image_url?: string;
+  nft_token_id?: number;
+  nft_contract_address?: string;
+  ip_fs_hash?: string;
+  metadata_hash?: string;
 }
 
 export interface ContentListResponse {

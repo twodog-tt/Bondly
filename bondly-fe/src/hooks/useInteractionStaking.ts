@@ -34,7 +34,18 @@ export const useInteractionStaking = () => {
   const interactionStakingAddress = CONTRACTS.INTERACTION_STAKING?.address as `0x${string}`;
   const bondTokenAddress = CONTRACTS.BOND_TOKEN?.address as `0x${string}`;
 
-  // Stake interaction
+  // 检查BOND代币授权额度 - 智能授权检查
+  const { data: allowance, refetch: refetchAllowance } = useReadContract({
+    address: bondTokenAddress,
+    abi: CONTRACTS.BOND_TOKEN.abi,
+    functionName: 'allowance',
+    args: [address as `0x${string}`, interactionStakingAddress],
+    query: {
+      enabled: !!address && !!bondTokenAddress && !!interactionStakingAddress,
+    }
+  });
+
+  // 智能质押交互 - 避免重复授权
   const stakeInteraction = useCallback(async (data: InteractionStakingData) => {
     if (!isConnected || !address) {
       throw new Error('Please connect your wallet first');
@@ -48,27 +59,42 @@ export const useInteractionStaking = () => {
     setError(null);
 
     try {
-      console.log('Starting interaction staking...', data);
+      console.log('Starting smart interaction staking...', data);
 
-      // First need to approve BOND tokens
-      console.log('Approving BOND tokens...');
-      const approveHash = await (writeContract as any)({
-        address: bondTokenAddress,
-        abi: CONTRACTS.BOND_TOKEN.abi,
-        functionName: 'approve',
-        args: [
-          interactionStakingAddress,
-          parseEther(data.stakeAmount.toString())
-        ],
-      });
+      const requiredAmount = parseEther(data.stakeAmount.toString());
+      const currentAllowance = (allowance as bigint) || BigInt(0);
 
-      console.log('BOND token approval successful:', approveHash);
+      console.log('Current allowance:', formatEther(currentAllowance));
+      console.log('Required amount:', formatEther(requiredAmount));
 
-      // Wait for approval confirmation
-      await new Promise(resolve => setTimeout(resolve, 3000));
+      // 智能授权检查 - 只在必要时授权
+      if (currentAllowance < requiredAmount) {
+        console.log('Insufficient allowance, approving BOND tokens...');
+        
+        const approveHash = await (writeContract as any)({
+          address: bondTokenAddress,
+          abi: CONTRACTS.BOND_TOKEN.abi,
+          functionName: 'approve',
+          args: [
+            interactionStakingAddress,
+            requiredAmount
+          ],
+        });
 
-      // Call InteractionStaking contract for staking
-      console.log('Calling staking contract...');
+        console.log('BOND token approval successful:', approveHash);
+
+        // 等待授权确认 - 减少等待时间
+        console.log('Waiting for approval confirmation...');
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        
+        // 重新获取授权额度
+        await refetchAllowance();
+      } else {
+        console.log('Sufficient allowance already exists, skipping approval');
+      }
+
+      // 直接进行质押交易
+      console.log('Proceeding with staking transaction...');
       const stakeHash = await (writeContract as any)({
         address: interactionStakingAddress,
         abi: CONTRACTS.INTERACTION_STAKING.abi,
@@ -84,7 +110,8 @@ export const useInteractionStaking = () => {
       return {
         success: true,
         transactionHash: stakeHash,
-        stakeAmount: data.stakeAmount
+        stakeAmount: data.stakeAmount,
+        needsApproval: currentAllowance < requiredAmount
       };
 
     } catch (err) {
@@ -94,7 +121,7 @@ export const useInteractionStaking = () => {
     } finally {
       setIsStaking(false);
     }
-  }, [address, isConnected, interactionStakingAddress, bondTokenAddress, writeContract]);
+  }, [address, isConnected, interactionStakingAddress, bondTokenAddress, writeContract, allowance, refetchAllowance]);
 
   // Claim reward
   const claimReward = useCallback(async (tokenId: number, interactionType: InteractionType) => {
@@ -181,11 +208,6 @@ export const useInteractionStaking = () => {
     }
   }, [address, isConnected, interactionStakingAddress, writeContract]);
 
-  // Note: Data reading is now handled by useInteractionStakingData hook
-  // This hook focuses only on write operations
-
-  // Note: Interaction status checking is now handled by useInteractionStakingData hook
-
   // Get stake amount configuration
   const getStakeAmounts = useCallback(() => {
     return {
@@ -227,5 +249,9 @@ export const useInteractionStaking = () => {
     
     // Contract info
     contractAddress: interactionStakingAddress || 'Not deployed',
+    
+    // Allowance info for debugging
+    allowance: allowance ? formatEther(allowance as bigint) : '0',
+    refetchAllowance,
   };
 }; 

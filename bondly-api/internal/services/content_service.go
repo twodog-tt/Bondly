@@ -76,6 +76,19 @@ func (s *ContentService) UpdateContent(ctx context.Context, id int64, updateData
 	if updateData.CoverImageURL != nil {
 		existingContent.CoverImageURL = updateData.CoverImageURL
 	}
+	// 更新NFT相关字段
+	if updateData.NFTTokenID != nil {
+		existingContent.NFTTokenID = updateData.NFTTokenID
+	}
+	if updateData.NFTContractAddress != nil {
+		existingContent.NFTContractAddress = updateData.NFTContractAddress
+	}
+	if updateData.IPFSHash != nil {
+		existingContent.IPFSHash = updateData.IPFSHash
+	}
+	if updateData.MetadataHash != nil {
+		existingContent.MetadataHash = updateData.MetadataHash
+	}
 
 	err = s.contentRepo.Update(existingContent)
 	if err != nil {

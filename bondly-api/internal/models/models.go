@@ -40,19 +40,23 @@ type Post struct {
 
 // Content 内容模型（兼容旧版）
 type Content struct {
-	ID            int64     `json:"id" gorm:"primaryKey"`
-	AuthorID      int64     `json:"author_id"`
-	Title         string    `json:"title"`
-	Content       string    `json:"content"`
-	Type          string    `json:"type"`                        // article, post, comment
-	Status        string    `json:"status" gorm:"default:draft"` // draft, published, archived
-	CoverImageURL *string   `json:"cover_image_url" gorm:"type:text" comment:"封面图片URL"`
-	Likes         int64     `json:"likes" gorm:"default:0"`
-	Dislikes      int64     `json:"dislikes" gorm:"default:0"`
-	Views         int64     `json:"views" gorm:"default:0"`
-	CreatedAt     time.Time `json:"created_at"`
-	UpdatedAt     time.Time `json:"updated_at"`
-	Author        User      `json:"author" gorm:"foreignKey:AuthorID"`
+	ID                 int64     `json:"id" gorm:"primaryKey"`
+	AuthorID           int64     `json:"author_id"`
+	Title              string    `json:"title"`
+	Content            string    `json:"content"`
+	Type               string    `json:"type"`                        // article, post, comment
+	Status             string    `json:"status" gorm:"default:draft"` // draft, published, archived
+	CoverImageURL      *string   `json:"cover_image_url" gorm:"type:text" comment:"封面图片URL"`
+	NFTTokenID         *int64    `json:"nft_token_id" gorm:"column:nft_token_id;comment:NFT Token ID，如果内容已铸造为NFT"`
+	NFTContractAddress *string   `json:"nft_contract_address" gorm:"column:nft_contract_address;comment:NFT合约地址"`
+	IPFSHash           *string   `json:"ip_fs_hash" gorm:"column:ip_fs_hash;comment:IPFS内容哈希"`
+	MetadataHash       *string   `json:"metadata_hash" gorm:"column:metadata_hash;comment:IPFS元数据哈希"`
+	Likes              int64     `json:"likes" gorm:"default:0"`
+	Dislikes           int64     `json:"dislikes" gorm:"default:0"`
+	Views              int64     `json:"views" gorm:"default:0"`
+	CreatedAt          time.Time `json:"created_at"`
+	UpdatedAt          time.Time `json:"updated_at"`
+	Author             User      `json:"author" gorm:"foreignKey:AuthorID"`
 }
 
 // Proposal 提案模型

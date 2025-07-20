@@ -250,11 +250,25 @@ func (h *ContentHandlers) UpdateContent(c *gin.Context) {
 	if req.CoverImageURL != nil {
 		updateData.CoverImageURL = req.CoverImageURL
 	}
+	// 添加NFT相关字段处理
+	if req.NFTTokenID != nil {
+		updateData.NFTTokenID = req.NFTTokenID
+	}
+	if req.NFTContractAddress != nil {
+		updateData.NFTContractAddress = req.NFTContractAddress
+	}
+	if req.IPFSHash != nil {
+		updateData.IPFSHash = req.IPFSHash
+	}
+	if req.MetadataHash != nil {
+		updateData.MetadataHash = req.MetadataHash
+	}
 
 	bizLog.BusinessLogic("参数处理", map[string]interface{}{
 		"content_id": id,
 		"user_id":    userID,
 		"has_cover":  req.CoverImageURL != nil,
+		"has_nft":    req.NFTTokenID != nil || req.NFTContractAddress != nil,
 	})
 
 	content, err := h.contentService.UpdateContent(c.Request.Context(), id, &updateData)
@@ -285,6 +299,18 @@ func (h *ContentHandlers) UpdateContent(c *gin.Context) {
 	}
 	if req.CoverImageURL != nil {
 		updatedFields = append(updatedFields, "cover_image_url")
+	}
+	if req.NFTTokenID != nil {
+		updatedFields = append(updatedFields, "nft_token_id")
+	}
+	if req.NFTContractAddress != nil {
+		updatedFields = append(updatedFields, "nft_contract_address")
+	}
+	if req.IPFSHash != nil {
+		updatedFields = append(updatedFields, "ip_fs_hash")
+	}
+	if req.MetadataHash != nil {
+		updatedFields = append(updatedFields, "metadata_hash")
 	}
 
 	bizLog.ContentUpdated(id, userID.(int64), updatedFields)

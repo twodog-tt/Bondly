@@ -1,0 +1,9 @@
+{
+  "network": "sepolia",
+  "contractAddress": "0xA8D4C5bD21Feba75BF99879B34cf35E82dB5aCEC",
+  "deployer": "0xBC6B35213374A3D64E25ef1bAeFd5A8eb9031E4A",
+  "transactionHash": "0xd5f4cc1fe255a8f45c639a86c6dadd46dc90e2a1d94bf4aef5627c7e61ee17d9",
+  "deploymentTime": "2025-07-20T09:29:12.926Z",
+  "mintFee": "0.01",
+  "feeReceiver": "0xBC6B35213374A3D64E25ef1bAeFd5A8eb9031E4A"
+}

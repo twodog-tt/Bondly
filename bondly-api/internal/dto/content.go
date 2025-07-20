@@ -13,28 +13,36 @@ type CreateContentRequest struct {
 
 // UpdateContentRequest 更新内容请求结构
 type UpdateContentRequest struct {
-	Title         *string `json:"title" example:"更新后的标题"`
-	Content       *string `json:"content" example:"更新后的内容"`
-	Type          *string `json:"type" example:"article"`
-	Status        *string `json:"status" example:"published"`
-	CoverImageURL *string `json:"cover_image_url" example:"https://example.com/new-image.jpg"`
+	Title              *string `json:"title" example:"更新后的标题"`
+	Content            *string `json:"content" example:"更新后的内容"`
+	Type               *string `json:"type" example:"article"`
+	Status             *string `json:"status" example:"published"`
+	CoverImageURL      *string `json:"cover_image_url" example:"https://example.com/new-image.jpg"`
+	NFTTokenID         *int64  `json:"nft_token_id" example:"123"`
+	NFTContractAddress *string `json:"nft_contract_address" example:"0x1234567890abcdef"`
+	IPFSHash           *string `json:"ip_fs_hash" example:"QmHash123"`
+	MetadataHash       *string `json:"metadata_hash" example:"QmMetadataHash456"`
 }
 
 // ContentResponse 内容响应结构
 type ContentResponse struct {
-	ID            int64        `json:"id" example:"1"`
-	AuthorID      int64        `json:"author_id" example:"1"`
-	Title         string       `json:"title" example:"文章标题"`
-	Content       string       `json:"content" example:"文章内容"`
-	Type          string       `json:"type" example:"article"`
-	Status        string       `json:"status" example:"published"`
-	CoverImageURL *string      `json:"cover_image_url" example:"https://example.com/image.jpg"`
-	Likes         int64        `json:"likes" example:"10"`
-	Dislikes      int64        `json:"dislikes" example:"2"`
-	Views         int64        `json:"views" example:"100"`
-	CreatedAt     time.Time    `json:"created_at" example:"2023-12-01T10:00:00Z"`
-	UpdatedAt     time.Time    `json:"updated_at" example:"2023-12-01T10:00:00Z"`
-	Author        UserResponse `json:"author"`
+	ID                 int64        `json:"id" example:"1"`
+	AuthorID           int64        `json:"author_id" example:"1"`
+	Title              string       `json:"title" example:"文章标题"`
+	Content            string       `json:"content" example:"文章内容"`
+	Type               string       `json:"type" example:"article"`
+	Status             string       `json:"status" example:"published"`
+	CoverImageURL      *string      `json:"cover_image_url" example:"https://example.com/image.jpg"`
+	NFTTokenID         *int64       `json:"nft_token_id" example:"123"`
+	NFTContractAddress *string      `json:"nft_contract_address" example:"0x1234567890abcdef"`
+	IPFSHash           *string      `json:"ip_fs_hash" example:"QmHash123"`
+	MetadataHash       *string      `json:"metadata_hash" example:"QmMetadataHash456"`
+	Likes              int64        `json:"likes" example:"10"`
+	Dislikes           int64        `json:"dislikes" example:"2"`
+	Views              int64        `json:"views" example:"100"`
+	CreatedAt          time.Time    `json:"created_at" example:"2023-12-01T10:00:00Z"`
+	UpdatedAt          time.Time    `json:"updated_at" example:"2023-12-01T10:00:00Z"`
+	Author             UserResponse `json:"author"`
 }
 
 // ListContentRequest 获取内容列表请求结构
