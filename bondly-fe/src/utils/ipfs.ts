@@ -56,13 +56,6 @@ const getPinataClient = () => {
   }
 };
 
-// 重置Pinata客户端（用于测试）
-export const resetPinataClient = () => {
-  pinataClient = null;
-  pinataInitialized = false;
-  pinataError = null;
-};
-
 // 获取Pinata状态
 export const getPinataStatus = () => {
   return {

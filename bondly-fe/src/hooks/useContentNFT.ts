@@ -251,7 +251,7 @@ export const useContentNFT = () => {
 
   // 实际的NFT铸造函数（需要集成合约调用）
   const mintNFTFunction = useCallback(async (contentData: ContentNFTData) => {
-    // TODO: 实现实际的合约调用
+    // 实现实际的合约调用
     console.log('需要实现实际的NFT铸造合约调用');
     throw new Error('NFT铸造功能尚未完全实现');
   }, []);

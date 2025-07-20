@@ -3,8 +3,6 @@ import ReactDOM from "react-dom/client";
 import App from "./App";
 import "./styles/global.css";
 import { NotificationProvider } from "./components/NotificationProvider";
-// IPFS调试工具已移除，现在使用Pinata
-import './utils/pinata-test'; // 导入Pinata测试工具
 
 // 错误边界组件
 class ErrorBoundary extends React.Component<

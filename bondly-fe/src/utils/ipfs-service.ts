@@ -43,31 +43,43 @@ export class IPFSService {
     };
   }
 
-  // 测试连接
-  async testConnection(): Promise<{ success: boolean; provider: string; error?: string }> {
+  // 连接
+  async testConnection() {
     try {
-      // 测试上传一个小文件
-      const testContent = `Test file created at ${new Date().toISOString()}`;
+      const apiKey = import.meta.env.VITE_PINATA_API_KEY;
+      if (!apiKey) {
+        return { success: false, message: 'API key not configured' };
+      }
+
+      const response = await fetch('https://api.pinata.cloud/data/testAuthentication', {
+        headers: {
+          'Authorization': `Bearer ${apiKey}`
+        }
+      });
+      
+      if (response.ok) {
+        return { success: true, message: '连接成功' };
+      } else {
+        return { success: false, message: '连接失败' };
+      }
+    } catch (error) {
+      return { success: false, message: `连接错误: ${error}` };
+    }
+  }
+
+  // 上传一个小文件
+  async testUpload() {
+    try {
+      const testContent = `测试文件 - 创建时间: ${new Date().toISOString()}`;
       const hash = await this.uploadContent(testContent, 'test.txt');
       
       if (hash.startsWith('QmMock')) {
-        return {
-          success: false,
-          provider: 'pinata',
-          error: 'Upload failed, using mock hash'
-        };
+        return { success: false, message: '上传失败，使用模拟hash' };
       }
-
-      return {
-        success: true,
-        provider: 'pinata'
-      };
+      
+      return { success: true, message: '上传成功', hash };
     } catch (error) {
-      return {
-        success: false,
-        provider: 'pinata',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      };
+      return { success: false, message: `上传错误: ${error}` };
     }
   }
 }

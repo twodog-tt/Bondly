@@ -59,17 +59,11 @@ export const useInteractionStaking = () => {
     setError(null);
 
     try {
-      console.log('Starting smart interaction staking...', data);
-
       const requiredAmount = parseEther(data.stakeAmount.toString());
       const currentAllowance = (allowance as bigint) || BigInt(0);
 
-      console.log('Current allowance:', formatEther(currentAllowance));
-      console.log('Required amount:', formatEther(requiredAmount));
-
       // 智能授权检查 - 只在必要时授权
       if (currentAllowance < requiredAmount) {
-        console.log('Insufficient allowance, approving BOND tokens...');
         
         const approveHash = await (writeContract as any)({
           address: bondTokenAddress,
@@ -81,20 +75,14 @@ export const useInteractionStaking = () => {
           ],
         });
 
-        console.log('BOND token approval successful:', approveHash);
-
         // 等待授权确认 - 减少等待时间
-        console.log('Waiting for approval confirmation...');
         await new Promise(resolve => setTimeout(resolve, 2000));
         
         // 重新获取授权额度
         await refetchAllowance();
-      } else {
-        console.log('Sufficient allowance already exists, skipping approval');
       }
 
       // 直接进行质押交易
-      console.log('Proceeding with staking transaction...');
       const stakeHash = await (writeContract as any)({
         address: interactionStakingAddress,
         abi: CONTRACTS.INTERACTION_STAKING.abi,
@@ -105,8 +93,6 @@ export const useInteractionStaking = () => {
         ],
       });
 
-      console.log('Interaction staking successful:', stakeHash);
-      
       return {
         success: true,
         transactionHash: stakeHash,
@@ -137,8 +123,6 @@ export const useInteractionStaking = () => {
     setError(null);
 
     try {
-      console.log('Starting reward claim...', { tokenId, interactionType });
-
       const claimHash = await (writeContract as any)({
         address: interactionStakingAddress,
         abi: CONTRACTS.INTERACTION_STAKING.abi,
@@ -149,8 +133,6 @@ export const useInteractionStaking = () => {
         ],
       });
 
-      console.log('Reward claim successful:', claimHash);
-      
       return {
         success: true,
         transactionHash: claimHash,
@@ -180,8 +162,6 @@ export const useInteractionStaking = () => {
     setError(null);
 
     try {
-      console.log('Starting stake withdrawal...', { tokenId, interactionType });
-
       const withdrawHash = await (writeContract as any)({
         address: interactionStakingAddress,
         abi: CONTRACTS.INTERACTION_STAKING.abi,
@@ -192,8 +172,6 @@ export const useInteractionStaking = () => {
         ],
       });
 
-      console.log('Stake withdrawal successful:', withdrawHash);
-      
       return {
         success: true,
         transactionHash: withdrawHash
@@ -250,7 +228,7 @@ export const useInteractionStaking = () => {
     // Contract info
     contractAddress: interactionStakingAddress || 'Not deployed',
     
-    // Allowance info for debugging
+    // Allowance info
     allowance: allowance ? formatEther(allowance as bigint) : '0',
     refetchAllowance,
   };
