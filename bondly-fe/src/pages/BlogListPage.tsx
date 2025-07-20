@@ -24,7 +24,7 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
     try {
       const params: any = {
         page,
-        limit: 10,
+        limit: 9, // 改为每页9条，更适合3x3网格布局
         status: 'published'
       };
       
@@ -35,7 +35,7 @@ const BlogListPage: React.FC<BlogListPageProps> = ({ isMobile, onPageChange }) =
       const response = await getContentList(params);
       
       setContents(response.contents);
-      setTotalPages(Math.ceil(response.pagination.total / 10));
+      setTotalPages(response.pagination.total_pages); // 使用API返回的total_pages
       setCurrentPage(page);
     } catch (err) {
       setError(err instanceof Error ? err.message : '获取内容失败');
