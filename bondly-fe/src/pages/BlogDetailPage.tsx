@@ -5,9 +5,11 @@ import CommentSection from '../components/CommentSection';
 import InteractionStakingSection from '../components/InteractionStakingSection';
 import StakingTutorial from '../components/StakingTutorial';
 import StakingSettings from '../components/StakingSettings';
-import { getContentById, Content } from '../api/content';
+import { getContentById, Content, updateContent } from '../api/content';
 import { useStakingTutorial } from '../hooks/useStakingTutorial';
 import { useAuth } from '../contexts/AuthContext';
+import { useContentNFT } from '../hooks/useContentNFT';
+import { CONTRACTS } from '../config/contracts';
 
 interface BlogDetailPageProps {
   isMobile: boolean;
@@ -28,6 +30,9 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
   
   // 判断当前用户是否是文章作者
   const isAuthor = isLoggedIn && user && content && user.user_id === content.author_id;
+  
+  // NFT发布Hook
+  const { publishAsNFT, isUploading, isMinting, error: nftError } = useContentNFT();
 
   // Get content ID from URL parameters
   const getContentIdFromUrl = () => {
@@ -74,6 +79,34 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
       const url = `${window.location.pathname}?page=editor&id=${content.id}`;
       window.history.pushState({}, '', url);
       onPageChange?.('editor');
+    }
+  };
+
+  // 处理发布为NFT按钮点击
+  const handlePublishAsNFT = async () => {
+    if (!content) return;
+    
+    try {
+      // 发布为NFT
+      const nftResult = await publishAsNFT({
+        title: content.title,
+        summary: content.content.substring(0, 200) + '...', // 自动生成摘要
+        content: content.content,
+        coverImage: content.cover_image_url,
+        category: content.type || 'article',
+        tags: [],
+        isPublished: true,
+        existingContentId: content.id // 传递现有文章ID，用于更新而不是创建
+      });
+      
+      // 显示成功消息
+      alert(`Article successfully published as NFT! Token ID: ${nftResult.tokenId}`);
+      
+      // 刷新页面以显示NFT标识
+      window.location.reload();
+    } catch (error) {
+      console.error('Failed to publish as NFT:', error);
+      alert('Failed to publish as NFT. Please try again.');
     }
   };
 
@@ -238,7 +271,12 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           
           {/* 编辑按钮 - 只有作者才能看到 */}
           {isAuthor && (
-            <div style={{ marginBottom: "20px" }}>
+            <div style={{ 
+              marginBottom: "20px",
+              display: "flex",
+              gap: "12px",
+              flexWrap: "wrap"
+            }}>
               <button
                 onClick={handleEditClick}
                 style={{
@@ -261,6 +299,42 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
                 <span>✏️</span>
                 Edit Article
               </button>
+              
+              {/* 发布为NFT按钮 - 只有作者且文章不是NFT时显示 */}
+              {!content.nft_token_id && (
+                <button
+                  onClick={handlePublishAsNFT}
+                  disabled={isUploading || isMinting}
+                  style={{
+                    background: "linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%)",
+                    color: "white",
+                    border: "none",
+                    padding: "10px 20px",
+                    borderRadius: "8px",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    cursor: isUploading || isMinting ? "not-allowed" : "pointer",
+                    transition: "opacity 0.2s ease",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    opacity: isUploading || isMinting ? "0.6" : "1"
+                  }}
+                  onMouseEnter={(e) => {
+                    if (!isUploading && !isMinting) {
+                      e.currentTarget.style.opacity = "0.9";
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (!isUploading && !isMinting) {
+                      e.currentTarget.style.opacity = "1";
+                    }
+                  }}
+                >
+                  <span>🪙</span>
+                  {isUploading || isMinting ? "Publishing..." : "Publish as NFT"}
+                </button>
+              )}
             </div>
           )}
           

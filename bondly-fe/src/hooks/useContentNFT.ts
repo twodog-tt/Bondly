@@ -13,6 +13,7 @@ export interface ContentNFTData {
   category?: string;
   tags?: string[];
   isPublished: boolean;
+  existingContentId?: number; // 添加现有文章ID，用于更新而不是创建
 }
 
 export interface NFTMintResult {
@@ -71,7 +72,16 @@ export const useContentNFT = () => {
         cover_image_url: contentData.coverImage, // 修正字段名
       };
 
-      const savedContent = await createContent(backendContent);
+      let savedContent;
+      if (contentData.existingContentId) {
+        // 更新现有文章
+        console.log('Updating existing content with ID:', contentData.existingContentId);
+        savedContent = await updateContent(contentData.existingContentId, backendContent);
+      } else {
+        // 创建新文章
+        console.log('Creating new content');
+        savedContent = await createContent(backendContent);
+      }
       console.log('Content saved to backend:', savedContent);
 
       // 4. 真正的NFT铸造
