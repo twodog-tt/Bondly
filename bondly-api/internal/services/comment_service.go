@@ -18,6 +18,7 @@ func NewCommentService(repo *repositories.CommentRepository) *CommentService {
 func (s *CommentService) CreateComment(req *dto.CreateCommentRequest, authorID int64) (*models.Comment, error) {
 	comment := &models.Comment{
 		PostID:          req.PostID,
+		ContentID:       req.ContentID,
 		AuthorID:        authorID,
 		Content:         req.Content,
 		ParentCommentID: req.ParentCommentID,
@@ -34,9 +35,9 @@ func (s *CommentService) GetComment(id int64) (*models.Comment, error) {
 	return s.repo.GetByID(id)
 }
 
-func (s *CommentService) ListComments(postID int64, parentCommentID *int64, page, limit int) ([]models.Comment, int64, error) {
+func (s *CommentService) ListComments(postID int64, contentID int64, parentCommentID *int64, page, limit int) ([]models.Comment, int64, error) {
 	offset := (page - 1) * limit
-	return s.repo.List(postID, parentCommentID, offset, limit)
+	return s.repo.List(postID, contentID, parentCommentID, offset, limit)
 }
 
 func (s *CommentService) DeleteComment(id int64, authorID int64) error {
@@ -52,6 +53,6 @@ func (s *CommentService) UnlikeComment(id int64) error {
 }
 
 // GetCommentCount 获取指定内容的评论数量
-func (s *CommentService) GetCommentCount(postID int64) (int64, error) {
-	return s.repo.GetCommentCount(postID)
+func (s *CommentService) GetCommentCount(postID int64, contentID int64) (int64, error) {
+	return s.repo.GetCommentCount(postID, contentID)
 }

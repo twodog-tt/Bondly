@@ -27,15 +27,24 @@ func (r *CommentRepository) GetByID(id int64) (*models.Comment, error) {
 	return &comment, nil
 }
 
-func (r *CommentRepository) List(postID int64, parentCommentID *int64, offset, limit int) ([]models.Comment, int64, error) {
+func (r *CommentRepository) List(postID int64, contentID int64, parentCommentID *int64, offset, limit int) ([]models.Comment, int64, error) {
 	var comments []models.Comment
 	var total int64
-	query := r.db.Model(&models.Comment{}).Where("post_id = ?", postID)
+
+	// 构建查询条件
+	query := r.db.Model(&models.Comment{})
+	if postID > 0 {
+		query = query.Where("post_id = ?", postID)
+	} else if contentID > 0 {
+		query = query.Where("content_id = ?", contentID)
+	}
+
 	if parentCommentID != nil {
 		query = query.Where("parent_comment_id = ?", *parentCommentID)
 	} else {
 		query = query.Where("parent_comment_id IS NULL")
 	}
+
 	query.Count(&total)
 	err := query.Preload("Author").Preload("ChildComments").Order("created_at asc").Offset(offset).Limit(limit).Find(&comments).Error
 	return comments, total, err
@@ -54,8 +63,16 @@ func (r *CommentRepository) Unlike(id int64) error {
 }
 
 // GetCommentCount 获取指定内容的评论数量
-func (r *CommentRepository) GetCommentCount(postID int64) (int64, error) {
+func (r *CommentRepository) GetCommentCount(postID int64, contentID int64) (int64, error) {
 	var count int64
-	err := r.db.Model(&models.Comment{}).Where("post_id = ?", postID).Count(&count).Error
+	query := r.db.Model(&models.Comment{})
+
+	if postID > 0 {
+		query = query.Where("post_id = ?", postID)
+	} else if contentID > 0 {
+		query = query.Where("content_id = ?", contentID)
+	}
+
+	err := query.Count(&count).Error
 	return count, err
 }

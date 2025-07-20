@@ -3,7 +3,8 @@ import { get, post, del } from '../utils/api';
 // 评论相关接口类型定义
 export interface Comment {
   id: number;
-  post_id: number;
+  post_id?: number;
+  content_id?: number;
   author_id: number;
   content: string;
   parent_comment_id?: number;
@@ -20,9 +21,18 @@ export interface Comment {
 }
 
 export interface CreateCommentRequest {
-  post_id: number;
+  post_id?: number;
+  content_id?: number;
   content: string;
   parent_comment_id?: number;
+}
+
+export interface CommentListRequest {
+  post_id?: number;
+  content_id?: number;
+  parent_comment_id?: number;
+  page?: number;
+  limit?: number;
 }
 
 export interface CommentListResponse {
@@ -36,23 +46,26 @@ export interface CommentListResponse {
 }
 
 // 获取评论列表
-export const getCommentList = async (params: {
-  post_id: number;
-  parent_comment_id?: number;
-  page?: number;
-  limit?: number;
-}): Promise<CommentListResponse> => {
-  const searchParams = new URLSearchParams();
-  searchParams.append('post_id', params.post_id.toString());
-  if (params.parent_comment_id) {
-    searchParams.append('parent_comment_id', params.parent_comment_id.toString());
-  }
-  if (params.page) searchParams.append('page', params.page.toString());
-  if (params.limit) searchParams.append('limit', params.limit.toString());
-
-  const endpoint = `/api/v1/comments?${searchParams.toString()}`;
+export const getCommentList = async (params: CommentListRequest): Promise<CommentListResponse> => {
+  const queryParams = new URLSearchParams();
   
-  const response = await get<CommentListResponse>(endpoint);
+  if (params.post_id) {
+    queryParams.append('post_id', params.post_id.toString());
+  }
+  if (params.content_id) {
+    queryParams.append('content_id', params.content_id.toString());
+  }
+  if (params.parent_comment_id) {
+    queryParams.append('parent_comment_id', params.parent_comment_id.toString());
+  }
+  if (params.page) {
+    queryParams.append('page', params.page.toString());
+  }
+  if (params.limit) {
+    queryParams.append('limit', params.limit.toString());
+  }
+  
+  const response = await get<CommentListResponse>(`/api/v1/comments?${queryParams.toString()}`);
   return response;
 };
 

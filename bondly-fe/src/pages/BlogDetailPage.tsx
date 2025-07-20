@@ -321,11 +321,11 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ isMobile, onPageChange 
           
           {/* Comment section */}
           <CommentSection
-            postId={content.id.toString()}
+            contentId={content.id.toString()}
             isMobile={isMobile}
             onTipComment={(commentId: string, authorName: string) => {
-                  // TODO: Implement comment tip functionality
-    console.log('Tip comment:', commentId, authorName);
+              // TODO: Implement comment tip functionality
+              console.log('Tip comment:', commentId, authorName);
             }}
           />
         </div>

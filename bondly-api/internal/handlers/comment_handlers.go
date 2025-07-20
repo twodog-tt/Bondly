@@ -7,6 +7,7 @@ import (
 	"bondly-api/internal/pkg/response"
 	"bondly-api/internal/services"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
@@ -34,16 +35,31 @@ func NewCommentHandlers(service *services.CommentService) *CommentHandlers {
 func (h *CommentHandlers) ListComments(c *gin.Context) {
 	bizLog := logger.NewBusinessLogger(c.Request.Context())
 	bizLog.StartAPI("GET", "/api/v1/comments", nil, "", nil)
+
+	// 支持post_id或content_id参数
 	postIDStr := c.Query("post_id")
-	if postIDStr == "" {
-		response.Fail(c, 400, "post_id参数必填")
+	contentIDStr := c.Query("content_id")
+
+	var postID, contentID int64
+	var err error
+
+	if postIDStr != "" {
+		postID, err = strconv.ParseInt(postIDStr, 10, 64)
+		if err != nil {
+			response.Fail(c, 400, "post_id参数格式错误")
+			return
+		}
+	} else if contentIDStr != "" {
+		contentID, err = strconv.ParseInt(contentIDStr, 10, 64)
+		if err != nil {
+			response.Fail(c, 400, "content_id参数格式错误")
+			return
+		}
+	} else {
+		response.Fail(c, 400, "post_id或content_id参数必填")
 		return
 	}
-	postID, err := strconv.ParseInt(postIDStr, 10, 64)
-	if err != nil {
-		response.Fail(c, 400, "post_id参数格式错误")
-		return
-	}
+
 	parentCommentIDStr := c.Query("parent_comment_id")
 	var parentCommentID *int64
 	if parentCommentIDStr != "" {
@@ -54,18 +70,22 @@ func (h *CommentHandlers) ListComments(c *gin.Context) {
 		}
 		parentCommentID = &id
 	}
+
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	comments, total, err := h.service.ListComments(postID, parentCommentID, page, limit)
+
+	comments, total, err := h.service.ListComments(postID, contentID, parentCommentID, page, limit)
 	if err != nil {
 		bizLog.BusinessLogic("error", map[string]interface{}{"err": err})
 		response.Fail(c, 500, "获取评论列表失败")
 		return
 	}
+
 	var commentResponses []dto.CommentResponse
 	for _, comment := range comments {
 		commentResponses = append(commentResponses, toCommentResponse(&comment))
 	}
+
 	resp := dto.CommentListResponse{
 		Comments:   commentResponses, // 确保返回空数组而不是null
 		Pagination: dto.PaginationData{Total: total, Page: page, Limit: limit, TotalPages: int((total + int64(limit) - 1) / int64(limit))},
@@ -241,56 +261,71 @@ func (h *CommentHandlers) UnlikeComment(c *gin.Context) {
 // @Tags 评论
 // @Accept json
 // @Produce json
-// @Param post_id query int true "内容ID"
-// @Success 200 {object} response.ResponseAny{data=map[string]int64}
+// @Param post_id query int false "文章ID"
+// @Param content_id query int false "内容ID"
+// @Success 200 {object} response.ResponseAny{data=int64}
 // @Router /api/v1/comments/count [get]
 func (h *CommentHandlers) GetCommentCount(c *gin.Context) {
 	bizLog := logger.NewBusinessLogger(c.Request.Context())
 	bizLog.StartAPI("GET", "/api/v1/comments/count", nil, "", nil)
 
+	// 支持post_id或content_id参数
 	postIDStr := c.Query("post_id")
-	if postIDStr == "" {
-		response.Fail(c, 400, "post_id参数必填")
+	contentIDStr := c.Query("content_id")
+
+	var postID, contentID int64
+	var err error
+
+	if postIDStr != "" {
+		postID, err = strconv.ParseInt(postIDStr, 10, 64)
+		if err != nil {
+			response.Fail(c, 400, "post_id参数格式错误")
+			return
+		}
+	} else if contentIDStr != "" {
+		contentID, err = strconv.ParseInt(contentIDStr, 10, 64)
+		if err != nil {
+			response.Fail(c, 400, "content_id参数格式错误")
+			return
+		}
+	} else {
+		response.Fail(c, 400, "post_id或content_id参数必填")
 		return
 	}
 
-	postID, err := strconv.ParseInt(postIDStr, 10, 64)
-	if err != nil {
-		response.Fail(c, 400, "post_id参数格式错误")
-		return
-	}
-
-	count, err := h.service.GetCommentCount(postID)
+	count, err := h.service.GetCommentCount(postID, contentID)
 	if err != nil {
 		bizLog.BusinessLogic("error", map[string]interface{}{"err": err})
 		response.Fail(c, 500, "获取评论数量失败")
 		return
 	}
 
-	response.OK(c, map[string]int64{"count": count}, "获取评论数量成功")
+	response.OK(c, count, "获取评论数量成功")
 }
 
 // toCommentResponse 工具函数
 func toCommentResponse(comment *models.Comment) dto.CommentResponse {
-	resp := dto.CommentResponse{
+	var childComments []dto.CommentResponse
+	for _, child := range comment.ChildComments {
+		childComments = append(childComments, toCommentResponse(&child))
+	}
+
+	return dto.CommentResponse{
 		ID:              comment.ID,
 		PostID:          comment.PostID,
+		ContentID:       comment.ContentID,
 		AuthorID:        comment.AuthorID,
 		Content:         comment.Content,
 		ParentCommentID: comment.ParentCommentID,
 		Likes:           comment.Likes,
-		CreatedAt:       comment.CreatedAt.Format("2006-01-02T15:04:05Z07:00"),
-		UpdatedAt:       comment.UpdatedAt.Format("2006-01-02T15:04:05Z07:00"),
+		CreatedAt:       comment.CreatedAt.Format(time.RFC3339),
+		UpdatedAt:       comment.UpdatedAt.Format(time.RFC3339),
+		Author: &dto.UserResponse{
+			ID:              comment.Author.ID,
+			Nickname:        comment.Author.Nickname,
+			AvatarURL:       comment.Author.AvatarURL,
+			ReputationScore: comment.Author.ReputationScore,
+		},
+		ChildComments: childComments,
 	}
-	if comment.Author.ID != 0 {
-		resp.Author = &dto.UserResponse{
-			ID:        comment.Author.ID,
-			Nickname:  comment.Author.Nickname,
-			AvatarURL: comment.Author.AvatarURL,
-		}
-	}
-	for _, child := range comment.ChildComments {
-		resp.ChildComments = append(resp.ChildComments, toCommentResponse(&child))
-	}
-	return resp
 }

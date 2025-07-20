@@ -102,7 +102,8 @@ type Transaction struct {
 // Comment 评论模型
 type Comment struct {
 	ID              int64     `json:"id" gorm:"primaryKey"`
-	PostID          int64     `json:"post_id"`
+	PostID          *int64    `json:"post_id"`    // 关联posts表，可为空
+	ContentID       *int64    `json:"content_id"` // 关联contents表，可为空
 	AuthorID        int64     `json:"author_id"`
 	Content         string    `json:"content"`
 	ParentCommentID *int64    `json:"parent_comment_id"`
@@ -110,7 +111,8 @@ type Comment struct {
 	CreatedAt       time.Time `json:"created_at"`
 	UpdatedAt       time.Time `json:"updated_at"`
 	Author          User      `json:"author" gorm:"foreignKey:AuthorID"`
-	Post            Post      `json:"post" gorm:"foreignKey:PostID"`
+	Post            *Post     `json:"post,omitempty" gorm:"foreignKey:PostID"`
+	ContentRef      *Content  `json:"content_ref,omitempty" gorm:"foreignKey:ContentID"`
 	ParentComment   *Comment  `json:"parent_comment,omitempty" gorm:"foreignKey:ParentCommentID"`
 	ChildComments   []Comment `json:"child_comments,omitempty" gorm:"foreignKey:ParentCommentID"`
 }

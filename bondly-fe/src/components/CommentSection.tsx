@@ -9,18 +9,21 @@ import {
   likeComment, 
   unlikeComment,
   Comment,
-  CreateCommentRequest
+  CreateCommentRequest,
+  CommentListRequest
 } from "../api/comment";
 import { useAuth } from "../contexts/AuthContext";
 
 interface CommentSectionProps {
-  postId: string;
+  postId?: string;
+  contentId?: string;
   isMobile: boolean;
   onTipComment?: (commentId: string, authorName: string) => void;
 }
 
 export default function CommentSection({
   postId,
+  contentId,
   isMobile,
   onTipComment,
 }: CommentSectionProps) {
@@ -49,21 +52,28 @@ export default function CommentSection({
   // Load comment list
   useEffect(() => {
     loadComments();
-  }, [postId]);
+  }, [postId, contentId]);
 
   const loadComments = async () => {
     try {
       setCommentLoading(true);
-      const response = await getCommentList({
-        post_id: parseInt(postId),
+      const params: CommentListRequest = {
         page: 1,
         limit: 50
-      });
+      };
+      
+      if (postId) {
+        params.post_id = parseInt(postId);
+      } else if (contentId) {
+        params.content_id = parseInt(contentId);
+      }
+      
+      const response = await getCommentList(params);
       setComments(response.comments || []);
     } catch (error) {
       console.error('Failed to load comments:', error);
       notify('Failed to load comments', 'error');
-              setComments([]); // Ensure empty array instead of null on failure
+      setComments([]); // Ensure empty array instead of null on failure
     } finally {
       setCommentLoading(false);
     }
@@ -83,10 +93,15 @@ export default function CommentSection({
     setLoading(true);
     try {
       const commentData: CreateCommentRequest = {
-        post_id: parseInt(postId),
         content: replyTo ? replyContent : newComment,
         parent_comment_id: replyTo || undefined
       };
+      
+      if (postId) {
+        commentData.post_id = parseInt(postId);
+      } else if (contentId) {
+        commentData.content_id = parseInt(contentId);
+      }
 
       const newCommentObj = await createComment(commentData);
 
