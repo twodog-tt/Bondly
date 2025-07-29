@@ -6,6 +6,8 @@ Video Introduction：
 bilibili:https://www.bilibili.com/video/BV1T4udz1Ek7/?vd_source=4294884d12011f690a0ffce59877a3a2
 YouTube:https://youtu.be/9OKgWyUvUns
 
+Hackquest address:
+https://www.hackquest.io/zh-cn/projects/Tech-Fairness-Hackathon-Bondly
 
 ---
 
